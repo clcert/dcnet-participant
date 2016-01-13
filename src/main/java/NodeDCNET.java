@@ -38,17 +38,30 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         int sumOfMessagesReceived= 0;
         int numberOfMessagesReceived = 0;
+        int numberOfNonZeroMessagesReceived = 0;
         int averageMessage;
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
             String inputMessage = receiver.recvStr().trim();
-            sumOfMessagesReceived += Integer.parseInt(inputMessage);
+            String[] messageAndNumber = inputMessage.split("#");
+            sumOfMessagesReceived += Integer.parseInt(messageAndNumber[0]);
             numberOfMessagesReceived++;
+            numberOfNonZeroMessagesReceived += Integer.parseInt(messageAndNumber[1]);
 
             if (numberOfMessagesReceived == dcNetSize) {
-                averageMessage = sumOfMessagesReceived / numberOfMessagesReceived;
-                pipe.send("" + averageMessage, 0);
+                if (numberOfNonZeroMessagesReceived == 1) {
+                    pipe.send("" + sumOfMessagesReceived, 1);
+                }
+                else {
+                    averageMessage = sumOfMessagesReceived / numberOfMessagesReceived;
+                    pipe.send("" + averageMessage, 0);
+                }
+
+                sumOfMessagesReceived = 0;
+                numberOfMessagesReceived = 0;
+                numberOfNonZeroMessagesReceived = 0;
+
             }
 
         }
@@ -111,29 +124,49 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             }
         }
 
-        String outputFirstMessage = "" + new Random().nextInt(100);
+        int outputNumericMessage = new Random().nextInt(100);
+        String outputMessage = outputNumericMessage + "#1";
+
+        boolean done = false;
 
         // Write to the other nodes
         while (!Thread.currentThread().isInterrupted()) {
             // Sending first message
-            sender.send(outputFirstMessage);
-            System.out.println("Sent message to the rest of the DCNET = " + outputFirstMessage);
+            sender.send(outputMessage);
+            System.out.println("m" + nodeIndex + " = " + outputMessage);
 
-            String averageMessage = receiverThread.recvStr(0);
+            for (int i = 0; i < 2; i++) {
+                String messageReceivedFromReceiverThread = receiverThread.recvStr(i);
+                if (messageReceivedFromReceiverThread != null) {
+                    switch (i) {
+                        case 0 :
+                            if (outputNumericMessage < Integer.parseInt(messageReceivedFromReceiverThread)) {
+                                sender.send(outputMessage);
+                                System.out.println("m" + nodeIndex + " = " + outputMessage);
+                            }
+                            else {
+                                sender.send("0#0");
+                                System.out.println("m" + nodeIndex + " = 0#0");
+                            }
+                            break;
+                        case 1 :
+                            if (messageReceivedFromReceiverThread.equals("" + outputNumericMessage)) {
+                                System.out.println("My message was received!");
+                                done = true;
+                                break;
+                            }
+                    }
+                }
+            }
 
-            if (Integer.parseInt(outputFirstMessage) < Integer.parseInt(averageMessage)) {
-                sender.send(outputFirstMessage);
-                System.out.println("Sent message to the rest of the DCNET = " + outputFirstMessage);
-            }
-            else {
-                sender.send("0");
-                System.out.println("Sent message to the rest of the DCNET = 0");
-            }
+            if (done)
+                break;
 
             new BufferedReader(new InputStreamReader(System.in)).readLine(); // <-- Used to stop the while
 
         }
 
+        receiverThread.close();
         sender.close();
         context.destroy();
 
