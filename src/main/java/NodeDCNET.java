@@ -36,12 +36,21 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the other nodes say
         receiver.subscribe("".getBytes());
 
-        int sumOfFirstMessagesReceived = 0;
+        int sumOfMessagesReceived= 0;
+        int numberOfMessagesReceived = 0;
+        int averageMessage;
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
             String inputMessage = receiver.recvStr().trim();
-            sumOfFirstMessagesReceived += Integer.parseInt(inputMessage);
+            sumOfMessagesReceived += Integer.parseInt(inputMessage);
+            numberOfMessagesReceived++;
+
+            if (numberOfMessagesReceived == dcNetSize) {
+                averageMessage = sumOfMessagesReceived / numberOfMessagesReceived;
+                pipe.send("" + averageMessage, 0);
+            }
+
         }
 
         receiver.close();
@@ -53,7 +62,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZContext context = new ZContext();
 
         // Run method to find all possible connections in the network
-        ZThread.fork(context, new NodeDCNET(this.networkIp, this.name), networkIp);
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name), networkIp);
 
         // Create socket to receive connections from other nodes
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
@@ -67,7 +76,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             } catch (Exception e) {
                 continue;
             }
-            System.out.println(name + " binded on port 900" + nodeIndex);
+            // System.out.println(name + " binded on port 900" + nodeIndex);
             break;
         }
 
@@ -79,12 +88,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             for (int i = 0; i < repliers.length; i++) {
                 repliers[i] = context.createSocket(ZMQ.REP);
                 repliers[i].bind("tcp://*:700" + (nodeIndex - 1 + i));
-                System.out.println(name + " opened connection on port 700" + (nodeIndex - 1 + i));
+                // System.out.println(name + " opened connection on port 700" + (nodeIndex - 1 + i));
 
                 // First synchronization to wait nodes to be connected
                 repliers[i].recv(0);
                 repliers[i].send("", 0);
-                System.out.println("Synchronized!");
+                // System.out.println("Synchronized!");
             }
         }
 
@@ -93,28 +102,39 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             for (int i = 0; i < requesters.length; i++) {
                 requesters[i] = context.createSocket(ZMQ.REQ);
                 requesters[i].connect("tcp://*:700" + (nodeIndex*2 + i)); // <-- Check this with examples with more than 3 nodes!
-                System.out.println(name + " connect to node listening on port 700" + (nodeIndex*2 + i));
+                // System.out.println(name + " connect to node listening on port 700" + (nodeIndex*2 + i));
 
                 // First synchronization to wait nodes to be connected
                 requesters[i].send("".getBytes(), 0);
                 requesters[i].recv(0);
-                System.out.println("Synchronized!");
+                // System.out.println("Synchronized!");
             }
         }
+
+        String outputFirstMessage = "" + new Random().nextInt(100);
 
         // Write to the other nodes
         while (!Thread.currentThread().isInterrupted()) {
             // Sending first message
-            String outputFirstMessage = "" + new Random().nextInt(100);
             sender.send(outputFirstMessage);
-            System.out.println("Sent first message to the rest of the DCNET = " + outputFirstMessage);
+            System.out.println("Sent message to the rest of the DCNET = " + outputFirstMessage);
 
-            // Used to stop the while
-            BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-            stdIn.readLine();
+            String averageMessage = receiverThread.recvStr(0);
+
+            if (Integer.parseInt(outputFirstMessage) < Integer.parseInt(averageMessage)) {
+                sender.send(outputFirstMessage);
+                System.out.println("Sent message to the rest of the DCNET = " + outputFirstMessage);
+            }
+            else {
+                sender.send("0");
+                System.out.println("Sent message to the rest of the DCNET = 0");
+            }
+
+            new BufferedReader(new InputStreamReader(System.in)).readLine(); // <-- Used to stop the while
 
         }
 
+        sender.close();
         context.destroy();
 
     }
