@@ -36,10 +36,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the other nodes say
         receiver.subscribe("".getBytes());
 
+        int sumOfFirstMessagesReceived = 0;
+
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
             String inputMessage = receiver.recvStr().trim();
-            System.out.println("Message received = " + inputMessage);
+            sumOfFirstMessagesReceived += Integer.parseInt(inputMessage);
         }
 
         receiver.close();
@@ -69,8 +71,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             break;
         }
 
-        ZMQ.Socket[] repliers = null;
-        ZMQ.Socket[] requesters = null;
+        ZMQ.Socket[] repliers;
+        ZMQ.Socket[] requesters;
 
         if (nodeIndex != 0) {
             repliers = new ZMQ.Socket[nodeIndex];
@@ -79,7 +81,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 repliers[i].bind("tcp://*:700" + (nodeIndex - 1 + i));
                 System.out.println(name + " opened connection on port 700" + (nodeIndex - 1 + i));
 
-                // First synchronization
+                // First synchronization to wait nodes to be connected
                 repliers[i].recv(0);
                 repliers[i].send("", 0);
                 System.out.println("Synchronized!");
@@ -93,7 +95,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 requesters[i].connect("tcp://*:700" + (nodeIndex*2 + i)); // <-- Check this with examples with more than 3 nodes!
                 System.out.println(name + " connect to node listening on port 700" + (nodeIndex*2 + i));
 
-                // First synchronization
+                // First synchronization to wait nodes to be connected
                 requesters[i].send("".getBytes(), 0);
                 requesters[i].recv(0);
                 System.out.println("Synchronized!");
