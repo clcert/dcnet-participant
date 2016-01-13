@@ -5,15 +5,12 @@ import org.zeromq.ZThread;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Random;
 
 class NodeDCNET implements ZThread.IAttachedRunnable {
 
     private final int dcNetSize = 3;
     private final String networkIp;
     private final String name;
-
-    int outputMessage = 0;
 
     public NodeDCNET(String networkIp, String name) {
         this.networkIp = networkIp;
@@ -38,9 +35,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the other nodes say
         receiver.subscribe("".getBytes());
 
-        // Write to the other nodes
+        // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
-
+            String inputMessage = receiver.recvStr().trim();
+            System.out.println(inputMessage);
         }
 
         receiver.close();
@@ -56,8 +54,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Create socket to receive connections from other nodes
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
-        sender.setLinger(5000);
-        sender.setHWM(0);
 
         // Explore in all the ports to bind my connection
         for (int i = 0; i < dcNetSize; i++) {
@@ -70,16 +66,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             break;
         }
 
-        //  Socket to receive signals
-        ZMQ.Socket syncservice = context.createSocket(ZMQ.REP);
-
-
         // Write to the other nodes
         while (!Thread.currentThread().isInterrupted()) {
-
+            BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+            String outputMessage = stdIn.readLine();
+            sender.send(name + ": " + outputMessage);
         }
 
-        sender.close();
         context.destroy();
 
     }
