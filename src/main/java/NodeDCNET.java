@@ -235,13 +235,16 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     // ?
                 }
                 if (messagesSentWithNoCollisions == dcNetSize) {
+                    System.out.println("FINISHED SOLVING THE COLLISION!");
                     new BufferedReader(new InputStreamReader(System.in)).readLine();
                 }
             }
+
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND
             else {
                 if (sumOfT == 0) {
                     round++;
+                    System.out.println();
                     continue;
                 }
                 else if (outputNumericMessage < sumOfM/sumOfT) {
@@ -250,6 +253,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             }
 
             round++;
+            System.out.println();
 
         }
 
