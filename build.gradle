@@ -10,21 +10,21 @@ task run0(type: JavaExec) {
     standardInput = System.in
     classpath = sourceSets.main.runtimeClasspath
     main = 'NodeDCNET'
-    args '0'
+    args '105'
 }
 
 task run1(type: JavaExec) {
     standardInput = System.in
     classpath = sourceSets.main.runtimeClasspath
     main = 'NodeDCNET'
-    args '1'
+    args '70'
 }
 
 task run2(type: JavaExec) {
     standardInput = System.in
     classpath = sourceSets.main.runtimeClasspath
     main = 'NodeDCNET'
-    args '2'
+    args '12'
 }
 
 repositories {

@@ -19,7 +19,7 @@ class CreateNodes {
         String networkIp = getNetworkIp();
 
         for (int i = 0; i < n; i++) {
-            nodes[i] = new NodeDCNET(networkIp, "Node " + i);
+            nodes[i] = new NodeDCNET(networkIp, "Node " + i, "100");
             nodes[i].createNode();
             System.out.println(i);
         }

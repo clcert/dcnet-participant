@@ -14,14 +14,16 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final int dcNetSize = 3;
     private final String networkIp;
     private final String name;
+    private int outputNumericMessage;
 
-    public NodeDCNET(String networkIp, String name) {
+    public NodeDCNET(String networkIp, String name, String outputNumericMessage) {
         this.networkIp = networkIp;
         this.name = name;
+        this.outputNumericMessage = Integer.parseInt(outputNumericMessage);
     }
 
     public static void main(String[] args) throws IOException {
-        new NodeDCNET("127.0.0.1", "Node " + args[0]).createNode();
+        new NodeDCNET("127.0.0.1", "Node", args[0]).createNode();
     }
 
     // Receiver Thread
@@ -42,72 +44,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the other nodes say
         receiver.subscribe("".getBytes());
 
-        // Sum of all the messages received in this round
-        int sumOfMessagesReceived= 0;
-
-        // Number of messages received in this round
-        int numberOfMessagesReceived = 0;
-
-        // Number of Non-Zero messages received in this round
-        int numberOfNonZeroMessagesReceived = 0;
-
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
-
-            // Message received from other node
-            // This message has the next format: "<m>#<t>" where <m> is the message and <t> is either 1 or 0
             String inputMessage = receiver.recvStr().trim();
-
-            // Split the message in two: messageAndNumber[0]=<m> and messageAndNumber[1]=<t>
-            String[] messageAndNumber = inputMessage.split("#");
-
-            // Add <m> tp the sum of all the messages received in this round
-            sumOfMessagesReceived += Integer.parseInt(messageAndNumber[0]);
-
-            // Increase the number of messages received in this round
-            numberOfMessagesReceived++;
-
-            // Add <t> to the number of non-zero messages received. Only will increase when <t>=1
-            numberOfNonZeroMessagesReceived += Integer.parseInt(messageAndNumber[1]);
-
-            // Number of nodes that have had their messages sent with no collisions
-            int messagesSentWithNoCollisions = 0;
-
-            // If the number of messages received in this round equals the size of the DC-NET room, it means that i received all of them
-            if (numberOfMessagesReceived == dcNetSize) {
-
-                // If the number of non-zero messages received equals 1, it means that there is no collision in this round
-                if (numberOfNonZeroMessagesReceived == 1) {
-                    // No Collision Round
-                    // Send to the sender thread "$" + <sumOfMessagesReceived> which corresponds to a "flag" letting know that there were no collisions and the message <m> of one of the nodes
-                    pipe.send("$" + sumOfMessagesReceived, 0);
-
-                    // Increase the number of messages that had been sent with no collisions
-                    messagesSentWithNoCollisions++;
-
-                    // If the number of messages sent with no collisions equals the size of the room, it means that all the participants could sent their message
-                    if (messagesSentWithNoCollisions == dcNetSize) {
-                        System.out.println("FINISH!");
-                        // TODO: Let know to the sender that the rounds are over
-                        break;
-                    }
-                }
-
-                // The non-zero messages is not 1, so it means that there's a collision of two or more messages
-                else {
-                    // Round with Collision
-                    // Calculate average message and send it to the sender thread
-                    int averageMessage = sumOfMessagesReceived / numberOfMessagesReceived;
-                    pipe.send("%" + averageMessage, 0);
-                }
-
-                // End of the round. Reset all the values to 0 and start a new round
-                sumOfMessagesReceived = 0;
-                numberOfMessagesReceived = 0;
-                numberOfNonZeroMessagesReceived = 0;
-
-            }
-
+            pipe.send(inputMessage);
         }
 
         // Close receiver thread
@@ -122,7 +62,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZContext context = new ZContext();
 
         // Throw receiver thread which runs the method run described above
-        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name), networkIp);
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage), networkIp);
 
         // Create the sender socket that works as a publisher
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
@@ -182,10 +122,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         }
 
         // This is the actual message that the node want to communicate (<m>)
-        int outputNumericMessage = new Random().nextInt(100);
+        int outputNumericMessage = this.outputNumericMessage;
 
         // This message <m> must be appended to #1, forming M = <m>#1
         String outputMessage = outputNumericMessage + "#1";
+
+        System.out.println("M = " + outputNumericMessage);
 
         // Variable to check that the message was transmitted to the rest of the room (was sent in a round with no collisions)
         boolean messageTransmitted = false;
@@ -197,6 +139,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         int nextRoundAllowedToSend = 1;
 
         Dictionary<Integer, String> messagesSentInPreviousRounds = new Hashtable<>();
+
+        int messagesSentWithNoCollisions = 0;
 
         // Write to the other nodes at the beginning of the round
         while (!Thread.currentThread().isInterrupted()) {
@@ -217,84 +161,86 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             System.out.println("ROUND " + round);
 
-            // See if the room is in a real round
+            int m, t;
+            int sumOfM = 0, sumOfT = 0;
+
+            // REAL ROUND
             if (round == 1 || round%2 == 0) {
-                // Check if my message was already transmitted, i just send "0#0"
+                System.out.println("REAL ROUND");
+                // If my message was already transmitted i just send "0#0"
                 if (messageTransmitted) {
                     sender.send("0#0");
-                    System.out.println("Sending message 0#0");
                     continue;
                 }
 
                 // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
                 if (nextRoundAllowedToSend == round) {
                     sender.send(outputMessage);
-                    System.out.println("Sending message " + outputMessage);
                 } else {
                     sender.send("0#0");
-                    System.out.println("Sending message 0#0");
                 }
-
 
                 // Receive information from the receiver thread in order to know how to proceed in the next rounds
-                // Check if there were or not collisions
-                // Receive the message from receiver thread
-                String messageReceivedFromReceiverThread = receiverThread.recvStr(0);
-                System.out.println("Received message from receiver thread = " + messageReceivedFromReceiverThread);
+                int messagesReceivedInThisRound = 0;
 
-                // If it's equals %, it means that there were no collisions
-                if (messageReceivedFromReceiverThread.charAt(0) == '$') {
-
-                    System.out.println("NO COLLISION!");
-
-                    // Take out the first character of the message sent by the receiver thread
-                    messageReceivedFromReceiverThread = messageReceivedFromReceiverThread.substring(1);
-
-                    // Check if the message receive from receiver thread equals the message <m> that i sent
-                    if (messageReceivedFromReceiverThread.equals("" + outputNumericMessage)) {
-                        System.out.println("My message was received!");
-                        messageTransmitted = true;
-                    }
-
+                while (messagesReceivedInThisRound < dcNetSize) {
+                    String messageReceivedFromReceiverThread = receiverThread.recvStr();
+                    m = Integer.parseInt(messageReceivedFromReceiverThread.split("#")[0]);
+                    t = Integer.parseInt(messageReceivedFromReceiverThread.split("#")[1]);
+                    sumOfM += m;
+                    sumOfT += t;
+                    messagesReceivedInThisRound++;
                 }
 
-                // If not, it means that there were a collision
-                else {
-                    System.out.println("COLLISION!");
-
-                    // Take out the first character of the message sent by the receiver thread
-                    messageReceivedFromReceiverThread = messageReceivedFromReceiverThread.substring(1);
-
-                    // If my message is below the average, i send my next message in round 2*<round>
-                    if (outputNumericMessage < Integer.parseInt(messageReceivedFromReceiverThread)) {
-                        nextRoundAllowedToSend = 2*round;
-                    }
-
-                    // If my message is above the average, my message will be retransmitted automatically
-
-                }
-
-
+                System.out.println("C = " + sumOfM + "#" + sumOfT);
+                messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
 
             }
 
-            // If not, we are in a virtual round and the message must be calculated automatically
-            // If we are in round <round> we must check (<round>-1) and ((<round>-1)/2)
+            // VIRTUAL ROUND
             else {
+                System.out.println("VIRTUAL ROUND");
+
                 String messageSentInRound2K = messagesSentInPreviousRounds.get(round-1);
                 String messageSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
 
-                System.out.println("Mensajes enviados en rondas 2k y k");
-                System.out.println(messageSentInRound2K);
-                System.out.println(messageSentInRoundK);
+                int sumOfMInRound2k = Integer.parseInt(messageSentInRound2K.split("#")[0]);
+                int sumOfTInRound2k = Integer.parseInt(messageSentInRound2K.split("#")[1]);
 
-                new BufferedReader(new InputStreamReader(System.in)).readLine(); // <-- Used to stop the while
+                int sumOfMInRoundK = Integer.parseInt(messageSentInRoundK.split("#")[0]);
+                int sumOfTInRoundK = Integer.parseInt(messageSentInRoundK.split("#")[1]);
+
+                sumOfM = sumOfMInRoundK - sumOfMInRound2k;
+                sumOfT = sumOfTInRoundK - sumOfTInRound2k;
+
+                System.out.println("C = " + sumOfM + "#" + sumOfT);
+                messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
 
             }
 
-            round++;
+            // Already received the information, either from real round or virtual round
 
-            // new BufferedReader(new InputStreamReader(System.in)).readLine(); // <-- Used to stop the while
+            // NO COLLISION
+            if (sumOfT == 1) {
+                messagesSentWithNoCollisions++;
+                if (sumOfM == outputNumericMessage) {
+                    messageTransmitted = true;
+                }
+                else {
+                    // ?
+                }
+                if (messagesSentWithNoCollisions == dcNetSize) {
+                    new BufferedReader(new InputStreamReader(System.in)).readLine();
+                }
+            }
+            // COLLISION
+            else {
+                if (outputNumericMessage < sumOfM/sumOfT) {
+                    nextRoundAllowedToSend = 2*round;
+                }
+            }
+
+            round++;
 
         }
 
