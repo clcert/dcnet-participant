@@ -209,8 +209,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 int sumOfMInRoundK = Integer.parseInt(messageSentInRoundK.split("#")[0]);
                 int sumOfTInRoundK = Integer.parseInt(messageSentInRoundK.split("#")[1]);
 
-                sumOfM = sumOfMInRoundK - sumOfMInRound2k;
-                sumOfT = sumOfTInRoundK - sumOfTInRound2k;
+                if (sumOfMInRound2k == 0 || sumOfMInRoundK == 0) {
+                    sumOfM = 0;
+                    sumOfT = 0;
+                }
+                else {
+                    sumOfM = sumOfMInRoundK - sumOfMInRound2k;
+                    sumOfT = sumOfTInRoundK - sumOfTInRound2k;
+                }
 
                 System.out.println("C = " + sumOfM + "#" + sumOfT);
                 messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
