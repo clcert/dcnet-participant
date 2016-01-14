@@ -4,6 +4,8 @@ version '1.0-SNAPSHOT'
 apply plugin: 'java'
 apply plugin: 'application'
 
+mainClassName = 'NodeDCNET'
+
 task run0(type: JavaExec) {
     standardInput = System.in
     classpath = sourceSets.main.runtimeClasspath
