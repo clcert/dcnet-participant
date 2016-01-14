@@ -170,11 +170,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // If my message was already transmitted i just send "0#0"
                 if (messageTransmitted) {
                     sender.send("0#0");
-                    continue;
                 }
 
                 // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
-                if (nextRoundAllowedToSend == round) {
+                if (nextRoundAllowedToSend == round && !messageTransmitted) {
                     sender.send(outputMessage);
                 } else {
                     sender.send("0#0");
@@ -233,9 +232,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     new BufferedReader(new InputStreamReader(System.in)).readLine();
                 }
             }
-            // COLLISION
+            // COLLISION OR NO MESSAGES SENT IN THIS ROUND
             else {
-                if (outputNumericMessage < sumOfM/sumOfT) {
+                if (sumOfT == 0) {
+                    round++;
+                    continue;
+                }
+                else if (outputNumericMessage < sumOfM/sumOfT) {
                     nextRoundAllowedToSend = 2*round;
                 }
             }
