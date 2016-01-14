@@ -74,13 +74,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // If the number of non-zero messages received equals 1, it means that there is no collision in this round
                 if (numberOfNonZeroMessagesReceived == 1) {
                     // TODO: No Collision Round
-                    pipe.send("" + sumOfMessagesReceived, 1);
+                    pipe.send("" + sumOfMessagesReceived, 0);
+                    break;
                 }
                 // The non-zero messages is not 1, so it means that there's a collision of two or more messages
                 else {
                     // TODO: Round with Collision
                     int averageMessage = sumOfMessagesReceived / numberOfMessagesReceived;
-                    pipe.send("" + averageMessage, 0);
+                    pipe.send("" + averageMessage, 1);
                 }
 
                 // End of the round. Reset all the values to 0 and start a new round
@@ -124,83 +125,109 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             break;
         }
 
-        // Create array of sockets that will work as repliers and requestors
         // We need to connect every pair of nodes in order to synchronize the sending of values
         // For this, we need that in every pair of nodes there will be one requestor and one replier
         // In every pair of nodes {i,j} where i<j, node i will work as a requestor and node j will work as a replier
+        // Create array of sockets that will work as repliers and requestors
         ZMQ.Socket[] repliers;
         ZMQ.Socket[] requestors;
 
+        // Initialize repliers array
+        // If my index is 0, i will only have requestors and none replier
         if (nodeIndex != 0) {
+            // If my index is <nodeIndex>, i will have to create <nodeIndex> repliers
             repliers = new ZMQ.Socket[nodeIndex];
+
+            // Iterate in repliers array in order to create the socket, bind the port and synchronize for the first time
             for (int i = 0; i < repliers.length; i++) {
+                // Create the replier socket
                 repliers[i] = context.createSocket(ZMQ.REP);
+
+                // Bind the replier socket to the corresponding port, that is at least 7000
                 repliers[i].bind("tcp://*:700" + (nodeIndex - 1 + i));
-                // System.out.println(name + " opened connection on port 700" + (nodeIndex - 1 + i));
 
                 // First synchronization to wait nodes to be connected
                 repliers[i].recv(0);
                 repliers[i].send("", 0);
-                // System.out.println("Synchronized!");
             }
         }
 
+        // Initialize requestors array
+        // If my index is the last, i will only have repliers and none requestor
         if (nodeIndex != dcNetSize - 1) {
+            // If my index is <nodeIndex>, i will have to create (<dcNetSize>-<nodeIndex>-1) requestors
             requestors = new ZMQ.Socket[dcNetSize - nodeIndex - 1];
+
+            // Iterate in requestors array in order to create the socket, bind the port and synchronize for the first time
             for (int i = 0; i < requestors.length; i++) {
+                // Create the requestor socket
                 requestors[i] = context.createSocket(ZMQ.REQ);
+
+                // Bind the requestor socket to the corresponding port, that is at least 7000
                 requestors[i].connect("tcp://*:700" + (nodeIndex*2 + i)); // <-- Check this with examples with more than 3 nodes!
-                // System.out.println(name + " connect to node listening on port 700" + (nodeIndex*2 + i));
 
                 // First synchronization to wait nodes to be connected
                 requestors[i].send("".getBytes(), 0);
                 requestors[i].recv(0);
-                // System.out.println("Synchronized!");
             }
         }
 
+        // This is the actual message that the node want to communicate (<m>)
         int outputNumericMessage = new Random().nextInt(100);
+
+        // This message <m> must be appended to #1, forming M = <m>#1
         String outputMessage = outputNumericMessage + "#1";
 
-        boolean done = false;
+        // Variable to check that the message was transmitted to the rest of the room (was sent in a round with no collisions)
+        boolean messageTransmitted = false;
 
-        // Write to the other nodes
+        // Write to the other nodes at the beginning of the round
         while (!Thread.currentThread().isInterrupted()) {
-            // Sending first message
+            // Sending message M to the rest of the room
             sender.send(outputMessage);
-            System.out.println("m" + nodeIndex + " = " + outputMessage);
 
-            for (int i = 0; i < 2; i++) {
-                String messageReceivedFromReceiverThread = receiverThread.recvStr(i);
+            // Receive information from the receiver thread in order to know how to proceed in the next round
+            // Check if there were or not collisions
+            // Receive the message from receiver thread with flag = 0
+            String messageReceivedFromReceiverThread = receiverThread.recvStr(0);
+
+            // If it's not null, it means that there were no collisions
+            if (messageReceivedFromReceiverThread != null) {
+                // Check again if the message receive from receiver thread equals the message <m> that i sent
+                if (messageReceivedFromReceiverThread.equals("" + outputNumericMessage)) {
+                    System.out.println("My message was received!");
+                    messageTransmitted = true;
+                }
+            }
+
+            // Check if there were collisions
+            else {
+                // Receive the message from receiver thread with flag = 1
+                messageReceivedFromReceiverThread = receiverThread.recvStr(1);
+
+                // If it's not null, it means that there were collisions
                 if (messageReceivedFromReceiverThread != null) {
-                    switch (i) {
-                        case 0 :
-                            if (outputNumericMessage < Integer.parseInt(messageReceivedFromReceiverThread)) {
-                                sender.send(outputMessage);
-                                System.out.println("m" + nodeIndex + " = " + outputMessage);
-                            }
-                            else {
-                                sender.send("0#0");
-                                System.out.println("m" + nodeIndex + " = 0#0");
-                            }
-                            break;
-                        case 1 :
-                            if (messageReceivedFromReceiverThread.equals("" + outputNumericMessage)) {
-                                System.out.println("My message was received!");
-                                done = true;
-                                break;
-                            }
+                    // If my message is below the average, i send again the same message in the next round
+                    if (outputNumericMessage < Integer.parseInt(messageReceivedFromReceiverThread)) {
+                        continue;
+                    }
+
+                    // If my message is not below the average, i send the message 0#0 in the next round
+                    else {
+                        outputMessage = "0#0";
                     }
                 }
             }
 
-            if (done)
+            // Check if my message was transmitted, i stop the application
+            if (messageTransmitted)
                 break;
 
             new BufferedReader(new InputStreamReader(System.in)).readLine(); // <-- Used to stop the while
 
         }
 
+        // Close all the threads and destroy the context
         receiverThread.close();
         sender.close();
         context.destroy();
