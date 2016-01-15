@@ -7,23 +7,24 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.Random;
 
 class NodeDCNET implements ZThread.IAttachedRunnable {
 
-    private final int dcNetSize = 3;
+    private final int dcNetSize;
     private final String networkIp;
     private final String name;
     private int outputNumericMessage;
 
-    public NodeDCNET(String networkIp, String name, String outputNumericMessage) {
+    public NodeDCNET(String networkIp, String name, String outputNumericMessage, String dcNetSize) {
         this.networkIp = networkIp;
         this.name = name;
         this.outputNumericMessage = Integer.parseInt(outputNumericMessage);
+        this.dcNetSize = Integer.parseInt(dcNetSize);
     }
 
     public static void main(String[] args) throws IOException {
-        new NodeDCNET("127.0.0.1", "Node", args[0]).createNode();
+        // Usage: ./gradlew run <message> <numberOfNodes>
+        new NodeDCNET("127.0.0.1", "Node", args[0], args[1]).createNode();
     }
 
     // Receiver Thread
@@ -62,7 +63,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZContext context = new ZContext();
 
         // Throw receiver thread which runs the method run described above
-        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage), networkIp);
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage, "" + this.dcNetSize), networkIp);
 
         // Create the sender socket that works as a publisher
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
@@ -230,9 +231,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 messagesSentWithNoCollisions++;
                 if (sumOfM == outputNumericMessage) {
                     messageTransmitted = true;
-                }
-                else {
-                    // ?
                 }
                 if (messagesSentWithNoCollisions == dcNetSize) {
                     System.out.println("FINISHED SOLVING THE COLLISION!");

@@ -6,25 +6,11 @@ apply plugin: 'application'
 
 mainClassName = 'NodeDCNET'
 
-task run0(type: JavaExec) {
+run {
     standardInput = System.in
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'NodeDCNET'
-    args '105'
-}
-
-task run1(type: JavaExec) {
-    standardInput = System.in
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'NodeDCNET'
-    args '70'
-}
-
-task run2(type: JavaExec) {
-    standardInput = System.in
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'NodeDCNET'
-    args '12'
+    if ( project.hasProperty("appArgs") ) {
+        args Eval.me(appArgs)
+    }
 }
 
 repositories {
