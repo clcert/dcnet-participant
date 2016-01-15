@@ -38,8 +38,11 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
         // Connect as a subscriber to all the nodes on the DC-NET room
-        for (int port = 9000; port < 9000 + dcNetSize; port++) {
+        for (int port = 9001; port < 9001 + dcNetSize; port++) {
             receiver.connect("tcp://" + network_ip + ":" + port);
+
+            System.out.println("Node connected to port " + port);
+
         }
 
         // Subscribe to whatever the other nodes say
@@ -71,15 +74,18 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Index of current node
         int nodeIndex;
 
-        // Explore in all the ports, starting from 9000, until find one available. This port will also used as the index for the node (not related with the name of it)
-        for (nodeIndex = 0; nodeIndex < dcNetSize; nodeIndex++) {
+        // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
+        for (nodeIndex = 1; nodeIndex < dcNetSize + 1; nodeIndex++) {
             // Try to bind the sender to the port 900<nodeIndex>. If not, continue with the rest of the ports
             try {
-                sender.bind("tcp://*:900" + nodeIndex);
+                sender.bind("tcp://*:" + (9000 + nodeIndex));
             } catch (Exception e) {
                 continue;
             }
             // Already bound to a port, so break the cycle
+
+            System.out.println("Node " + nodeIndex + " bound to port " + (9000 + nodeIndex));
+
             break;
         }
 
@@ -91,34 +97,42 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket[] requestors = null;
 
         // Initialize repliers array
-        // If my index is 0, i will only have requestors and none replier
-        if (nodeIndex != 0) {
-            // If my index is <nodeIndex>, i will have to create <nodeIndex> repliers
-            repliers = new ZMQ.Socket[nodeIndex];
+        // If my index is 1, i will only have requestors and none replier
+        if (nodeIndex != 1) {
+            // If my index is <nodeIndex>, i will have to create (<nodeIndex>-1) repliers
+            repliers = new ZMQ.Socket[nodeIndex-1];
 
             // Iterate in repliers array in order to create the socket and bind the port
             for (int i = 0; i < repliers.length; i++) {
                 // Create the replier socket
                 repliers[i] = context.createSocket(ZMQ.REP);
 
-                // Bind the replier socket to the corresponding port, that is at least 7000
-                repliers[i].bind("tcp://*:700" + (nodeIndex - 1 + i));
+                // Bind the replier socket to the corresponding port
+                int firstPortToBind = (7002 + ((nodeIndex*(nodeIndex-3))/2));
+                repliers[i].bind("tcp://*:" + (firstPortToBind+i));
+
+                System.out.println("Node " + nodeIndex + " create replier bound to port " + (firstPortToBind+i));
+
             }
         }
 
         // Initialize requestors array
         // If my index is the last, i will only have repliers and none requestor
-        if (nodeIndex != dcNetSize - 1) {
-            // If my index is <nodeIndex>, i will have to create (<dcNetSize>-<nodeIndex>-1) requestors
-            requestors = new ZMQ.Socket[dcNetSize - nodeIndex - 1];
+        if (nodeIndex != dcNetSize) {
+            // If my index is <nodeIndex>, i will have to create (<dcNetSize>-<nodeIndex>) requestors
+            requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
 
             // Iterate in requestors array in order to create the socket and bind the port
             for (int i = 0; i < requestors.length; i++) {
                 // Create the requestor socket
                 requestors[i] = context.createSocket(ZMQ.REQ);
 
-                // Bind the requestor socket to the corresponding port, that is at least 7000
-                requestors[i].connect("tcp://*:700" + (nodeIndex*2 + i)); // <-- Check this with examples with more than 3 nodes!
+                // Bind the requestor socket to the corresponding port, that is at least 7001
+                int portToConnect = ((((nodeIndex + i + 1)*(nodeIndex + i - 2))/2) + 7002) + nodeIndex - 1;
+                requestors[i].connect("tcp://*:" + (portToConnect));
+
+                System.out.println("Node " + nodeIndex + " create requestor listening to port " + (portToConnect));
+
             }
         }
 
@@ -153,14 +167,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Write to the other nodes at the beginning of the round
         while (!Thread.currentThread().isInterrupted()) {
             // Synchronize nodes at the beginning of each round
-            if (nodeIndex != 0) {
+            if (nodeIndex != 1) {
                 for (ZMQ.Socket replier : repliers) {
                     replier.recv(0);
                     replier.send("", 0);
                 }
             }
 
-            if (nodeIndex != dcNetSize - 1) {
+            if (nodeIndex != dcNetSize) {
                 for (ZMQ.Socket requestor : requestors) {
                     requestor.send("".getBytes(), 0);
                     requestor.recv(0);
