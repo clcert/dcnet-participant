@@ -125,10 +125,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // This is the actual message that the node want to communicate (<m>)
         int outputNumericMessage = this.outputNumericMessage;
 
-        // This message <m> must be appended to #1, forming M = <m>#1
-        String outputMessage = outputNumericMessage + "#1";
+        // If <m>!=0 must be appended to #1, forming M = <m>#1. If not, M = 0#0
+        String outputMessage;
+        if (outputNumericMessage == 0)
+            outputMessage = "0#0";
+        else
+            outputMessage = outputNumericMessage + "#1";
 
-        System.out.println("M = " + outputNumericMessage);
+        System.out.println("m = " + outputNumericMessage);
 
         // Variable to check that the message was transmitted to the rest of the room (was sent in a round with no collisions)
         boolean messageTransmitted = false;
@@ -138,6 +142,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Index to know in which round i'm allowed to resend my message
         int nextRoundAllowedToSend = 1;
+
+        // How many messages are being involved in the first collision
+        int collisionSize = 0;
 
         Dictionary<Integer, String> messagesSentInPreviousRounds = new Hashtable<>();
 
@@ -192,6 +199,16 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     messagesReceivedInThisRound++;
                 }
 
+                // Assign the size of the collision produced in the first round
+                if (round == 1) {
+                    collisionSize = sumOfT;
+                    if (collisionSize == 0) {
+                        System.out.println("NO COLLISION PRODUCED");
+                        new BufferedReader(new InputStreamReader(System.in)).readLine();
+                    }
+
+                }
+
                 System.out.println("C = " + sumOfM + "#" + sumOfT);
                 messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
 
@@ -232,7 +249,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 if (sumOfM == outputNumericMessage) {
                     messageTransmitted = true;
                 }
-                if (messagesSentWithNoCollisions == dcNetSize) {
+                if (messagesSentWithNoCollisions == collisionSize) {
                     System.out.println("FINISHED SOLVING THE COLLISION!");
                     new BufferedReader(new InputStreamReader(System.in)).readLine();
                 }
