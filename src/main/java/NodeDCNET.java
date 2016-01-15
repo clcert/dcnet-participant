@@ -40,9 +40,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Connect as a subscriber to all the nodes on the DC-NET room
         for (int port = 9001; port < 9001 + dcNetSize; port++) {
             receiver.connect("tcp://" + network_ip + ":" + port);
-
-            System.out.println("Node connected to port " + port);
-
         }
 
         // Subscribe to whatever the other nodes say
@@ -83,9 +80,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 continue;
             }
             // Already bound to a port, so break the cycle
-
-            System.out.println("Node " + nodeIndex + " bound to port " + (9000 + nodeIndex));
-
             break;
         }
 
@@ -110,9 +104,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // Bind the replier socket to the corresponding port
                 int firstPortToBind = (7002 + ((nodeIndex*(nodeIndex-3))/2));
                 repliers[i].bind("tcp://*:" + (firstPortToBind+i));
-
-                System.out.println("Node " + nodeIndex + " create replier bound to port " + (firstPortToBind+i));
-
             }
         }
 
@@ -130,9 +121,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // Bind the requestor socket to the corresponding port, that is at least 7001
                 int portToConnect = ((((nodeIndex + i + 1)*(nodeIndex + i - 2))/2) + 7002) + nodeIndex - 1;
                 requestors[i].connect("tcp://*:" + (portToConnect));
-
-                System.out.println("Node " + nodeIndex + " create requestor listening to port " + (portToConnect));
-
             }
         }
 
