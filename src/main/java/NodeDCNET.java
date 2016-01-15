@@ -255,23 +255,20 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     messageTransmitted = true;
                 }
                 if (messagesSentWithNoCollisions == collisionSize) {
-                    System.out.println("FINISHED SOLVING THE COLLISION!");
+                    System.out.println("Finished!");
                     new BufferedReader(new InputStreamReader(System.in)).readLine();
                 }
             }
 
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND
             else {
-                if (sumOfT == 0) {
-                    round++;
-                    System.out.println();
-                    continue;
-                }
-                else if (nextRoundAllowedToSend == round) {
-                    if (outputNumericMessage < sumOfM / sumOfT) {
-                        nextRoundAllowedToSend = 2 * round;
-                    } else {
-                        nextRoundAllowedToSend = 2 * round + 1;
+                if (sumOfT != 0) {
+                    if (nextRoundAllowedToSend == round) {
+                        if (outputNumericMessage < sumOfM / sumOfT) {
+                            nextRoundAllowedToSend = 2 * round;
+                        } else {
+                            nextRoundAllowedToSend = 2 * round + 1;
+                        }
                     }
                 }
             }
