@@ -8,6 +8,13 @@ import java.io.InputStreamReader;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
+/*
+    This application runs a collision resolution protocol, in order
+    to use within a DC-NET.
+    The nodes that are created by this class are run all in the same
+    computer, running on different ports.
+*/
+
 class NodeDCNET implements ZThread.IAttachedRunnable {
 
     private final int dcNetSize;
@@ -37,7 +44,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create the receiver socket that works as a subscriber
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
-        // Connect as a subscriber to all the nodes on the DC-NET room
+        // Connect as a subscriber to all the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
         for (int port = 9001; port < 9001 + dcNetSize; port++) {
             receiver.connect("tcp://" + network_ip + ":" + port);
         }
@@ -47,7 +54,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
+            // Receive message
             String inputMessage = receiver.recvStr().trim();
+
+            // Send the message received to the publisher that handles the collision
             pipe.send(inputMessage);
         }
 
@@ -71,9 +81,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Index of current node
         int nodeIndex;
 
-        // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
+        // Explore in all the orts, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
         for (nodeIndex = 1; nodeIndex < dcNetSize + 1; nodeIndex++) {
-            // Try to bind the sender to the port 900<nodeIndex>. If not, continue with the rest of the ports
+            // Try to bind the sender to the port (9000 + <nodeIndex>).
+            // If not, continue with the rest of the ports
             try {
                 sender.bind("tcp://*:" + (9000 + nodeIndex));
             } catch (Exception e) {
@@ -108,7 +119,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         }
 
         // Initialize requestors array
-        // If my index is the last, i will only have repliers and none requestor
+        // If my index is the last one, i will only have repliers and none requestor
         if (nodeIndex != dcNetSize) {
             // If my index is <nodeIndex>, i will have to create (<dcNetSize>-<nodeIndex>) requestors
             requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
@@ -124,7 +135,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             }
         }
 
-        // This is the actual message that the node want to communicate (<m>)
+        // This is the actual message that the node wants to communicate (<m>)
         int outputNumericMessage = this.outputNumericMessage;
 
         // If <m>!=0 must be appended to #1, forming M = <m>#1. If not, M = 0#0
@@ -150,10 +161,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         Dictionary<Integer, String> messagesSentInPreviousRounds = new Hashtable<>();
 
+        // Count how many messages were sent without collisions. When this number equals the collision size, the collision was resolved
         int messagesSentWithNoCollisions = 0;
 
-        // Write to the other nodes at the beginning of the round
+        // Begin the collision resolution protocol
         while (!Thread.currentThread().isInterrupted()) {
+
+            // Needed for the test, some configuration iterates at infinity
             if (round == 20)
                 new BufferedReader(new InputStreamReader(System.in)).readLine();
 
@@ -174,12 +188,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             System.out.println("ROUND " + round);
 
-            int m, t;
-            int sumOfM = 0, sumOfT = 0;
+            // Variables to store the resulting message of the round
+            // C = <sumOfM>#<sumOfT>
+            int m, t, sumOfM = 0, sumOfT = 0;
 
             // REAL ROUND
             if (round == 1 || round%2 == 0) {
                 System.out.println("REAL ROUND");
+
                 // If my message was already transmitted i just send "0#0"
                 if (messageTransmitted) {
                     sender.send("0#0");
@@ -192,9 +208,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     sender.send("0#0");
                 }
 
-                // Receive information from the receiver thread in order to know how to proceed in the next rounds
+                // Receive information from the receiver thread
+                // Count how many messages were receive from the receiver thread. When this number equals <dcNetSize> i've received all the messages in this round
                 int messagesReceivedInThisRound = 0;
-
                 while (messagesReceivedInThisRound < dcNetSize) {
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
                     m = Integer.parseInt(messageReceivedFromReceiverThread.split("#")[0]);
@@ -215,6 +231,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 }
 
                 System.out.println("C = " + sumOfM + "#" + sumOfT);
+
+                // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
                 messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
 
             }
@@ -223,56 +241,81 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             else {
                 System.out.println("VIRTUAL ROUND");
 
+                // Recover messages sent in rounds 2k and k
                 String messageSentInRound2K = messagesSentInPreviousRounds.get(round-1);
                 String messageSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
 
+                // Divide messages received in rounds 2k and k in <sumOfM> and <sumOfT> for each round
                 int sumOfMInRound2k = Integer.parseInt(messageSentInRound2K.split("#")[0]);
                 int sumOfTInRound2k = Integer.parseInt(messageSentInRound2K.split("#")[1]);
-
                 int sumOfMInRoundK = Integer.parseInt(messageSentInRoundK.split("#")[0]);
                 int sumOfTInRoundK = Integer.parseInt(messageSentInRoundK.split("#")[1]);
 
+                // If any of the messages recover for this rounds was 0, it means that this round it doesn't really happens
                 if (sumOfMInRound2k == 0 || sumOfMInRoundK == 0) {
                     sumOfM = 0;
                     sumOfT = 0;
                 }
+
+                // If not, is a virtual round that needs to happen, so calculate the resulting message
                 else {
                     sumOfM = sumOfMInRoundK - sumOfMInRound2k;
                     sumOfT = sumOfTInRoundK - sumOfTInRound2k;
                 }
 
                 System.out.println("C = " + sumOfM + "#" + sumOfT);
+
+                // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
                 messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
 
             }
 
             // Already received the information, either from real round or virtual round
 
-            // NO COLLISION
+            // NO COLLISION ROUND => <sumOfT> = 1
             if (sumOfT == 1) {
+
+                // Increase the number of messages that went through the protocol
                 messagesSentWithNoCollisions++;
+
+                // If the message that went through equals mine, my message was transmitted
                 if (sumOfM == outputNumericMessage) {
                     messageTransmitted = true;
                 }
+
+                // If the number of messages that went through equals the collision size, the collision was completely resolved
                 if (messagesSentWithNoCollisions == collisionSize) {
                     System.out.println("Finished!");
                     new BufferedReader(new InputStreamReader(System.in)).readLine();
                 }
             }
 
-            // COLLISION OR NO MESSAGES SENT IN THIS ROUND
+            // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
             else {
+
+                // New collision produced, it means that <sumOfT> > 1
                 if (sumOfT != 0) {
+
+                    // Check if my message was involved in the collision, seeing that this round i was allowed to send my message
                     if (nextRoundAllowedToSend == round) {
+
+                        // See if i need to send in the next (2*round) round, checking the average condition
                         if (outputNumericMessage < sumOfM / sumOfT) {
                             nextRoundAllowedToSend = 2 * round;
-                        } else {
+                        }
+
+                        // If not, i'm "allowed to send" in the (2*round + 1) round, which will be a virtual round
+                        else {
                             nextRoundAllowedToSend = 2 * round + 1;
                         }
+
                     }
+
                 }
+
             }
 
+            // At the end of the round, i increase the round number and continue
             round++;
             System.out.println();
 
