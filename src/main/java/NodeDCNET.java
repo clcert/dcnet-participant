@@ -154,6 +154,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Write to the other nodes at the beginning of the round
         while (!Thread.currentThread().isInterrupted()) {
+            if (round == 20)
+                new BufferedReader(new InputStreamReader(System.in)).readLine();
+
             // Synchronize nodes at the beginning of each round
             if (nodeIndex != 1) {
                 for (ZMQ.Socket replier : repliers) {
@@ -264,8 +267,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     System.out.println();
                     continue;
                 }
-                else if (outputNumericMessage < sumOfM/sumOfT) {
-                    nextRoundAllowedToSend = 2*round;
+                else if (nextRoundAllowedToSend == round) {
+                    if (outputNumericMessage < sumOfM / sumOfT) {
+                        nextRoundAllowedToSend = 2 * round;
+                    } else {
+                        nextRoundAllowedToSend = 2 * round + 1;
+                    }
                 }
             }
 
