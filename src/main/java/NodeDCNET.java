@@ -49,6 +49,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
         for (int i = 0; i < receivers.length; i++) {
+            // SOSPECHA: Aquí está el problema, que existan nodos que no se conecten bien a otros
             receivers[i].connect("tcp://" + network_ip + ":" + (9001 + i));
             receivers[i].subscribe("".getBytes());
         }
@@ -63,7 +64,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
-
 
             // Receive message
             //String inputMessage = receiver.recvStr().trim();
@@ -195,7 +195,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 }
 
-                System.out.println("C = " + sumOfM + "#" + sumOfT);
+                System.out.println("C_" + round +  " = " + sumOfM + "#" + sumOfT);
 
                 // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
                 messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
@@ -228,7 +228,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     sumOfT = sumOfTInRoundK - sumOfTInRound2k;
                 }
 
-                System.out.println("C = " + sumOfM + "#" + sumOfT);
+                System.out.println("C_" + round +  " = " + sumOfM + "#" + sumOfT);
 
                 // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
                 messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
