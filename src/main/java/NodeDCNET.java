@@ -51,8 +51,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // SOSPECHA: Aquí está el problema, que existan nodos que no se conecten bien a otros
 
-            receivers[i].setReceiveTimeOut(1000);
-
             receivers[i].connect("tcp://" + network_ip + ":" + (9001 + i));
             // Subscribe to whatever the node say
             receivers[i].subscribe("".getBytes());
@@ -66,12 +64,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // Receive message
             for (ZMQ.Socket receiver : receivers) {
-                String inputMessage;
-                try {
-                    inputMessage = receiver.recvStr().trim();
-                } catch (NullPointerException e) {
-                    inputMessage = receiver.recvStr().trim();
-                }
+                String inputMessage = receiver.recvStr().trim();
                 pipe.send(inputMessage);
             }
 
