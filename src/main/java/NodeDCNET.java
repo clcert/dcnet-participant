@@ -30,7 +30,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     }
 
     public static void main(String[] args) throws IOException {
-        // Usage: ./gradlew run <message> <numberOfNodes>
+        // Usage: ./gradlew run -PappArgs="['<message>','<numberOfNodes>']"
         new NodeDCNET("127.0.0.1", "Node", args[0], args[1]).createNode();
     }
 
@@ -81,62 +81,15 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create the sender socket that works as a publisher
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
 
-        // Index of current node
-        int nodeIndex;
-
-        // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
-        for (nodeIndex = 1; nodeIndex < dcNetSize + 1; nodeIndex++) {
-            // Try to bind the sender to the port (9000 + <nodeIndex>).
-            // If not, continue with the rest of the ports
-            try {
-                sender.bind("tcp://*:" + (9000 + nodeIndex));
-            } catch (Exception e) {
-                continue;
-            }
-            // Already bound to a port, so break the cycle
-            break;
-        }
+        // // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
+        int nodeIndex = bindSenderPort(sender);
 
         // We need to connect every pair of nodes in order to synchronize the sending of values
         // For this, we need that in every pair of nodes there will be one requestor and one replier
         // In every pair of nodes {i,j} where i<j, node i will work as a requestor and node j will work as a replier
         // Create array of sockets that will work as repliers and requestors
-        ZMQ.Socket[] repliers = null;
-        ZMQ.Socket[] requestors = null;
-
-        // Initialize repliers array
-        // If my index is 1, i will only have requestors and none replier
-        if (nodeIndex != 1) {
-            // If my index is <nodeIndex>, i will have to create (<nodeIndex>-1) repliers
-            repliers = new ZMQ.Socket[nodeIndex-1];
-
-            // Iterate in repliers array in order to create the socket and bind the port
-            for (int i = 0; i < repliers.length; i++) {
-                // Create the replier socket
-                repliers[i] = context.createSocket(ZMQ.REP);
-
-                // Bind the replier socket to the corresponding port
-                int firstPortToBind = (7002 + ((nodeIndex*(nodeIndex-3))/2));
-                repliers[i].bind("tcp://*:" + (firstPortToBind+i));
-            }
-        }
-
-        // Initialize requestors array
-        // If my index is the last one, i will only have repliers and none requestor
-        if (nodeIndex != dcNetSize) {
-            // If my index is <nodeIndex>, i will have to create (<dcNetSize>-<nodeIndex>) requestors
-            requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
-
-            // Iterate in requestors array in order to create the socket and bind the port
-            for (int i = 0; i < requestors.length; i++) {
-                // Create the requestor socket
-                requestors[i] = context.createSocket(ZMQ.REQ);
-
-                // Bind the requestor socket to the corresponding port, that is at least 7001
-                int portToConnect = ((((nodeIndex + i + 1)*(nodeIndex + i - 2))/2) + 7002) + nodeIndex - 1;
-                requestors[i].connect("tcp://*:" + (portToConnect));
-            }
-        }
+        ZMQ.Socket[] repliers = initializeRepliersArray(nodeIndex, context);
+        ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
 
         // Synchronize nodes in order to ensure that everyone bound their publisher port
         synchronizeNodes(nodeIndex, repliers, requestors);
@@ -168,9 +121,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // How many messages are being involved in the first collision
         int collisionSize = 0;
 
+        // Store messages sent in previous rounds in order to build the message in the virtual rounds
         Dictionary<Integer, String> messagesSentInPreviousRounds = new Hashtable<>();
 
-        // Count how many messages were sent without collisions. When this number equals the collision size, the collision was resolved
+        // Count how many messages were sent without collisions. When this number equals the collision size, the first collision was resolved
         int messagesSentWithNoCollisions = 0;
 
         // Begin the collision resolution protocol
@@ -322,6 +276,62 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         sender.close();
         context.destroy();
 
+    }
+
+    private ZMQ.Socket[] initializeRequestorsArray(int nodeIndex, ZContext context) {
+        ZMQ.Socket[] requestors = null;
+        // If my index is the last one, i will only have repliers and none requestor
+        if (nodeIndex != dcNetSize) {
+            // If my index is <nodeIndex>, i will have to create (<dcNetSize>-<nodeIndex>) requestors
+            requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
+
+            // Iterate in requestors array in order to create the socket and bind the port
+            for (int i = 0; i < requestors.length; i++) {
+                // Create the requestor socket
+                requestors[i] = context.createSocket(ZMQ.REQ);
+
+                // Bind the requestor socket to the corresponding port, that is at least 7001
+                int portToConnect = ((((nodeIndex + i + 1)*(nodeIndex + i - 2))/2) + 7002) + nodeIndex - 1;
+                requestors[i].connect("tcp://*:" + (portToConnect));
+            }
+        }
+        return requestors;
+    }
+
+    private ZMQ.Socket[] initializeRepliersArray(int nodeIndex, ZContext context) {
+        ZMQ.Socket[] repliers = null;
+        // If my index is 1, i will only have requestors and none replier
+        if (nodeIndex != 1) {
+            // If my index is <nodeIndex>, i will have to create (<nodeIndex>-1) repliers
+            repliers = new ZMQ.Socket[nodeIndex-1];
+
+            // Iterate in repliers array in order to create the socket and bind the port
+            for (int i = 0; i < repliers.length; i++) {
+                // Create the replier socket
+                repliers[i] = context.createSocket(ZMQ.REP);
+
+                // Bind the replier socket to the corresponding port
+                int firstPortToBind = (7002 + ((nodeIndex*(nodeIndex-3))/2));
+                repliers[i].bind("tcp://*:" + (firstPortToBind+i));
+            }
+        }
+        return repliers;
+    }
+
+    private int bindSenderPort(ZMQ.Socket sender) {
+        int nodeIndex;
+        for (nodeIndex = 1; nodeIndex < dcNetSize + 1; nodeIndex++) {
+            // Try to bind the sender to the port (9000 + <nodeIndex>).
+            // If not, continue with the rest of the ports
+            try {
+                sender.bind("tcp://*:" + (9000 + nodeIndex));
+            } catch (Exception e) {
+                continue;
+            }
+            // Already bound to a port, so break the cycle
+            break;
+        }
+        return nodeIndex;
     }
 
     private void synchronizeNodes(int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors) {
