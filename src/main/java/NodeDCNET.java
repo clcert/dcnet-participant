@@ -46,37 +46,34 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         for (int i = 0; i < receivers.length; i++)
             receivers[i] = context.createSocket(ZMQ.SUB);
 
-        // ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
-
+        // Connect as a subscriber to each of the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
         for (int i = 0; i < receivers.length; i++) {
+
             // SOSPECHA: Aquí está el problema, que existan nodos que no se conecten bien a otros
+
+            receivers[i].setReceiveTimeOut(1000);
+
             receivers[i].connect("tcp://" + network_ip + ":" + (9001 + i));
+            // Subscribe to whatever the node say
             receivers[i].subscribe("".getBytes());
         }
-
-        // Connect as a subscriber to all the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
-        /*for (int port = 9001; port < 9001 + dcNetSize; port++) {
-            receiver.connect("tcp://" + network_ip + ":" + port);
-        }*/
-
-        // Subscribe to whatever the other nodes say
-        // receiver.subscribe("".getBytes());
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
 
-            // Receive message
-            //String inputMessage = receiver.recvStr().trim();
-            for (ZMQ.Socket receiver : receivers) {
-                String inputMessage = receiver.recvStr().trim();
-                pipe.send(inputMessage);
-            }
-
             // Wait for sender thread to warn when a new round can begin
             pipe.recvStr();
 
-            // Send the message received to the publisher that handles the collision
-            // pipe.send(inputMessage);
+            // Receive message
+            for (ZMQ.Socket receiver : receivers) {
+                String inputMessage;
+                try {
+                    inputMessage = receiver.recvStr().trim();
+                } catch (NullPointerException e) {
+                    inputMessage = receiver.recvStr().trim();
+                }
+                pipe.send(inputMessage);
+            }
 
         }
 
@@ -145,14 +142,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Begin the collision resolution protocol
         while (!Thread.currentThread().isInterrupted()) {
 
-            // Needed for the test, some configuration iterates at infinity
-            if (round == 20)
-                new BufferedReader(new InputStreamReader(System.in)).readLine();
-
             // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors);
 
             System.out.println("ROUND " + round);
+
+            // Let know to the receiver thread that a new round will begin
+            receiverThread.send("CONTINUE");
 
             // Variables to store the resulting message of the round
             // C = <sumOfM>#<sumOfT>
@@ -251,6 +247,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // If the number of messages that went through equals the collision size, the collision was completely resolved
                 if (messagesSentWithNoCollisions == collisionSize) {
                     System.out.println("Finished!");
+                    receiverThread.send("FINISHED");
                     new BufferedReader(new InputStreamReader(System.in)).readLine();
                 }
             }
@@ -283,8 +280,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             // At the end of the round, i increase the round number and continue
             round++;
             System.out.println();
-            // Let know to the receiver thread that a new round will begin
-            receiverThread.send("");
 
         }
 
