@@ -78,9 +78,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create context where to run the receiver and sender threads
         ZContext context = new ZContext();
 
-        // Throw receiver thread which runs the method run described above
-        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage, "" + this.dcNetSize), networkIp);
-
         // Create the sender socket that works as a publisher
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
 
@@ -141,6 +138,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             }
         }
 
+        // Synchronize nodes in order to ensure that everyone bound their publisher port
+        synchronizeNodes(nodeIndex, repliers, requestors);
+
+        // Throw receiver thread which runs the method 'run' described above
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage, "" + this.dcNetSize), networkIp);
+
         // This is the actual message that the node wants to communicate (<m>)
         int outputNumericMessage = this.outputNumericMessage;
 
@@ -178,17 +181,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 new BufferedReader(new InputStreamReader(System.in)).readLine();
 
             // Synchronize nodes at the beginning of each round
-            if (nodeIndex != 1)
-                for (ZMQ.Socket replier : repliers) {
-                    replier.recv(0);
-                    replier.send("", 0);
-                }
-
-            if (nodeIndex != dcNetSize)
-                for (ZMQ.Socket requestor : requestors) {
-                    requestor.send("".getBytes(), 0);
-                    requestor.recv(0);
-                }
+            synchronizeNodes(nodeIndex, repliers, requestors);
 
             System.out.println("ROUND " + round);
 
@@ -329,6 +322,20 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         sender.close();
         context.destroy();
 
+    }
+
+    private void synchronizeNodes(int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors) {
+        if (nodeIndex != 1)
+            for (ZMQ.Socket replier : repliers) {
+                replier.recv(0);
+                replier.send("", 0);
+            }
+
+        if (nodeIndex != dcNetSize)
+            for (ZMQ.Socket requestor : requestors) {
+                requestor.send("".getBytes(), 0);
+                requestor.recv(0);
+            }
     }
 
 }
