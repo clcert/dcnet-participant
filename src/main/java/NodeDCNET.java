@@ -41,34 +41,49 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Get the Network IP where all the nodes are participating
         String network_ip = (String) args[0];
 
-        // Create the receiver socket that works as a subscriber
-        ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
+        // Create the receivers sockets that work as a subscribers
+        ZMQ.Socket[] receivers = new ZMQ.Socket[dcNetSize];
+        for (int i = 0; i < receivers.length; i++)
+            receivers[i] = context.createSocket(ZMQ.SUB);
 
-        // Connect as a subscriber to all the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
-        for (int port = 9001; port < 9001 + dcNetSize; port++) {
-            receiver.connect("tcp://" + network_ip + ":" + port);
+        // ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
+
+        for (int i = 0; i < receivers.length; i++) {
+            receivers[i].connect("tcp://" + network_ip + ":" + (9001 + i));
+            receivers[i].subscribe("".getBytes());
         }
 
+        // Connect as a subscriber to all the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
+        /*for (int port = 9001; port < 9001 + dcNetSize; port++) {
+            receiver.connect("tcp://" + network_ip + ":" + port);
+        }*/
+
         // Subscribe to whatever the other nodes say
-        receiver.subscribe("".getBytes());
+        // receiver.subscribe("".getBytes());
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
-            System.out.println("Waiting to receive message...");
+
 
             // Receive message
-            String inputMessage = receiver.recvStr().trim();
+            //String inputMessage = receiver.recvStr().trim();
+            for (ZMQ.Socket receiver : receivers) {
+                String inputMessage = receiver.recvStr().trim();
+                pipe.send(inputMessage);
+            }
 
-            System.out.println("Receive message from other node: " + inputMessage);
+            // Wait for sender thread to warn when a new round can begin
+            pipe.recvStr();
 
             // Send the message received to the publisher that handles the collision
-            pipe.send(inputMessage);
+            // pipe.send(inputMessage);
 
-            System.out.println("Sent message to the sender thread: " + inputMessage);
         }
 
         // Close receiver thread
-        receiver.close();
+        for (ZMQ.Socket receiver : receivers) {
+            receiver.close();
+        }
 
     }
 
@@ -268,6 +283,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             // At the end of the round, i increase the round number and continue
             round++;
             System.out.println();
+            // Let know to the receiver thread that a new round will begin
+            receiverThread.send("");
 
         }
 
