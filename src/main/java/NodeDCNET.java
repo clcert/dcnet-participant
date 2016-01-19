@@ -50,9 +50,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             receiver.connect("tcp://" + network_ip + ":" + (9001 + i));
         }
 
-        // Set Timeout to the receiver
-        receiver.setReceiveTimeOut(5000);
-
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
 
@@ -89,15 +86,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
         int nodeIndex = bindSenderPort(sender);
 
-        // We need to connect every pair of nodes in order to synchronize the sending of values
+        // We need to connect every pair of nodes in order to synchronize the sending of values at the beginning of each round
         // For this, we need that in every pair of nodes there will be one requestor and one replier
         // In every pair of nodes {i,j} where i<j, node i will work as a requestor and node j will work as a replier
         // Create array of sockets that will work as repliers and requestors
         ZMQ.Socket[] repliers = initializeRepliersArray(nodeIndex, context);
         ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
-
-        // Synchronize nodes in order to ensure that everyone bound their publisher port
-        synchronizeNodes(nodeIndex, repliers, requestors);
 
         // Throw receiver thread which runs the method 'run' described above
         ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage, "" + this.dcNetSize), networkIp);
@@ -135,9 +129,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Begin the collision resolution protocol
         while (!Thread.currentThread().isInterrupted()) {
 
-            if (round == 20)
-                new BufferedReader(new InputStreamReader(System.in)).readLine();
-
             // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors);
 
@@ -159,8 +150,17 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     sender.send("0#0");
 
                 // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
-                else if (nextRoundAllowedToSend == round)
+                else if (nextRoundAllowedToSend == round) {
+
+                    // Identify slow joiner problem
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
                     sender.send(outputMessage);
+                }
                 else
                     sender.send("0#0");
 
