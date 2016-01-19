@@ -8,6 +8,7 @@ mainClassName = 'NodeDCNET'
 
 run {
     standardInput = System.in
+    classpath = sourceSets.main.runtimeClasspath
     if ( project.hasProperty("appArgs") ) {
         args Eval.me(appArgs)
     }
