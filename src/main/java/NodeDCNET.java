@@ -155,20 +155,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 System.out.println("REAL ROUND");
 
                 // If my message was already transmitted i just send "0#0"
-                if (messageTransmitted) {
+                if (messageTransmitted)
                     sender.send("0#0");
-                    System.out.println("Message: 0#0 in round " + round);
-                }
 
                 // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
-                else if (nextRoundAllowedToSend == round) {
+                else if (nextRoundAllowedToSend == round)
                     sender.send(outputMessage);
-                    System.out.println("Message: " + outputMessage + " in round " + round);
-                }
-                else {
+                else
                     sender.send("0#0");
-                    System.out.println("Message: 0#0 in round " + round);
-                }
 
                 // Receive information from the receiver thread
                 // Count how many messages were receive from the receiver thread. When this number equals <dcNetSize> i've received all the messages in this round
