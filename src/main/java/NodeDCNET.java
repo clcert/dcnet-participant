@@ -53,6 +53,55 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
 
+
+        // Synchronize publishers and subscribers
+        // Subscriber needs to receive ALL THE MESSAGES that the publishers sent
+        int nodeIndex = Integer.parseInt(pipe.recvStr());
+        String inputSyncMessage;
+        receiver.setReceiveTimeOut(2000);
+        boolean[] nodesConnectedtoMe = new boolean[dcNetSize];
+        boolean[] nodesConnectedTo = new boolean[dcNetSize];
+        for (boolean value : nodesConnectedtoMe)
+            value = false;
+        for (boolean value : nodesConnectedTo)
+            value = false;
+        boolean readyOne = false;
+        boolean readyTwo = false;
+        while (true) {
+            while ((inputSyncMessage = receiver.recvStr()) == null)
+                ;
+            if (inputSyncMessage.charAt(0) != 'r') {
+                pipe.send(inputSyncMessage);
+            }
+            else {
+                nodesConnectedTo[Integer.parseInt(inputSyncMessage.substring(1,2))-1] = true;
+                if (inputSyncMessage.substring(1,2).equals("" + nodeIndex)) {
+                    nodesConnectedtoMe[Integer.parseInt(inputSyncMessage.substring(3,4))-1] = true;
+                }
+                for (boolean value : nodesConnectedtoMe) {
+                    if (value)
+                        readyOne = true;
+                    else {
+                        readyOne = false;
+                        break;
+                    }
+                }
+                for (boolean value : nodesConnectedTo) {
+                    if (value)
+                        readyTwo = true;
+                    else {
+                        readyTwo = false;
+                        break;
+                    }
+                }
+                if (readyOne && readyTwo) {
+                    pipe.send("ready");
+                    break;
+                }
+            }
+        }
+        receiver.setReceiveTimeOut(-1);
+
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
 
@@ -61,10 +110,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             for (int i = 0; i < dcNetSize; i++) {
                 // Receive message
-                String inputMessage = receiver.recvStr().trim();
+                String inputMessage;
+                while ((inputMessage = receiver.recvStr().trim()).charAt(0) != 's')
+                    ;
 
                 // Send to the sender thread the message received
-                pipe.send(inputMessage);
+                pipe.send(inputMessage.substring(1));
             }
 
         }
@@ -95,6 +146,29 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Throw receiver thread which runs the method 'run' described above
         ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage, "" + this.dcNetSize), networkIp);
+
+        System.out.println("waiting to all nodes be connected");
+
+        // Synchronize publishers and subscribers
+        // Publisher needs to know that EVERYONE received their message
+        receiverThread.send("" + nodeIndex);
+        receiverThread.setReceiveTimeOut(2000);
+        String inputSyncMessage;
+        while (true) {
+            sender.send("" + nodeIndex);
+            while ((inputSyncMessage = receiverThread.recvStr()) == null)
+                sender.send("" + nodeIndex);
+            if (inputSyncMessage.equals("ready"))
+                break;
+            else
+                sender.send("r" + inputSyncMessage + "#" + nodeIndex);
+        }
+        receiverThread.setReceiveTimeOut(-1);
+
+        System.out.println("all nodes connected");
+
+        // Synchronize nodes at the beginning of each round
+        synchronizeNodes(nodeIndex, repliers, requestors);
 
         // This is the actual message that the node wants to communicate (<m>)
         int outputNumericMessage = this.outputNumericMessage;
@@ -147,22 +221,22 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 // If my message was already transmitted i just send "0#0"
                 if (messageTransmitted)
-                    sender.send("0#0");
+                    sender.send("s0#0");
 
                 // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
                 else if (nextRoundAllowedToSend == round) {
 
                     // Identify slow joiner problem
-                    try {
+                    /*try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
-                    }
+                    }*/
 
-                    sender.send(outputMessage);
+                    sender.send('s' + outputMessage);
                 }
                 else
-                    sender.send("0#0");
+                    sender.send("s0#0");
 
                 // Receive information from the receiver thread
                 // Count how many messages were receive from the receiver thread. When this number equals <dcNetSize> i've received all the messages in this round
@@ -178,15 +252,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 // Assign the size of the collision produced in the first round
                 if (round == 1) {
-
                     collisionSize = sumOfT;
                     if (collisionSize == 0) {
                         System.out.println("NO COLLISION PRODUCED");
                         new BufferedReader(new InputStreamReader(System.in)).readLine();
                     }
-
                 }
-
             }
 
             // VIRTUAL ROUND
@@ -214,7 +285,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     sumOfM = sumOfMInRoundK - sumOfMInRound2k;
                     sumOfT = sumOfTInRoundK - sumOfTInRound2k;
                 }
-
             }
 
             // Display round message
@@ -225,7 +295,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // NO COLLISION ROUND => <sumOfT> = 1
             if (sumOfT == 1) {
-
                 // Increase the number of messages that went through the protocol
                 messagesSentWithNoCollisions++;
 
@@ -243,27 +312,20 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
             else {
-
                 // New collision produced, it means that <sumOfT> > 1
                 if (sumOfT != 0) {
-
                     // Check if my message was involved in the collision, seeing that this round i was allowed to send my message
                     if (nextRoundAllowedToSend == round) {
-
                         // See if i need to send in the next (2*round) round, checking the average condition
                         if (outputNumericMessage < sumOfM / sumOfT) {
                             nextRoundAllowedToSend = 2 * round;
                         }
-
                         // If not, i'm "allowed to send" in the (2*round + 1) round, which will be a virtual round
                         else {
                             nextRoundAllowedToSend = 2 * round + 1;
                         }
-
                     }
-
                 }
-
             }
 
             // At the end of the round, i increase the round number and continue
