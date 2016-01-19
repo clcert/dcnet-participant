@@ -41,22 +41,19 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Get the Network IP where all the nodes are participating
         String network_ip = (String) args[0];
 
-        // Create the receivers sockets that work as a subscribers
-        ZMQ.Socket[] receivers = new ZMQ.Socket[dcNetSize];
-        for (int i = 0; i < receivers.length; i++)
-            receivers[i] = context.createSocket(ZMQ.SUB);
+        // Create the receiver socket that work as a subscriber
+        ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
         // Connect as a subscriber to each of the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
-        for (int i = 0; i < receivers.length; i++) {
-
-            // SOSPECHA: Aquí está el problema, que existan nodos que no se conecten bien a otros
-
-            receivers[i].setReceiveTimeOut(1000);
-
-            receivers[i].connect("tcp://" + network_ip + ":" + (9001 + i));
-            // Subscribe to whatever the node say
-            receivers[i].subscribe("".getBytes());
+        for (int i = 0; i < dcNetSize; i++) {
+            receiver.connect("tcp://" + network_ip + ":" + (9001 + i));
         }
+
+        // Set Timeout to the receiver
+        receiver.setReceiveTimeOut(1000);
+
+        // Subscribe to whatever the node say
+        receiver.subscribe("".getBytes());
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
@@ -65,22 +62,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             pipe.recvStr();
 
             // Receive message
-            for (ZMQ.Socket receiver : receivers) {
-                String inputMessage;
-                try {
-                    inputMessage = receiver.recvStr().trim();
-                } catch (NullPointerException e) {
-                    inputMessage = receiver.recvStr().trim();
-                }
-                pipe.send(inputMessage);
-            }
+            String inputMessage = receiver.recvStr().trim();
 
+            // Send to the sender thread the message received
+            pipe.send(inputMessage);
         }
 
         // Close receiver thread
-        for (ZMQ.Socket receiver : receivers) {
-            receiver.close();
-        }
+        receiver.close();
 
     }
 
