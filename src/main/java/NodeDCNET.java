@@ -53,7 +53,32 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
 
+        waitForAllPublishers(pipe, receiver);
 
+        // Read from other nodes
+        while (!Thread.currentThread().isInterrupted()) {
+
+            // Wait for sender thread let know that a new round will begin
+            pipe.recvStr();
+
+            for (int i = 0; i < dcNetSize; i++) {
+                // Receive message
+                String inputMessage;
+                while ((inputMessage = receiver.recvStr().trim()).charAt(0) != 's')
+                    ;
+
+                // Send to the sender thread the message received
+                pipe.send(inputMessage.substring(1));
+            }
+
+        }
+
+        // Close receiver thread
+        receiver.close();
+
+    }
+
+    private void waitForAllPublishers(ZMQ.Socket pipe, ZMQ.Socket receiver) {
         // Synchronize publishers and subscribers
         // Subscriber needs to receive ALL THE MESSAGES that the publishers sent
         int nodeIndex = Integer.parseInt(pipe.recvStr());
@@ -101,28 +126,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             }
         }
         receiver.setReceiveTimeOut(-1);
-
-        // Read from other nodes
-        while (!Thread.currentThread().isInterrupted()) {
-
-            // Wait for sender thread let know that a new round will begin
-            pipe.recvStr();
-
-            for (int i = 0; i < dcNetSize; i++) {
-                // Receive message
-                String inputMessage;
-                while ((inputMessage = receiver.recvStr().trim()).charAt(0) != 's')
-                    ;
-
-                // Send to the sender thread the message received
-                pipe.send(inputMessage.substring(1));
-            }
-
-        }
-
-        // Close receiver thread
-        receiver.close();
-
     }
 
     // Sender Thread
@@ -149,21 +152,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         System.out.println("waiting to all nodes be connected");
 
-        // Synchronize publishers and subscribers
-        // Publisher needs to know that EVERYONE received their message
-        receiverThread.send("" + nodeIndex);
-        receiverThread.setReceiveTimeOut(2000);
-        String inputSyncMessage;
-        while (true) {
-            sender.send("" + nodeIndex);
-            while ((inputSyncMessage = receiverThread.recvStr()) == null)
-                sender.send("" + nodeIndex);
-            if (inputSyncMessage.equals("ready"))
-                break;
-            else
-                sender.send("r" + inputSyncMessage + "#" + nodeIndex);
-        }
-        receiverThread.setReceiveTimeOut(-1);
+        // Synchronize Publishers and Subscribers
+        waitForAllSubscribers(receiverThread, sender, nodeIndex);
 
         System.out.println("all nodes connected");
 
@@ -339,6 +329,24 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         sender.close();
         context.destroy();
 
+    }
+
+    private void waitForAllSubscribers(ZMQ.Socket receiverThread, ZMQ.Socket sender, int nodeIndex) {
+        // Synchronize publishers and subscribers
+        // Publisher needs to know that EVERYONE received their message
+        receiverThread.send("" + nodeIndex);
+        receiverThread.setReceiveTimeOut(2000);
+        String inputSyncMessage;
+        while (true) {
+            sender.send("" + nodeIndex);
+            while ((inputSyncMessage = receiverThread.recvStr()) == null)
+                sender.send("" + nodeIndex);
+            if (inputSyncMessage.equals("ready"))
+                break;
+            else
+                sender.send("r" + inputSyncMessage + "#" + nodeIndex);
+        }
+        receiverThread.setReceiveTimeOut(-1);
     }
 
     private ZMQ.Socket[] initializeRequestorsArray(int nodeIndex, ZContext context) {
