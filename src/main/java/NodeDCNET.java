@@ -58,9 +58,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
 
-            // Wait for sender thread to warn when a new round can begin
-            pipe.recvStr();
-
             // Receive message
             String inputMessage = receiver.recvStr().trim();
 
@@ -162,6 +159,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 int messagesReceivedInThisRound = 0;
                 while (messagesReceivedInThisRound < dcNetSize) {
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
+                    System.out.println("Received message from receiver thread");
                     m = Integer.parseInt(messageReceivedFromReceiverThread.split("#")[0]);
                     t = Integer.parseInt(messageReceivedFromReceiverThread.split("#")[1]);
                     sumOfM += m;
