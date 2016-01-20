@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
@@ -18,6 +19,9 @@ import java.util.Random;
 
 class NodeDCNET implements ZThread.IAttachedRunnable {
 
+    private final int SYNC = 0;
+    private final int DCNET = 1;
+
     private final int dcNetSize;
     private final String networkIp;
     private final String name;
@@ -31,7 +35,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     }
 
     public static void main(String[] args) throws IOException {
-        // Usage: ./gradlew run -PappArgs="['<message>','<numberOfNodes>']"
+        // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>]
         new NodeDCNET("127.0.0.1", "Node", args[0], args[1]).createNode();
     }
 
@@ -53,7 +57,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
 
-        waitForAllPublishers(pipe, receiver);
+        // Synchronize publishers and subscribers
+        // waitForAllPublishers(pipe, receiver);
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
@@ -63,12 +68,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             for (int i = 0; i < dcNetSize; i++) {
                 // Receive message
-                String inputMessage;
-                while ((inputMessage = receiver.recvStr().trim()).charAt(0) != 's')
-                    ;
+                String inputMessage = receiver.recvStr().trim();
+
+                OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);
+                String clearInputMessage = incomingOutputMessage.getMessage();
 
                 // Send to the sender thread the message received
-                pipe.send(inputMessage.substring(1));
+                pipe.send(clearInputMessage);
             }
 
         }
@@ -79,53 +85,121 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     }
 
     private void waitForAllPublishers(ZMQ.Socket pipe, ZMQ.Socket receiver) {
-        // Synchronize publishers and subscribers
-        // Subscriber needs to receive ALL THE MESSAGES that the publishers sent
+        // Receive message from sender that indicates our nodeIndex
         int nodeIndex = Integer.parseInt(pipe.recvStr());
+
+        // Store the message received from receiver thread
         String inputSyncMessage;
+
+        // Set time out of the receiver socket
         receiver.setReceiveTimeOut(2000);
+
+        // Array to store what nodes received my message
         boolean[] nodesConnectedtoMe = new boolean[dcNetSize];
+
+        // Array to store what nodes i'm connected to
         boolean[] nodesConnectedTo = new boolean[dcNetSize];
-        for (boolean value : nodesConnectedtoMe)
+
+        // Array to store nodes ready
+        boolean[] nodesReady = new boolean[dcNetSize];
+
+        /*for (boolean value : nodesConnectedtoMe)
             value = false;
         for (boolean value : nodesConnectedTo)
-            value = false;
-        boolean readyOne = false;
-        boolean readyTwo = false;
+            value = false;*/
+
+        // Variable to know if i'm connected to the rest of the room
+        boolean connectedToAllRoom = false;
+
+        // Variable to know if all the room is connected to me
+        boolean allRoomConnectedToMe = false;
+
+        // Variable to know if all the room is connected between them
+        boolean allRoomConnected = false;
+
         while (true) {
+            // Wait until receive any message from any node of the room
             while ((inputSyncMessage = receiver.recvStr()) == null)
                 ;
-            if (inputSyncMessage.charAt(0) != 'r') {
+
+            // If the first character is not an 'r' it means that i can hear a certain node that is transmitting
+            if (inputSyncMessage.charAt(0) != 'r' && inputSyncMessage.charAt(0) != 'g') {
+                // <inputSyncMessage> = node that I can hear
+                // Let know to sender thread that i can hear a certain node stored on <inputSyncMessage>
                 pipe.send(inputSyncMessage);
+
+                if (!nodesConnectedTo[Integer.parseInt(inputSyncMessage) - 1]) {
+                    nodesConnectedTo[Integer.parseInt(inputSyncMessage) - 1] = true;
+                    System.out.println("Node " + nodeIndex + " can hear node " + inputSyncMessage);
+                }
             }
+
+            else if (inputSyncMessage.charAt(0) == 'g') {
+                int nodeReady = Integer.parseInt(inputSyncMessage.substring(2,3));
+                nodesReady[nodeReady - 1] = true;
+                for (boolean value : nodesReady) {
+                    if (value)
+                        allRoomConnected = true;
+                    else {
+                        allRoomConnected = false;
+                        break;
+                    }
+                }
+            }
+
+            // If the first character is an 'r', it means that is a response that a node can hear a certain other node
+            // <inputSyncMessage> = 'rX#Y' => node Y can hear node X
             else {
-                nodesConnectedTo[Integer.parseInt(inputSyncMessage.substring(1,2))-1] = true;
-                if (inputSyncMessage.substring(1,2).equals("" + nodeIndex)) {
-                    nodesConnectedtoMe[Integer.parseInt(inputSyncMessage.substring(3,4))-1] = true;
-                }
-                for (boolean value : nodesConnectedtoMe) {
-                    if (value)
-                        readyOne = true;
-                    else {
-                        readyOne = false;
-                        break;
+                // Separate values that what node is being heard and what node is the one that is hearing it
+                int nodeThatIsHeard = Integer.parseInt(inputSyncMessage.substring(1, 2));
+                int nodeThatIsHearing = Integer.parseInt(inputSyncMessage.substring(3, 4));
+
+                // See if other node is being hearing me
+                if (nodeThatIsHeard == nodeIndex) {
+                    if (!nodesConnectedtoMe[nodeThatIsHearing - 1]) {
+                        nodesConnectedtoMe[nodeThatIsHearing - 1] = true;
+                        System.out.println("Node " + nodeIndex + " is being heard by node " + nodeThatIsHearing);
                     }
                 }
-                for (boolean value : nodesConnectedTo) {
-                    if (value)
-                        readyTwo = true;
-                    else {
-                        readyTwo = false;
-                        break;
-                    }
-                }
-                if (readyOne && readyTwo) {
-                    pipe.send("ready");
+            }
+
+            // To be ready i need that all the nodes are connected to me and i am connected to all the nodes
+            // Check that all the nodes are connected to me
+            for (boolean value : nodesConnectedtoMe) {
+                if (value)
+                    connectedToAllRoom = true;
+                else {
+                    connectedToAllRoom = false;
                     break;
                 }
             }
+
+            // Check that i am connected to all the nodes
+            for (boolean value : nodesConnectedTo) {
+                if (value)
+                    allRoomConnectedToMe = true;
+                else {
+                    allRoomConnectedToMe = false;
+                    break;
+                }
+            }
+
+            // If both values are true, it means that i am ready to go
+            if (connectedToAllRoom && allRoomConnectedToMe) {
+                pipe.send("ready");
+                // ¿Let know to the rest of the room that i'm ready?
+            }
+
+            if (allRoomConnected) {
+                pipe.send("all ready");
+                break;
+            }
+
+
         }
+
         receiver.setReceiveTimeOut(-1);
+
     }
 
     // Sender Thread
@@ -150,27 +224,34 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Throw receiver thread which runs the method 'run' described above
         ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage, "" + this.dcNetSize), networkIp);
 
-        System.out.println("waiting to all nodes be connected");
+        /*System.out.println("waiting to all nodes be connected");
 
         // Synchronize Publishers and Subscribers
         waitForAllSubscribers(receiverThread, sender, nodeIndex);
 
-        System.out.println("all nodes connected");
+        System.out.println("all nodes connected");*/
 
         // Synchronize nodes at the beginning of each round
         synchronizeNodes(nodeIndex, repliers, requestors);
+
+        // Create OutputMessage object
+        OutputMessage outputMessage = new OutputMessage();
+        outputMessage.setSenderId("Node_" + nodeIndex);
+        outputMessage.setCmd(DCNET);
 
         // This is the actual message that the node wants to communicate (<m>)
         int outputNumericMessage = this.outputNumericMessage;
 
         // If <m>!=0 must be appended to #1, forming M = <m>#1. If not, M = 0#0
-        String outputMessage;
         if (outputNumericMessage == 0)
-            outputMessage = "0#0";
+            outputMessage.setMessage("0#0");
         else
-            outputMessage = outputNumericMessage + "#1";
+            outputMessage.setMessage(outputNumericMessage + "#1");
 
-        System.out.println("m = " + outputNumericMessage);
+        String outputMessageJson = new Gson().toJson(outputMessage);
+        System.out.println(outputMessageJson);
+
+        System.out.println("O_" + nodeIndex + " = " + outputMessage.getMessage());
 
         // Variable to check that the message was transmitted to the rest of the room (was sent in a round with no collisions)
         boolean messageTransmitted = false;
@@ -189,6 +270,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Count how many messages were sent without collisions. When this number equals the collision size, the first collision was resolved
         int messagesSentWithNoCollisions = 0;
+
+        // Sleep to overlap slow joiner problem
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         // Begin the collision resolution protocol
         while (!Thread.currentThread().isInterrupted()) {
@@ -210,8 +298,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 System.out.println("REAL ROUND");
 
                 // If my message was already transmitted i just send "0#0"
-                if (messageTransmitted)
-                    sender.send("s0#0");
+                if (messageTransmitted) {
+                    sender.send(new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, "0#0")));
+                }
 
                 // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
                 else if (nextRoundAllowedToSend == round) {
@@ -223,10 +312,11 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                         e.printStackTrace();
                     }*/
 
-                    sender.send('s' + outputMessage);
+                    sender.send(outputMessageJson);
                 }
-                else
-                    sender.send("s0#0");
+                else {
+                    sender.send(new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, "0#0")));
+                }
 
                 // Receive information from the receiver thread
                 // Count how many messages were receive from the receiver thread. When this number equals <dcNetSize> i've received all the messages in this round
@@ -332,20 +422,42 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     }
 
     private void waitForAllSubscribers(ZMQ.Socket receiverThread, ZMQ.Socket sender, int nodeIndex) {
-        // Synchronize publishers and subscribers
-        // Publisher needs to know that EVERYONE received their message
+        // Let know the receiver thread what is my nodeIndex
         receiverThread.send("" + nodeIndex);
+
+        // Set timeout on the receiver thread
         receiverThread.setReceiveTimeOut(2000);
+
+        // Store the message received from receiver thread
         String inputSyncMessage;
+
         while (true) {
+            // Send nodeIndex to the rest of the room
             sender.send("" + nodeIndex);
+
+            // While the receiver doesn't inform me i send again my nodeIndex to the rest of the room
             while ((inputSyncMessage = receiverThread.recvStr()) == null)
                 sender.send("" + nodeIndex);
-            if (inputSyncMessage.equals("ready"))
+
+            // If the receiver tells me we are ready to go, break the cycle and continue
+            if (inputSyncMessage.equals("ready")) {
+                sender.send("" + nodeIndex);
+                sender.send("go" + nodeIndex);
+                for (int i = 0; i < dcNetSize; i++)
+                    sender.send("r" + (i+1) + "#" + nodeIndex);
+            }
+
+            else if (inputSyncMessage.equals("all ready")) {
                 break;
+            }
+
+            // If not, it means that the receiver received a message from other node, so i let know to the rest of the room that i'm already connected to them
             else
+                // "rX#Y" means that node Y already received message from node X
                 sender.send("r" + inputSyncMessage + "#" + nodeIndex);
         }
+
+        // Set timeout to infinity to continue the protocol
         receiverThread.setReceiveTimeOut(-1);
     }
 
