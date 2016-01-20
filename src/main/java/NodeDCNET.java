@@ -84,124 +84,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     }
 
-    private void waitForAllPublishers(ZMQ.Socket pipe, ZMQ.Socket receiver) {
-        // Receive message from sender that indicates our nodeIndex
-        int nodeIndex = Integer.parseInt(pipe.recvStr());
-
-        // Store the message received from receiver thread
-        String inputSyncMessage;
-
-        // Set time out of the receiver socket
-        receiver.setReceiveTimeOut(2000);
-
-        // Array to store what nodes received my message
-        boolean[] nodesConnectedtoMe = new boolean[dcNetSize];
-
-        // Array to store what nodes i'm connected to
-        boolean[] nodesConnectedTo = new boolean[dcNetSize];
-
-        // Array to store nodes ready
-        boolean[] nodesReady = new boolean[dcNetSize];
-
-        /*for (boolean value : nodesConnectedtoMe)
-            value = false;
-        for (boolean value : nodesConnectedTo)
-            value = false;*/
-
-        // Variable to know if i'm connected to the rest of the room
-        boolean connectedToAllRoom = false;
-
-        // Variable to know if all the room is connected to me
-        boolean allRoomConnectedToMe = false;
-
-        // Variable to know if all the room is connected between them
-        boolean allRoomConnected = false;
-
-        while (true) {
-            // Wait until receive any message from any node of the room
-            while ((inputSyncMessage = receiver.recvStr()) == null)
-                ;
-
-            // If the first character is not an 'r' it means that i can hear a certain node that is transmitting
-            if (inputSyncMessage.charAt(0) != 'r' && inputSyncMessage.charAt(0) != 'g') {
-                // <inputSyncMessage> = node that I can hear
-                // Let know to sender thread that i can hear a certain node stored on <inputSyncMessage>
-                pipe.send(inputSyncMessage);
-
-                if (!nodesConnectedTo[Integer.parseInt(inputSyncMessage) - 1]) {
-                    nodesConnectedTo[Integer.parseInt(inputSyncMessage) - 1] = true;
-                    System.out.println("Node " + nodeIndex + " can hear node " + inputSyncMessage);
-                }
-            }
-
-            else if (inputSyncMessage.charAt(0) == 'g') {
-                int nodeReady = Integer.parseInt(inputSyncMessage.substring(2,3));
-                nodesReady[nodeReady - 1] = true;
-                for (boolean value : nodesReady) {
-                    if (value)
-                        allRoomConnected = true;
-                    else {
-                        allRoomConnected = false;
-                        break;
-                    }
-                }
-            }
-
-            // If the first character is an 'r', it means that is a response that a node can hear a certain other node
-            // <inputSyncMessage> = 'rX#Y' => node Y can hear node X
-            else {
-                // Separate values that what node is being heard and what node is the one that is hearing it
-                int nodeThatIsHeard = Integer.parseInt(inputSyncMessage.substring(1, 2));
-                int nodeThatIsHearing = Integer.parseInt(inputSyncMessage.substring(3, 4));
-
-                // See if other node is being hearing me
-                if (nodeThatIsHeard == nodeIndex) {
-                    if (!nodesConnectedtoMe[nodeThatIsHearing - 1]) {
-                        nodesConnectedtoMe[nodeThatIsHearing - 1] = true;
-                        System.out.println("Node " + nodeIndex + " is being heard by node " + nodeThatIsHearing);
-                    }
-                }
-            }
-
-            // To be ready i need that all the nodes are connected to me and i am connected to all the nodes
-            // Check that all the nodes are connected to me
-            for (boolean value : nodesConnectedtoMe) {
-                if (value)
-                    connectedToAllRoom = true;
-                else {
-                    connectedToAllRoom = false;
-                    break;
-                }
-            }
-
-            // Check that i am connected to all the nodes
-            for (boolean value : nodesConnectedTo) {
-                if (value)
-                    allRoomConnectedToMe = true;
-                else {
-                    allRoomConnectedToMe = false;
-                    break;
-                }
-            }
-
-            // If both values are true, it means that i am ready to go
-            if (connectedToAllRoom && allRoomConnectedToMe) {
-                pipe.send("ready");
-                // ¿Let know to the rest of the room that i'm ready?
-            }
-
-            if (allRoomConnected) {
-                pipe.send("all ready");
-                break;
-            }
-
-
-        }
-
-        receiver.setReceiveTimeOut(-1);
-
-    }
-
     // Sender Thread
     public void createNode() throws IOException {
 
@@ -459,6 +341,124 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Set timeout to infinity to continue the protocol
         receiverThread.setReceiveTimeOut(-1);
+    }
+
+    private void waitForAllPublishers(ZMQ.Socket pipe, ZMQ.Socket receiver) {
+        // Receive message from sender that indicates our nodeIndex
+        int nodeIndex = Integer.parseInt(pipe.recvStr());
+
+        // Store the message received from receiver thread
+        String inputSyncMessage;
+
+        // Set time out of the receiver socket
+        receiver.setReceiveTimeOut(2000);
+
+        // Array to store what nodes received my message
+        boolean[] nodesConnectedtoMe = new boolean[dcNetSize];
+
+        // Array to store what nodes i'm connected to
+        boolean[] nodesConnectedTo = new boolean[dcNetSize];
+
+        // Array to store nodes ready
+        boolean[] nodesReady = new boolean[dcNetSize];
+
+        /*for (boolean value : nodesConnectedtoMe)
+            value = false;
+        for (boolean value : nodesConnectedTo)
+            value = false;*/
+
+        // Variable to know if i'm connected to the rest of the room
+        boolean connectedToAllRoom = false;
+
+        // Variable to know if all the room is connected to me
+        boolean allRoomConnectedToMe = false;
+
+        // Variable to know if all the room is connected between them
+        boolean allRoomConnected = false;
+
+        while (true) {
+            // Wait until receive any message from any node of the room
+            while ((inputSyncMessage = receiver.recvStr()) == null)
+                ;
+
+            // If the first character is not an 'r' it means that i can hear a certain node that is transmitting
+            if (inputSyncMessage.charAt(0) != 'r' && inputSyncMessage.charAt(0) != 'g') {
+                // <inputSyncMessage> = node that I can hear
+                // Let know to sender thread that i can hear a certain node stored on <inputSyncMessage>
+                pipe.send(inputSyncMessage);
+
+                if (!nodesConnectedTo[Integer.parseInt(inputSyncMessage) - 1]) {
+                    nodesConnectedTo[Integer.parseInt(inputSyncMessage) - 1] = true;
+                    System.out.println("Node " + nodeIndex + " can hear node " + inputSyncMessage);
+                }
+            }
+
+            else if (inputSyncMessage.charAt(0) == 'g') {
+                int nodeReady = Integer.parseInt(inputSyncMessage.substring(2,3));
+                nodesReady[nodeReady - 1] = true;
+                for (boolean value : nodesReady) {
+                    if (value)
+                        allRoomConnected = true;
+                    else {
+                        allRoomConnected = false;
+                        break;
+                    }
+                }
+            }
+
+            // If the first character is an 'r', it means that is a response that a node can hear a certain other node
+            // <inputSyncMessage> = 'rX#Y' => node Y can hear node X
+            else {
+                // Separate values that what node is being heard and what node is the one that is hearing it
+                int nodeThatIsHeard = Integer.parseInt(inputSyncMessage.substring(1, 2));
+                int nodeThatIsHearing = Integer.parseInt(inputSyncMessage.substring(3, 4));
+
+                // See if other node is being hearing me
+                if (nodeThatIsHeard == nodeIndex) {
+                    if (!nodesConnectedtoMe[nodeThatIsHearing - 1]) {
+                        nodesConnectedtoMe[nodeThatIsHearing - 1] = true;
+                        System.out.println("Node " + nodeIndex + " is being heard by node " + nodeThatIsHearing);
+                    }
+                }
+            }
+
+            // To be ready i need that all the nodes are connected to me and i am connected to all the nodes
+            // Check that all the nodes are connected to me
+            for (boolean value : nodesConnectedtoMe) {
+                if (value)
+                    connectedToAllRoom = true;
+                else {
+                    connectedToAllRoom = false;
+                    break;
+                }
+            }
+
+            // Check that i am connected to all the nodes
+            for (boolean value : nodesConnectedTo) {
+                if (value)
+                    allRoomConnectedToMe = true;
+                else {
+                    allRoomConnectedToMe = false;
+                    break;
+                }
+            }
+
+            // If both values are true, it means that i am ready to go
+            if (connectedToAllRoom && allRoomConnectedToMe) {
+                pipe.send("ready");
+                // ¿Let know to the rest of the room that i'm ready?
+            }
+
+            if (allRoomConnected) {
+                pipe.send("all ready");
+                break;
+            }
+
+
+        }
+
+        receiver.setReceiveTimeOut(-1);
+
     }
 
     private ZMQ.Socket[] initializeRequestorsArray(int nodeIndex, ZContext context) {

@@ -37,7 +37,6 @@ public class OutputMessage {
     }
 
     public String getSenderId() {
-
         return senderId;
     }
 }
