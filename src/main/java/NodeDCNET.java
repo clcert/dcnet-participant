@@ -60,14 +60,25 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Synchronize publishers and subscribers
         // waitForAllPublishers(pipe, receiver);
 
+        int round = 1;
+
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
 
-            // Wait for sender thread let know that a new round will begin
-            pipe.recvStr();
+            // Wait for sender thread let know that a new round will begin, if it is a virtual round, i wait two times
+            if (round != 1 && round%2 != 0) {
+                String inputFromSender = pipe.recvStr();
+                round++;
+                if (inputFromSender.equals("FINISHED"))
+                    break;
+            }
+
+            String inputFromSender = pipe.recvStr();
+            if (inputFromSender.equals("FINISHED"))
+                break;
 
             for (int i = 0; i < dcNetSize; i++) {
-                // Receive message
+                // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();
 
                 OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);
@@ -77,10 +88,15 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 pipe.send(clearInputMessage);
             }
 
+            round++;
+
         }
 
         // Close receiver thread
         receiver.close();
+
+        // Let know to the sender that i'm already closed
+        pipe.send("");
 
     }
 
@@ -153,6 +169,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Count how many messages were sent without collisions. When this number equals the collision size, the first collision was resolved
         int messagesSentWithNoCollisions = 0;
 
+        boolean finished = false;
+
         // Sleep to overlap slow joiner problem
         try {
             Thread.sleep(5000);
@@ -166,10 +184,16 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors);
 
-            System.out.println("ROUND " + round);
+            // Let know to the receiver thread that a new real round will begin
+            if (finished) {
+                receiverThread.send("FINISHED");
+                receiverThread.recvStr();
+                break;
+            }
+            else
+                receiverThread.send("");
 
-            // Let know to the receiver thread that a new round will begin
-            receiverThread.send("");
+            System.out.println("ROUND " + round);
 
             // Variables to store the resulting message of the round
             // C = <sumOfM>#<sumOfT>
@@ -186,14 +210,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
                 else if (nextRoundAllowedToSend == round) {
-
-                    // Identify slow joiner problem
-                    /*try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }*/
-
                     sender.send(outputMessageJson);
                 }
                 else {
@@ -268,7 +284,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // If the number of messages that went through equals the collision size, the collision was completely resolved
                 if (messagesSentWithNoCollisions == collisionSize) {
                     System.out.println("Finished!");
-                    new BufferedReader(new InputStreamReader(System.in)).readLine();
+                    finished = true;
                 }
             }
 
