@@ -123,10 +123,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.outputNumericMessage, "" + this.dcNetSize), networkIp);
 
         /*System.out.println("waiting to all nodes be connected");
-
         // Synchronize Publishers and Subscribers
         waitForAllSubscribers(receiverThread, sender, nodeIndex);
-
         System.out.println("all nodes connected");*/
 
         // Create OutputMessage object
