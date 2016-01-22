@@ -306,6 +306,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             round++;
             System.out.println();
 
+            // Prevent infinite loops
+            if (round == Math.pow(2, collisionSize))
+                finished = true;
+
         }
 
         // Close all the threads and destroy the context
