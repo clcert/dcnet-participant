@@ -129,9 +129,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         System.out.println("all nodes connected");*/
 
-        // Synchronize nodes at the beginning of each round
-        synchronizeNodes(nodeIndex, repliers, requestors);
-
         // Create OutputMessage object
         OutputMessage outputMessage = new OutputMessage();
         outputMessage.setSenderId("Node_" + nodeIndex);
