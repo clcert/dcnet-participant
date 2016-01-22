@@ -232,8 +232,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 if (round == 1) {
                     collisionSize = sumOfT;
                     if (collisionSize == 0) {
-                        System.out.println("NO COLLISION PRODUCED");
-                        new BufferedReader(new InputStreamReader(System.in)).readLine();
+                        System.out.println("NO MESSAGES WERE SENT");
+                        finished = true;
+                        continue;
                     }
                 }
             }
