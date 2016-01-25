@@ -3,12 +3,9 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.Random;
 
 /*
     This application runs a collision resolution protocol, in order
@@ -81,6 +78,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();
 
+                // Format the message that is incoming to "extract" the actual message
                 OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);
                 String clearInputMessage = incomingOutputMessage.getMessage();
 
