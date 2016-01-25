@@ -174,6 +174,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         LinkedList<Integer> nextRoundsToHappen = new LinkedList<>();
         nextRoundsToHappen.addFirst(1);
 
+        // Count how many real rounds are played
+        int realRounds = 0;
+
         // Sleep to overlap slow joiner problem
         try {
             Thread.sleep(5000);
@@ -212,6 +215,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // REAL ROUND
             if (round == 1 || round%2 == 0) {
+                realRounds++;
                 System.out.println("REAL ROUND");
 
                 // If my message was already transmitted i just send "0#0"
@@ -337,6 +341,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         receiverThread.close();
         sender.close();
         context.destroy();
+
+        System.out.println("REAL ROUNDS PLAYED: " + realRounds);
 
     }
 
