@@ -4,8 +4,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
 import java.io.IOException;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.*;
 
 /*
     This application runs a collision resolution protocol, in order
@@ -66,11 +65,17 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             if (round != 1 && round%2 != 0) {
                 String inputFromSender = pipe.recvStr();
                 round++;
+                if (inputFromSender.equals("NO ROUND"))
+                    continue;
                 if (inputFromSender.equals("FINISHED"))
                     break;
             }
 
             String inputFromSender = pipe.recvStr();
+            if (inputFromSender.equals("NO ROUND")) {
+                round++;
+                continue;
+            }
             if (inputFromSender.equals("FINISHED"))
                 break;
 
@@ -162,7 +167,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Count how many messages were sent without collisions. When this number equals the collision size, the first collision was resolved
         int messagesSentWithNoCollisions = 0;
 
+        // Variable to see if the first collision was solved or not
         boolean finished = false;
+
+        // Variable to store the next rounds that are allow to happen (this is use to skip rounds that no node will send a value)
+        LinkedList<Integer> nextRoundsToHappen = new LinkedList<>();
+        nextRoundsToHappen.addFirst(1);
 
         // Sleep to overlap slow joiner problem
         try {
@@ -183,9 +193,17 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 receiverThread.recvStr();
                 break;
             }
+            else if (!nextRoundsToHappen.peekFirst().equals(round)) {
+                round++;
+                receiverThread.send("NO ROUND");
+                continue;
+            }
             else
                 receiverThread.send("");
 
+
+
+            // PRINTING INFO ABOUT THE ROUND
             System.out.println("ROUND " + round);
 
             // Variables to store the resulting message of the round
@@ -280,6 +298,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     System.out.println("Finished!");
                     finished = true;
                 }
+
+                // Remove actual round from next rounds to happen
+                nextRoundsToHappen.removeFirst();
             }
 
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
@@ -297,6 +318,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                             nextRoundAllowedToSend = 2 * round + 1;
                         }
                     }
+                    // Remove actual round and add 2k and 2k+1 rounds
+                    rotateAndAddRounds(nextRoundsToHappen, 2*round, 2*round+1);
                 }
             }
 
@@ -315,6 +338,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         sender.close();
         context.destroy();
 
+    }
+
+    private void rotateAndAddRounds(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
+        nextRoundsToHappen.removeFirst();
+        nextRoundsToHappen.add(firstRoundToAdd);
+        nextRoundsToHappen.add(secondRoundToAdd);
     }
 
     private void waitForAllSubscribers(ZMQ.Socket receiverThread, ZMQ.Socket sender, int nodeIndex) {
