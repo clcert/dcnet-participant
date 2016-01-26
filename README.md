@@ -8,9 +8,15 @@ This program simulates the nodes as different threads running in the same machin
 
 ### Run automatize tests
 
-* There is a file called "tests.sh" that is a bash script that can simulate a certain number of nodes running on the same machine that send random messages to the rest of the room. Then the collision is resolved. The logs of what did each node is stored in the folder logs/.
+There are tests written as bash scripts that simulates a certain number of nodes sending messages to the rest of the room. The logs of what each node did is stored in the folder logs/.
 
-    ```sh ./tests.sh <numberOfNodes>```
+* Worst Case: all nodes send a message (maximum collision)
+
+    ```sh ./worst_case_test.sh <numberOfNodes>```
+
+* Coin toss: a node flips a coin in order to send a message or not
+
+    ```sh ./prob_one_half_test.sh <numberOfNodes>```
     
 ### Run nodes separately
 
