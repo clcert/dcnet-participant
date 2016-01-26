@@ -56,28 +56,19 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Synchronize publishers and subscribers
         // waitForAllPublishers(pipe, receiver);
 
-        int round = 1;
-
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
 
-            // Wait for sender thread let know that a new round will begin, if it is a virtual round, i wait two times
-            if (round != 1 && round%2 != 0) {
-                String inputFromSender = pipe.recvStr();
-                round++;
-                if (inputFromSender.equals("NO ROUND"))
-                    continue;
-                if (inputFromSender.equals("FINISHED"))
-                    break;
-            }
-
             String inputFromSender = pipe.recvStr();
-            if (inputFromSender.equals("NO ROUND")) {
-                round++;
-                continue;
-            }
             if (inputFromSender.equals("FINISHED"))
                 break;
+
+            int round = Integer.parseInt(inputFromSender);
+
+            // Wait for sender thread let know that a new round will begin, if it is a virtual round, i wait two times
+            if (round != 1 && round%2 != 0) {
+                continue;
+            }
 
             for (int i = 0; i < dcNetSize; i++) {
                 // Receive message from a node in the room
@@ -90,8 +81,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // Send to the sender thread the message received
                 pipe.send(clearInputMessage);
             }
-
-            round++;
 
         }
 
@@ -190,21 +179,16 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors);
 
-            // Let know to the receiver thread that a new real round will begin
             if (finished) {
                 receiverThread.send("FINISHED");
                 receiverThread.recvStr();
                 break;
             }
-            else if (!nextRoundsToHappen.peekFirst().equals(round)) {
-                round++;
-                receiverThread.send("NO ROUND");
-                continue;
+            else {
+                // Get actual round to play and send this round to the receiver thread
+                round = nextRoundsToHappen.removeFirst();
+                receiverThread.send("" + round);
             }
-            else
-                receiverThread.send("");
-
-
 
             // PRINTING INFO ABOUT THE ROUND
             System.out.println("ROUND " + round);
@@ -302,9 +286,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     System.out.println("Finished!");
                     finished = true;
                 }
-
-                // Remove actual round from next rounds to happen
-                nextRoundsToHappen.removeFirst();
             }
 
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
@@ -323,12 +304,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                         }
                     }
                     // Remove actual round and add 2k and 2k+1 rounds
-                    rotateAndAddRounds(nextRoundsToHappen, 2*round, 2*round+1);
+                    addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
                 }
             }
 
-            // At the end of the round, i increase the round number and continue
-            round++;
             System.out.println();
 
             // Prevent infinite loops
@@ -346,8 +325,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     }
 
-    private void rotateAndAddRounds(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
-        nextRoundsToHappen.removeFirst();
+    private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
         nextRoundsToHappen.add(firstRoundToAdd);
         nextRoundsToHappen.add(secondRoundToAdd);
     }
