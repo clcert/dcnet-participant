@@ -4,6 +4,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 /*
@@ -76,10 +77,16 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 // Format the message that is incoming to "extract" the actual message
                 OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);
-                String clearInputMessage = incomingOutputMessage.getMessage();
+                int numericInputMessage = incomingOutputMessage.getMessage();
+
+                /*String clearInputMessage;
+                if (numericInputMessage == 0)
+                    clearInputMessage = "0#0";
+                else
+                    clearInputMessage = ((numericInputMessage-1)/(dcNetSize+1)) + "#1";*/
 
                 // Send to the sender thread the message received
-                pipe.send(clearInputMessage);
+                pipe.send("" + numericInputMessage);
             }
 
         }
@@ -129,20 +136,22 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // If <m>!=0 must be appended to #1, forming M = <m>#1. If not, M = 0#0
         if (outputNumericMessage == 0)
-            outputMessage.setMessage("0#0");
+            outputMessage.setMessage(0);
         else
-            outputMessage.setMessage(outputNumericMessage + "#1");
+            outputMessage.setMessage(outputNumericMessage*(dcNetSize+1) + 1);
 
         String outputMessageJson = new Gson().toJson(outputMessage);
-        System.out.println(outputMessageJson);
 
+        System.out.println();
+        System.out.println("m_" + nodeIndex + " = " + outputNumericMessage);
         System.out.println("O_" + nodeIndex + " = " + outputMessage.getMessage());
+        System.out.println();
 
         // Variable to check that the message was transmitted to the rest of the room (was sent in a round with no collisions)
         boolean messageTransmitted = false;
 
         // Index to know in what round we are
-        int round = 1;
+        int round;
 
         // Index to know in which round i'm allowed to resend my message
         int nextRoundAllowedToSend = 1;
@@ -204,7 +213,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 // If my message was already transmitted i just send "0#0"
                 if (messageTransmitted) {
-                    sender.send(new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, "0#0")));
+                    sender.send(new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, 0)));
                 }
 
                 // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
@@ -212,7 +221,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     sender.send(outputMessageJson);
                 }
                 else {
-                    sender.send(new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, "0#0")));
+                    sender.send(new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, 0)));
                 }
 
                 // Receive information from the receiver thread
@@ -220,8 +229,17 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 int messagesReceivedInThisRound = 0;
                 while (messagesReceivedInThisRound < dcNetSize) {
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                    m = Integer.parseInt(messageReceivedFromReceiverThread.split("#")[0]);
-                    t = Integer.parseInt(messageReceivedFromReceiverThread.split("#")[1]);
+                    int numericMessage = Integer.parseInt(messageReceivedFromReceiverThread);
+
+                    if (numericMessage != 0) {
+                        m = (numericMessage - 1) / (dcNetSize + 1);
+                        t = 1;
+                    }
+                    else {
+                        m = 0;
+                        t = 0;
+                    }
+
                     sumOfM += m;
                     sumOfT += t;
                     messagesReceivedInThisRound++;
