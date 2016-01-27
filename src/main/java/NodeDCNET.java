@@ -79,12 +79,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);
                 int numericInputMessage = incomingOutputMessage.getMessage();
 
-                /*String clearInputMessage;
-                if (numericInputMessage == 0)
-                    clearInputMessage = "0#0";
-                else
-                    clearInputMessage = ((numericInputMessage-1)/(dcNetSize+1)) + "#1";*/
-
                 // Send to the sender thread the message received
                 pipe.send("" + numericInputMessage);
             }
@@ -134,7 +128,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // This is the actual message that the node wants to communicate (<m>)
         int outputNumericMessage = this.outputNumericMessage;
 
-        // If <m>!=0 must be appended to #1, forming M = <m>#1. If not, M = 0#0
         if (outputNumericMessage == 0)
             outputMessage.setMessage(0);
         else
@@ -160,7 +153,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         int collisionSize = 0;
 
         // Store messages sent in previous rounds in order to build the message in the virtual rounds
-        Dictionary<Integer, String> messagesSentInPreviousRounds = new Hashtable<>();
+        Dictionary<Integer, Integer> messagesSentInPreviousRounds = new Hashtable<>();
 
         // Count how many messages were sent without collisions. When this number equals the collision size, the first collision was resolved
         int messagesSentWithNoCollisions = 0;
@@ -203,20 +196,18 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             System.out.println("ROUND " + round);
 
             // Variables to store the resulting message of the round
-            // C = <sumOfM>#<sumOfT>
-            int m, t, sumOfM = 0, sumOfT = 0;
+            int sumOfM, sumOfT;
+            int sumOfO = 0;
 
             // REAL ROUND
             if (round == 1 || round%2 == 0) {
                 realRounds++;
                 System.out.println("REAL ROUND");
 
-                // If my message was already transmitted i just send "0#0"
                 if (messageTransmitted) {
                     sender.send(new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, 0)));
                 }
 
-                // Sending message M to the rest of the room if i'm allowed to. If not, i send "0#0"
                 else if (nextRoundAllowedToSend == round) {
                     sender.send(outputMessageJson);
                 }
@@ -229,31 +220,11 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 int messagesReceivedInThisRound = 0;
                 while (messagesReceivedInThisRound < dcNetSize) {
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                    int numericMessage = Integer.parseInt(messageReceivedFromReceiverThread);
-
-                    if (numericMessage != 0) {
-                        m = (numericMessage - 1) / (dcNetSize + 1);
-                        t = 1;
-                    }
-                    else {
-                        m = 0;
-                        t = 0;
-                    }
-
-                    sumOfM += m;
-                    sumOfT += t;
+                    int incomingOutputMessage = Integer.parseInt(messageReceivedFromReceiverThread);
+                    sumOfO += incomingOutputMessage;
                     messagesReceivedInThisRound++;
                 }
 
-                // Assign the size of the collision produced in the first round
-                if (round == 1) {
-                    collisionSize = sumOfT;
-                    if (collisionSize == 0) {
-                        System.out.println("NO MESSAGES WERE SENT");
-                        finished = true;
-                        continue;
-                    }
-                }
             }
 
             // VIRTUAL ROUND
@@ -261,33 +232,31 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 System.out.println("VIRTUAL ROUND");
 
                 // Recover messages sent in rounds 2k and k
-                String messageSentInRound2K = messagesSentInPreviousRounds.get(round-1);
-                String messageSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
-
-                // Divide messages received in rounds 2k and k in <sumOfM> and <sumOfT> for each round
-                int sumOfMInRound2k = Integer.parseInt(messageSentInRound2K.split("#")[0]);
-                int sumOfTInRound2k = Integer.parseInt(messageSentInRound2K.split("#")[1]);
-                int sumOfMInRoundK = Integer.parseInt(messageSentInRoundK.split("#")[0]);
-                int sumOfTInRoundK = Integer.parseInt(messageSentInRoundK.split("#")[1]);
-
-                // If any of the messages recover for this rounds was 0, it means that this round it doesn't really happens
-                if (sumOfMInRound2k == 0 || sumOfMInRoundK == 0) {
-                    sumOfM = 0;
-                    sumOfT = 0;
-                }
+                int sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round-1);
+                int sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
 
                 // If not, is a virtual round that needs to happen, so calculate the resulting message
-                else {
-                    sumOfM = sumOfMInRoundK - sumOfMInRound2k;
-                    sumOfT = sumOfTInRoundK - sumOfTInRound2k;
-                }
+                sumOfO = sumOfOSentInRoundK - sumOfOSentInRound2K;
             }
 
-            // Display round message
-            System.out.println("C_" + round +  " = " + sumOfM + "#" + sumOfT);
-
             // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
-            messagesSentInPreviousRounds.put(round, "" + sumOfM + "#" + sumOfT);
+            messagesSentInPreviousRounds.put(round, sumOfO);
+
+            sumOfM = sumOfO/(dcNetSize + 1);
+            sumOfT = sumOfO - (sumOfM*(dcNetSize + 1));
+
+            // Display round message
+            System.out.println("C_" + round +  " = (" + sumOfM + "," + sumOfT + ")");
+
+            // Assign the size of the collision produced in the first round
+            if (round == 1) {
+                collisionSize = sumOfT;
+                if (collisionSize == 0) {
+                    System.out.println("NO MESSAGES WERE SENT");
+                    finished = true;
+                    continue;
+                }
+            }
 
             // NO COLLISION ROUND => <sumOfT> = 1
             if (sumOfT == 1) {
@@ -321,7 +290,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                             nextRoundAllowedToSend = 2 * round + 1;
                         }
                     }
-                    // Remove actual round and add 2k and 2k+1 rounds
+                    // Add 2k and 2k+1 rounds to future plays
                     addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
                 }
             }
