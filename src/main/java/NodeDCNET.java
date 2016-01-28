@@ -171,9 +171,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         LinkedList<Integer> nextRoundsToHappen = new LinkedList<>();
         nextRoundsToHappen.addFirst(1);
 
-        // Count how many real rounds are played
-        int realRounds = 0;
-
         // Create the zeroMessage which is used several times on the protocol
         String zeroMessageJson = new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, 0));
 
@@ -206,7 +203,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // REAL ROUND
             if (round == 1 || round%2 == 0) {
-                realRounds++;
                 System.out.println("REAL ROUND");
 
                 if (messageTransmitted) {
@@ -305,7 +301,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             System.out.println();
 
             // Prevent infinite loops
-            if (round == Math.pow(2, collisionSize))
+            if (round >= Math.pow(2, collisionSize))
                 finished = true;
 
         }
