@@ -12,11 +12,11 @@ There are tests written as bash scripts that simulates a certain number of nodes
 
 * Worst Case: all nodes send a message (maximum collision)
 
-    ```sh ./worst_case_test.sh <numberOfNodes>```
+    ```sh tests/worst_case_test.sh <numberOfNodes>```
 
 * Coin toss: a node flips a coin in order to send a message or not
 
-    ```sh ./prob_one_half_test.sh <numberOfNodes>```
+    ```sh tests/prob_one_half_test.sh <numberOfNodes>```
     
 ### Run nodes separately
 
