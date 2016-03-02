@@ -26,6 +26,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final int message;
     private final int nodeIndex;
 
+    private static Hashtable<Integer, String> directory = new Hashtable();
+
     public NodeDCNET(String myIp, String name, String message, String dcNetSize, String nodeIndex) {
         this.myIp = myIp;
         this.name = name;
@@ -37,29 +39,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>]
     public static void main(String[] args) throws IOException {
         String myIp = getLocalNetworkIp();
-        System.out.println(myIp);
+        directory.put(1, "172.30.65.154");
+        directory.put(2, "172.30.65.229");
+        directory.put(3, "172.30.65.192");
         new NodeDCNET(myIp, "Node", args[0], args[1], args[2]).createNode();
-    }
-
-    public static String getLocalNetworkIp() {
-        String networkIp = "";
-
-        InetAddress ip;
-        try {
-
-            ip = InetAddress.getLocalHost();
-            networkIp = ip.getHostAddress();
-
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-
-        return networkIp;
-    }
-
-    private static String cut_ip(String ip) {
-        String[] numbers = ip.split("\\.");
-        return "" + numbers[0] + "." + numbers[1] + "." + numbers[2] + ".";
     }
 
     // Receiver Thread
@@ -67,13 +50,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     public void run(Object[] args, ZContext context, ZMQ.Socket pipe) {
 
         // Get the Network IP where all the nodes are participating
-        String myIp = (String) args[0];
+        String myIp = directory.get(nodeIndex);
 
         // Create the receiver socket that work as a subscriber
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
         // Connect as a subscriber to each of the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
-        connectReceiverThread(receiver, "172.30.65.154");
+        connectReceiverThread(receiver, myIp);
 
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
@@ -119,10 +102,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     }
 
     private void connectReceiverThread(ZMQ.Socket receiver, String myIp) {
-        String cuttedIp = cut_ip(myIp);
+        for (int i = 1; i <= dcNetSize; i++) {
+            receiver.connect("tcp://" + directory.get(i) + ":9000");
+        }
+
+        /*String cuttedIp = cut_ip(myIp);
         for (int i = 0; i < 256; i++) {
             receiver.connect("tcp://" + cuttedIp + i + ":" + 9000);
-        }
+        }*/
     }
 
     // Sender Thread and Collision Resolution Protocol
@@ -355,7 +342,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket[] requestors = null;
         if (nodeIndex != dcNetSize) {
             requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
-            if (nodeIndex == 1) {
+            for (int i = 0; i < requestors.length; i++) {
+                requestors[i] = context.createSocket(ZMQ.REQ);
+                requestors[i].connect("tcp://" + directory.get(i+1) + ":700" + (nodeIndex-1));
+            }
+
+
+
+            /*if (nodeIndex == 1) {
                 requestors[0] = context.createSocket(ZMQ.REQ);
                 requestors[0].connect("tcp://172.30.65.229:7000");
                 requestors[1] = context.createSocket(ZMQ.REQ);
@@ -364,7 +358,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             else {
                 requestors[0] = context.createSocket(ZMQ.REQ);
                 requestors[0].connect("tcp://172.30.65.192:7001");
-            }
+            }*/
+
         }
         return requestors;
 
@@ -396,16 +391,22 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         if (nodeIndex != 1) {
             repliers = new ZMQ.Socket[nodeIndex-1];
 
-            if (nodeIndex == 2) {
+            for (int i = 0; i < repliers.length; i++) {
+                repliers[i] = context.createSocket(ZMQ.REP);
+                repliers[i].bind("tcp://*:700" + i);
+            }
+
+            /*if (nodeIndex == 2) {
                 repliers[0] = context.createSocket(ZMQ.REP);
-                repliers[0].bind("tcp://*:7000");
+                repliers[0].bind("tcp:/*//*:7000");
             }
             else {
                 repliers[0] = context.createSocket(ZMQ.REP);
-                repliers[0].bind("tcp://*:7000");
+                repliers[0].bind("tcp:/*//*:7000");
                 repliers[1] = context.createSocket(ZMQ.REP);
-                repliers[1].bind("tcp://*:7001");
-            }
+                repliers[1].bind("tcp:/*//*:7001");
+            }*/
+
         }
 
         return repliers;
@@ -447,6 +448,22 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             }
     }
 
+    private static String cut_ip(String ip) {
+        String[] numbers = ip.split("\\.");
+        return "" + numbers[0] + "." + numbers[1] + "." + numbers[2] + ".";
+    }
+
+    public static String getLocalNetworkIp() {
+        String networkIp = "";
+        InetAddress ip;
+        try {
+            ip = InetAddress.getLocalHost();
+            networkIp = ip.getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        return networkIp;
+    }
 }
 
     /* private void waitForAllSubscribers(ZMQ.Socket receiverThread, ZMQ.Socket sender, int nodeIndex) {
