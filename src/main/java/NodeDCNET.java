@@ -362,7 +362,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 requestors[1].connect("tcp://172.30.65.192:7000");
             }
             else {
-                requestors[1].connect("tcp://172.30.65.192:7001");
+                requestors[0] = context.createSocket(ZMQ.REQ);
+                requestors[0].connect("tcp://172.30.65.192:7001");
             }
         }
         return requestors;
@@ -396,6 +397,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             repliers = new ZMQ.Socket[nodeIndex-1];
 
             if (nodeIndex == 2) {
+                repliers[0] = context.createSocket(ZMQ.REP);
                 repliers[0].bind("tcp://*:7000");
             }
             else {
