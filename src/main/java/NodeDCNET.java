@@ -390,7 +390,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             repliers = new ZMQ.Socket[nodeIndex-1];
             for (int i = 0; i < repliers.length; i++) {
                 repliers[i] = context.createSocket(ZMQ.REP);
-                repliers[i].bind("tcp://*:9000");
+                repliers[i].bind("tcp://*:7000");
             }
         }
 
