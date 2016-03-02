@@ -120,7 +120,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private void connectReceiverThread(ZMQ.Socket receiver, String network_ip) {
         String cuttedIp = cut_ip(network_ip);
         for (int i = 0; i < 256; i++) {
-            receiver.connect("tcp://" + cuttedIp + "." + i + ":" + 9000);
+            receiver.connect("tcp://" + cuttedIp + i + ":" + 9000);
         }
     }
 
