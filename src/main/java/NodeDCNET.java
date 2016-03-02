@@ -67,13 +67,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     public void run(Object[] args, ZContext context, ZMQ.Socket pipe) {
 
         // Get the Network IP where all the nodes are participating
-        String network_ip = (String) args[0];
+        String myIp = (String) args[0];
 
         // Create the receiver socket that work as a subscriber
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
         // Connect as a subscriber to each of the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
-        connectReceiverThread(receiver, network_ip);
+        connectReceiverThread(receiver, "172.30.65.154");
 
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
