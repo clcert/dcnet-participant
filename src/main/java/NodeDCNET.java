@@ -21,13 +21,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final int DCNET = 1;
 
     private final int dcNetSize;
-    private final String networkIp;
+    private final String myIp;
     private final String name;
     private final int message;
     private final int nodeIndex;
 
-    public NodeDCNET(String networkIp, String name, String message, String dcNetSize, String nodeIndex) {
-        this.networkIp = networkIp;
+    public NodeDCNET(String myIp, String name, String message, String dcNetSize, String nodeIndex) {
+        this.myIp = myIp;
         this.name = name;
         this.message = Integer.parseInt(message);
         this.dcNetSize = Integer.parseInt(dcNetSize);
@@ -36,9 +36,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>]
     public static void main(String[] args) throws IOException {
-        String ip = getLocalNetworkIp();
-        System.out.println(ip);
-        new NodeDCNET(ip, "Node", args[0], args[1], args[2]).createNode();
+        String myIp = getLocalNetworkIp();
+        System.out.println(myIp);
+        new NodeDCNET(myIp, "Node", args[0], args[1], args[2]).createNode();
     }
 
     public static String getLocalNetworkIp() {
@@ -118,8 +118,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     }
 
-    private void connectReceiverThread(ZMQ.Socket receiver, String network_ip) {
-        String cuttedIp = cut_ip(network_ip);
+    private void connectReceiverThread(ZMQ.Socket receiver, String myIp) {
+        String cuttedIp = cut_ip(myIp);
         for (int i = 0; i < 256; i++) {
             receiver.connect("tcp://" + cuttedIp + i + ":" + 9000);
         }
@@ -145,7 +145,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
 
         // Throw receiver thread which runs the method 'run' described above
-        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.message, "" + this.dcNetSize, "" + this.nodeIndex), networkIp);
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, "" + this.dcNetSize, "" + this.nodeIndex), myIp);
 
         /*System.out.println("waiting to all nodes be connected");
         // Synchronize Publishers and Subscribers
@@ -355,9 +355,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket[] requestors = null;
         if (nodeIndex != dcNetSize) {
             requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
-            for (int i = 0; i < requestors.length; i++) {
-                requestors[i] = context.createSocket(ZMQ.REQ);
-                requestors[i].connect("tcp://" + cut_ip(networkIp) + "201:7000");
+            if (nodeIndex == 1) {
+                requestors[0] = context.createSocket(ZMQ.REQ);
+                requestors[0].connect("tcp://172.30.65.229:7000");
+                requestors[1] = context.createSocket(ZMQ.REQ);
+                requestors[1].connect("tcp://172.30.65.192:7000");
+            }
+            else {
+                requestors[1].connect("tcp://172.30.65.192:7001");
             }
         }
         return requestors;
@@ -376,7 +381,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 // Bind the requestor socket to the corresponding port, that is at least 7001
                 int portToConnect = ((((nodeIndex + i + 1)*(nodeIndex + i - 2))/2) + 7002) + nodeIndex - 1;
-                String cuttedIp = cut_ip(networkIp);
+                String cuttedIp = cut_ip(myIp);
                 for (int j = 0; j < 256; j++)
                     requestors[i].connect("tcp://" + cuttedIp + j + ":" + (portToConnect));
             }
@@ -389,9 +394,15 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         if (nodeIndex != 1) {
             repliers = new ZMQ.Socket[nodeIndex-1];
-            for (int i = 0; i < repliers.length; i++) {
-                repliers[i] = context.createSocket(ZMQ.REP);
-                repliers[i].bind("tcp://*:7000");
+
+            if (nodeIndex == 2) {
+                repliers[0].bind("tcp://*:7000");
+            }
+            else {
+                repliers[0] = context.createSocket(ZMQ.REP);
+                repliers[0].bind("tcp://*:7000");
+                repliers[1] = context.createSocket(ZMQ.REP);
+                repliers[1].bind("tcp://*:7001");
             }
         }
 
