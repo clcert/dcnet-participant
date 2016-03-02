@@ -37,6 +37,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>]
     public static void main(String[] args) throws IOException {
         String ip = getLocalNetworkIp();
+        System.out.println(ip);
         new NodeDCNET(ip, "Node", args[0], args[1], args[2]).createNode();
     }
 
