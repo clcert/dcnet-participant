@@ -4,6 +4,8 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 
 /*
@@ -22,17 +24,41 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final String networkIp;
     private final String name;
     private final int message;
+    private final int nodeIndex;
 
-    public NodeDCNET(String networkIp, String name, String message, String dcNetSize) {
+    public NodeDCNET(String networkIp, String name, String message, String dcNetSize, String nodeIndex) {
         this.networkIp = networkIp;
         this.name = name;
         this.message = Integer.parseInt(message);
         this.dcNetSize = Integer.parseInt(dcNetSize);
+        this.nodeIndex = Integer.parseInt(nodeIndex);
     }
 
+    // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>]
     public static void main(String[] args) throws IOException {
-        // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>]
-        new NodeDCNET("127.0.0.1", "Node", args[0], args[1]).createNode();
+        String ip = getLocalNetworkIp();
+        new NodeDCNET(ip, "Node", args[0], args[1], args[2]).createNode();
+    }
+
+    public static String getLocalNetworkIp() {
+        String networkIp = "";
+
+        InetAddress ip;
+        try {
+
+            ip = InetAddress.getLocalHost();
+            networkIp = ip.getHostAddress();
+
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        return networkIp;
+    }
+
+    private static String cut_ip(String ip) {
+        String[] numbers = ip.split("\\.");
+        return "" + numbers[0] + "." + numbers[1] + "." + numbers[2] + ".";
     }
 
     // Receiver Thread
@@ -92,8 +118,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     }
 
     private void connectReceiverThread(ZMQ.Socket receiver, String network_ip) {
-        for (int i = 0; i < dcNetSize; i++) {
-            receiver.connect("tcp://" + network_ip + ":" + (9001 + i));
+        String cuttedIp = cut_ip(network_ip);
+        for (int i = 0; i < 256; i++) {
+            receiver.connect("tcp://" + cuttedIp + "." + i + ":" + 9000);
         }
     }
 
@@ -107,17 +134,17 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
 
         // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
-        int nodeIndex = bindSenderPort(sender);
+        bindSenderPort(sender);
 
         // We need to connect every pair of nodes in order to synchronize the sending of values at the beginning of each round
         // For this, we need that in every pair of nodes there will be one requestor and one replier
         // In every pair of nodes {i,j} where i<j, node i will work as a requestor and node j will work as a replier
         // Create array of sockets that will work as repliers and requestors
-        ZMQ.Socket[] repliers = initializeRepliersArray(nodeIndex, context);
-        ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
+        // ZMQ.Socket[] repliers = initializeRepliersArray(nodeIndex, context);
+        // ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
 
         // Throw receiver thread which runs the method 'run' described above
-        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.message, "" + this.dcNetSize), networkIp);
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.message, "" + this.dcNetSize, "" + this.nodeIndex), networkIp);
 
         /*System.out.println("waiting to all nodes be connected");
         // Synchronize Publishers and Subscribers
@@ -185,7 +212,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         while (!Thread.currentThread().isInterrupted()) {
 
             // Synchronize nodes at the beginning of each round
-            synchronizeNodes(nodeIndex, repliers, requestors);
+            // synchronizeNodes(nodeIndex, repliers, requestors);
 
             if (finished) {
                 receiverThread.send("FINISHED");
@@ -363,20 +390,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         return repliers;
     }
 
-    private int bindSenderPort(ZMQ.Socket sender) {
-        int nodeIndex;
-        for (nodeIndex = 1; nodeIndex < dcNetSize + 1; nodeIndex++) {
-            // Try to bind the sender to the port (9000 + <nodeIndex>).
-            // If not, continue with the rest of the ports
-            try {
-                sender.bind("tcp://*:" + (9000 + nodeIndex));
-            } catch (Exception e) {
-                continue;
-            }
-            // Already bound to a port, so break the cycle
-            break;
-        }
-        return nodeIndex;
+    private void bindSenderPort(ZMQ.Socket sender) {
+        sender.bind("tcp://*:9000");
     }
 
     private void synchronizeNodes(int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors) {
