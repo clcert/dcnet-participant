@@ -344,7 +344,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
             for (int i = 0; i < requestors.length; i++) {
                 requestors[i] = context.createSocket(ZMQ.REQ);
-                requestors[i].connect("tcp://" + directory.get(i+1) + ":700" + (nodeIndex-1));
+                requestors[i].connect("tcp://" + directory.get(nodeIndex + i + 1) + ":700" + (nodeIndex-1));
             }
 
 
