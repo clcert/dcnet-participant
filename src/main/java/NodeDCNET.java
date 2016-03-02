@@ -352,6 +352,17 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     private ZMQ.Socket[] initializeRequestorsArray(int nodeIndex, ZContext context) {
         ZMQ.Socket[] requestors = null;
+        if (nodeIndex != dcNetSize) {
+            requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
+            for (int i = 0; i < requestors.length; i++) {
+                requestors[i] = context.createSocket(ZMQ.REQ);
+                requestors[i].connect("tcp://" + cut_ip(networkIp) + "201:7000");
+            }
+        }
+        return requestors;
+
+
+        /*ZMQ.Socket[] requestors = null;
         // If my index is the last one, i will only have repliers and none requestor
         if (nodeIndex != dcNetSize) {
             // If my index is <nodeIndex>, i will have to create (<dcNetSize>-<nodeIndex>) requestors
@@ -369,11 +380,23 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     requestors[i].connect("tcp://" + cuttedIp + j + ":" + (portToConnect));
             }
         }
-        return requestors;
+        return requestors;*/
     }
 
     private ZMQ.Socket[] initializeRepliersArray(int nodeIndex, ZContext context) {
         ZMQ.Socket[] repliers = null;
+
+        if (nodeIndex != 1) {
+            repliers = new ZMQ.Socket[nodeIndex-1];
+            for (int i = 0; i < repliers.length; i++) {
+                repliers[i] = context.createSocket(ZMQ.REP);
+                repliers[i].bind("tcp://*:9000");
+            }
+        }
+
+        return repliers;
+
+        /*ZMQ.Socket[] repliers = null;
         // If my index is 1, i will only have requestors and none replier
         if (nodeIndex != 1) {
             // If my index is <nodeIndex>, i will have to create (<nodeIndex>-1) repliers
@@ -386,10 +409,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 // Bind the replier socket to the corresponding port
                 int firstPortToBind = (7002 + ((nodeIndex*(nodeIndex-3))/2));
-                repliers[i].bind("tcp://*:" + (firstPortToBind+i));
+                repliers[i].bind("tcp:/*//*:" + (firstPortToBind+i));
             }
         }
-        return repliers;
+        return repliers;*/
     }
 
     private void bindSenderPort(ZMQ.Socket sender) {
