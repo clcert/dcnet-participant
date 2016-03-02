@@ -46,9 +46,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
         // Connect as a subscriber to each of the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
-        for (int i = 0; i < dcNetSize; i++) {
-            receiver.connect("tcp://" + network_ip + ":" + (9001 + i));
-        }
+        connectReceiverThread(receiver, network_ip);
 
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
@@ -91,6 +89,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Let know to the sender that i'm already closed
         pipe.send("");
 
+    }
+
+    private void connectReceiverThread(ZMQ.Socket receiver, String network_ip) {
+        for (int i = 0; i < dcNetSize; i++) {
+            receiver.connect("tcp://" + network_ip + ":" + (9001 + i));
+        }
     }
 
     // Sender Thread and Collision Resolution Protocol
