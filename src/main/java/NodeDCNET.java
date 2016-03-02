@@ -140,8 +140,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // For this, we need that in every pair of nodes there will be one requestor and one replier
         // In every pair of nodes {i,j} where i<j, node i will work as a requestor and node j will work as a replier
         // Create array of sockets that will work as repliers and requestors
-        // ZMQ.Socket[] repliers = initializeRepliersArray(nodeIndex, context);
-        // ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
+        ZMQ.Socket[] repliers = initializeRepliersArray(nodeIndex, context);
+        ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
 
         // Throw receiver thread which runs the method 'run' described above
         ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.networkIp, this.name, "" + this.message, "" + this.dcNetSize, "" + this.nodeIndex), networkIp);
@@ -212,7 +212,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         while (!Thread.currentThread().isInterrupted()) {
 
             // Synchronize nodes at the beginning of each round
-            // synchronizeNodes(nodeIndex, repliers, requestors);
+            synchronizeNodes(nodeIndex, repliers, requestors);
 
             if (finished) {
                 receiverThread.send("FINISHED");
@@ -364,7 +364,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
                 // Bind the requestor socket to the corresponding port, that is at least 7001
                 int portToConnect = ((((nodeIndex + i + 1)*(nodeIndex + i - 2))/2) + 7002) + nodeIndex - 1;
-                requestors[i].connect("tcp://*:" + (portToConnect));
+                String cuttedIp = cut_ip(networkIp);
+                for (int j = 0; j < 256; j++)
+                    requestors[i].connect("tcp://" + cuttedIp + j + ":" + (portToConnect));
             }
         }
         return requestors;
