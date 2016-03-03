@@ -42,6 +42,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         directory.put(1, "172.30.65.154");
         directory.put(2, "172.30.65.229");
         directory.put(3, "172.30.65.192");
+        directory.put(4, "172.30.65.167");
+        directory.put(5, "172.30.65.201");
         new NodeDCNET(myIp, "Node", args[0], args[1], args[2]).createNode();
     }
 
