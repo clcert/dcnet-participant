@@ -44,6 +44,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         directory.put(1, "172.17.0.2");
         directory.put(2, "172.17.0.3");
+        directory.put(3, "172.17.0.4");
 
         /*directory.put(3, "172.30.65.192");
         directory.put(4, "172.30.65.167");
