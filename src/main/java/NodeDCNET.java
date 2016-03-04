@@ -223,6 +223,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Wait until the receiver thread received all the index and ip of all the other nodes
         receiverThread.recvStr();*/
 
+        long t1 = 0;
 
         // Begin the collision resolution protocol
         while (!Thread.currentThread().isInterrupted()) {
@@ -240,6 +241,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 round = nextRoundsToHappen.removeFirst();
                 receiverThread.send("" + round);
             }
+
+            if (round == 1)
+                t1 = System.currentTimeMillis();
 
             // PRINTING INFO ABOUT THE ROUND
             System.out.println("ROUND " + round);
@@ -350,6 +354,11 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 finished = true;
 
         }
+
+        long t2 = System.currentTimeMillis();
+
+        long total_time = t2-t1;
+        System.out.println("Total Time: " + total_time/1000 + " seconds");
 
         // Close all the threads and destroy the context
         receiverThread.close();
