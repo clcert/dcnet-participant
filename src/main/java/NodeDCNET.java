@@ -36,17 +36,19 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         this.nodeIndex = Integer.parseInt(nodeIndex);
     }
 
-    // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>]
+    // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>,<nodeIndex>]
     public static void main(String[] args) throws IOException {
         String myIp = getLocalNetworkIp();
-        System.out.println(myIp);
+
+        /*System.out.println(myIp);
         directory.put(1, "172.30.65.154");
         directory.put(2, "172.30.65.229");
         directory.put(3, "172.30.65.192");
         directory.put(4, "172.30.65.167");
         directory.put(5, "172.30.65.201");
-        directory.put(6, "172.30.65.215");
-        new NodeDCNET(myIp, "Node", args[0], args[1], args[2]).createNode();
+        directory.put(6, "172.30.65.215");*/
+
+        new NodeDCNET(myIp, "Node " + args[2], args[0], args[1], args[2]).createNode();
     }
 
     // Receiver Thread
@@ -67,6 +69,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Synchronize publishers and subscribers
         // waitForAllPublishers(pipe, receiver);
+
+        // CREATE DIRECTORY
+        for (int i = 0; i < dcNetSize; i++) {
+            String[] info = receiver.recvStr().split("%");
+            System.out.println(info[0] + " " + info[1]);
+            directory.put(Integer.parseInt(info[0]), info[1]);
+        }
+        pipe.send("");
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
@@ -199,6 +209,17 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Store all the messages received in this round to show them later
         List<Integer> messagesReceived = new LinkedList<>();
+
+        // CREATE DIRECTORY
+        // Synchronize nodes
+        synchronizeNodes(nodeIndex, repliers, requestors);
+
+        // Send my index and my ip to the rest of the room
+        sender.send(nodeIndex + "%" + myIp);
+
+        // Wait until the receiver thread received all the index and ip of all the other nodes
+        receiverThread.recvStr();
+
 
         // Begin the collision resolution protocol
         while (!Thread.currentThread().isInterrupted()) {
