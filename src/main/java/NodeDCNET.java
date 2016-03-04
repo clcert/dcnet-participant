@@ -40,10 +40,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     public static void main(String[] args) throws IOException {
         String myIp = getLocalNetworkIp();
 
-        System.out.println(myIp);
-        /*directory.put(1, "172.30.65.154");
-        directory.put(2, "172.30.65.229");
-        directory.put(3, "172.30.65.192");
+        System.out.println("my IP: " + myIp);
+
+        directory.put(1, "172.17.0.2");
+        directory.put(2, "172.17.0.3");
+
+        /*directory.put(3, "172.30.65.192");
         directory.put(4, "172.30.65.167");
         directory.put(5, "172.30.65.201");
         directory.put(6, "172.30.65.215");*/
@@ -71,12 +73,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // waitForAllPublishers(pipe, receiver);
 
         // CREATE DIRECTORY
-        for (int i = 0; i < dcNetSize; i++) {
+        /*for (int i = 0; i < dcNetSize; i++) {
             String[] info = receiver.recvStr().split("%");
             System.out.println(info[0] + " " + info[1]);
             directory.put(Integer.parseInt(info[0]), info[1]);
         }
-        pipe.send("");
+        pipe.send("");*/
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
@@ -211,14 +213,14 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         List<Integer> messagesReceived = new LinkedList<>();
 
         // CREATE DIRECTORY
-        // Synchronize nodes
+        /*// Synchronize nodes
         synchronizeNodes(nodeIndex, repliers, requestors);
 
         // Send my index and my ip to the rest of the room
         sender.send(nodeIndex + "%" + myIp);
 
         // Wait until the receiver thread received all the index and ip of all the other nodes
-        receiverThread.recvStr();
+        receiverThread.recvStr();*/
 
 
         // Begin the collision resolution protocol
