@@ -147,6 +147,11 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         directoryPush.send(nodeIndex + "%" + myIp);
 
         System.out.println("WAITING message from directory");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         String directoryJson = directorySubscriber.recvStr();
         Directory directory = new Gson().fromJson(directoryJson, Directory.class);
         for (int i = 0; i < directory.nodes.length; i++) {
@@ -225,16 +230,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Store all the messages received in this round to show them later
         List<Integer> messagesReceived = new LinkedList<>();
-
-        // CREATE DIRECTORY
-        /*// Synchronize nodes
-        synchronizeNodes(nodeIndex, repliers, requestors);
-
-        // Send my index and my ip to the rest of the room
-        sender.send(nodeIndex + "%" + myIp);
-
-        // Wait until the receiver thread received all the index and ip of all the other nodes
-        receiverThread.recvStr();*/
 
         long t1 = 0;
 
