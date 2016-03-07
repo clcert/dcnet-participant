@@ -27,6 +27,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final int message;
     private final int nodeIndex;
     private final boolean NONPROBABILISTIC = false;
+    private final String directoryIp = "172.17.0.2";
 
     private static Hashtable<Integer, String> directory = new Hashtable();
 
@@ -41,12 +42,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>,<nodeIndex>]
     public static void main(String[] args) throws IOException {
         String myIp = getLocalNetworkIp();
-
         System.out.println("my IP: " + myIp);
 
+/*
         directory.put(1, "172.17.0.2");
         directory.put(2, "172.17.0.3");
-        directory.put(3, "172.17.0.4");
+        directory.put(3, "172.17.0.4");*/
 
         /*directory.put(3, "172.30.65.192");
         directory.put(4, "172.30.65.167");
@@ -142,6 +143,21 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
         bindSenderPort(sender);
+
+        ZMQ.Socket directorySubscriber = context.createSocket(ZMQ.SUB);
+        directorySubscriber.connect("tcp://" + directoryIp + ":5555");
+        directorySubscriber.subscribe("".getBytes());
+
+        ZMQ.Socket directoryPush = context.createSocket(ZMQ.PUSH);
+        directoryPush.connect("tcp://" + directoryIp + ":5554");
+
+        directoryPush.send(nodeIndex + "%" + myIp);
+
+        String directoryJson = directorySubscriber.recvStr();
+        Directory directory = new Gson().fromJson(directoryJson, Directory.class);
+        for (int i = 0; i < directory.nodes.length; i++) {
+            NodeDCNET.directory.put(directory.nodes[i].index, directory.nodes[i].ip);
+        }
 
         // We need to connect every pair of nodes in order to synchronize the sending of values at the beginning of each round
         // For this, we need that in every pair of nodes there will be one requestor and one replier
@@ -383,10 +399,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         System.out.println("\nMessages received: ");
         messagesReceived.forEach(System.out::println);
 
-    }
-
-    private void addRoundToHappenNext(LinkedList<Integer> nextRoundsToHappen, int roundToAdd) {
-        nextRoundsToHappen.add(roundToAdd);
     }
 
     private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
