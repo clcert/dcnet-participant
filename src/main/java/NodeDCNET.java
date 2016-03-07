@@ -333,32 +333,35 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
             else {
-                // New collision produced, it means that <sumOfT> > 1
-                // Check if my message was involved in the collision, seeing that this round i was allowed to send my message
-                if (nextRoundAllowedToSend == round) {
-                    if (NONPROBABILISTIC) {
-                        // See if i need to send in the next (2*round) round, checking the average condition
-                        if (message < sumOfM / sumOfT) {
-                            nextRoundAllowedToSend = 2 * round;
-                        }
-                        // If not, i'm "allowed to send" in the (2*round + 1) round, which will be a virtual round
-                        else {
-                            nextRoundAllowedToSend = 2 * round + 1;
-                        }
-                    }
-                    else {
-                        // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
-                        int coin = new SecureRandom().nextInt(2);
-                        if (coin == 0) {
-                            nextRoundAllowedToSend = 2 * round;
-                        }
-                        else {
-                            nextRoundAllowedToSend = 2 * round + 1;
-                        }
-                    }
+                if (sumOfT == 0) {
+                    continue;
                 }
-                // Add 2k and 2k+1 rounds to future plays
-                addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
+                else {
+                    // New collision produced, it means that <sumOfT> > 1
+                    // Check if my message was involved in the collision, seeing that this round i was allowed to send my message
+                    if (nextRoundAllowedToSend == round) {
+                        if (NONPROBABILISTIC) {
+                            // See if i need to send in the next (2*round) round, checking the average condition
+                            if (message < sumOfM / sumOfT) {
+                                nextRoundAllowedToSend = 2 * round;
+                            }
+                            // If not, i'm "allowed to send" in the (2*round + 1) round, which will be a virtual round
+                            else {
+                                nextRoundAllowedToSend = 2 * round + 1;
+                            }
+                        } else {
+                            // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
+                            int coin = new SecureRandom().nextInt(2);
+                            if (coin == 0) {
+                                nextRoundAllowedToSend = 2 * round;
+                            } else {
+                                nextRoundAllowedToSend = 2 * round + 1;
+                            }
+                        }
+                    }
+                    // Add 2k and 2k+1 rounds to future plays
+                    addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
+                }
             }
 
             System.out.println();
