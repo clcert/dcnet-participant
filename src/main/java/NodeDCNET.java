@@ -345,18 +345,23 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                         else {
                             nextRoundAllowedToSend = 2 * round + 1;
                         }
+                        // Add 2k and 2k+1 rounds to future plays
+                        addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
                     }
                     else {
                         // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
                         int coin = new SecureRandom().nextInt(2);
-                        if (coin == 0)
+                        if (coin == 0) {
                             nextRoundAllowedToSend = 2 * round;
-                        else
+                            addRoundToHappenNext(nextRoundsToHappen, 2*round);
+                        }
+                        else {
                             nextRoundAllowedToSend = 2 * round + 1;
+                            addRoundToHappenNext(nextRoundsToHappen, 2*round+1);
+                        }
                     }
                 }
-                // Add 2k and 2k+1 rounds to future plays
-                addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
+
             }
 
             System.out.println();
@@ -380,6 +385,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         System.out.println("\nMessages received: ");
         messagesReceived.forEach(System.out::println);
 
+    }
+
+    private void addRoundToHappenNext(LinkedList<Integer> nextRoundsToHappen, int roundToAdd) {
+        nextRoundsToHappen.add(roundToAdd);
     }
 
     private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
