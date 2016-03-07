@@ -333,9 +333,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
             else {
-                if (sumOfT == 0) {
-                    continue;
-                }
+                if (sumOfT == 0) {}
                 else {
                     // New collision produced, it means that <sumOfT> > 1
                     // Check if my message was involved in the collision, seeing that this round i was allowed to send my message
