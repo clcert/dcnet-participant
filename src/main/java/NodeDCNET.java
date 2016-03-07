@@ -26,7 +26,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final String name;
     private final int message;
     private final int nodeIndex;
-    private final boolean NONPROBABILISTIC = true;
+    private final boolean NONPROBABILISTIC = false;
 
     private static Hashtable<Integer, String> directory = new Hashtable();
 
