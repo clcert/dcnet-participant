@@ -147,11 +147,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         directoryPush.send(nodeIndex + "%" + myIp);
 
         System.out.println("WAITING message from directory");
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         String directoryJson = directorySubscriber.recvStr();
         Directory directory = new Gson().fromJson(directoryJson, Directory.class);
         for (int i = 0; i < directory.nodes.length; i++) {
