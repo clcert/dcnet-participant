@@ -286,7 +286,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 System.out.println("VIRTUAL ROUND");
 
                 // Recover messages sent in rounds 2k and k
-                int sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round-1);
+                int sumOfOSentInRound2K;
+                try {
+                    sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
+                } catch (NullPointerException e) {
+                    sumOfOSentInRound2K = 0;
+                }
                 int sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
 
                 // If not, is a virtual round that needs to happen, so calculate the resulting message
