@@ -286,12 +286,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 System.out.println("VIRTUAL ROUND");
 
                 // Recover messages sent in rounds 2k and k
-                int sumOfOSentInRound2K;
-                try {
-                    sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
-                } catch (NullPointerException e) {
-                    sumOfOSentInRound2K = 0;
-                }
+                int sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
                 int sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
 
                 // If not, is a virtual round that needs to happen, so calculate the resulting message
@@ -350,21 +345,19 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                         else {
                             nextRoundAllowedToSend = 2 * round + 1;
                         }
-                        // Add 2k and 2k+1 rounds to future plays
-                        addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
                     }
                     else {
                         // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
                         int coin = new SecureRandom().nextInt(2);
                         if (coin == 0) {
                             nextRoundAllowedToSend = 2 * round;
-                            addRoundToHappenNext(nextRoundsToHappen, 2*round);
                         }
                         else {
                             nextRoundAllowedToSend = 2 * round + 1;
-                            addRoundToHappenNext(nextRoundsToHappen, 2*round+1);
                         }
                     }
+                    // Add 2k and 2k+1 rounds to future plays
+                    addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
                 }
 
             }
@@ -372,8 +365,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             System.out.println();
 
             // Prevent infinite loops
-            if (round >= Math.pow(2, collisionSize)*4)
-                finished = true;
+            /*if (round >= Math.pow(2, collisionSize)*4)
+                finished = true;*/
 
         }
 
