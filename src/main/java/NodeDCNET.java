@@ -362,7 +362,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             System.out.println();
 
             // Prevent infinite loops
-            if (round >= Math.pow(2, collisionSize))
+            if (round >= Math.pow(2, collisionSize)*4)
                 finished = true;
 
         }
