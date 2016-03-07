@@ -356,10 +356,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                             nextRoundAllowedToSend = 2 * round + 1;
                         }
                     }
-                    // Add 2k and 2k+1 rounds to future plays
-                    addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
                 }
-
+                // Add 2k and 2k+1 rounds to future plays
+                addRoundsToHappenNext(nextRoundsToHappen, 2*round, 2*round+1);
             }
 
             System.out.println();
