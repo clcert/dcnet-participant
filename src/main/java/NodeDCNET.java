@@ -59,6 +59,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
 
+        int dcNetRoomSize = (int) args[0];
+
         // Synchronize publishers and subscribers
         // waitForAllPublishers(pipe, receiver);
 
@@ -85,7 +87,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 continue;
             }
 
-            for (int i = 0; i < dcNetSize; i++) {
+            for (int i = 0; i < dcNetRoomSize; i++) {
                 // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();
 
@@ -152,13 +154,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             int indexKey = (int) mapEntry.getKey();
             String ipValue = NodeDCNET.directory.get(indexKey);
             if (ipValue.equals(myIp))
-                this.nodeIndex = indexKey;
+                nodeIndex = indexKey;
         }
-        System.out.println("My index is: " + this.nodeIndex);
+        System.out.println("My index is: " + nodeIndex);
 
         // Set number of nodes in the room
-        this.dcNetSize = directory.nodes.length;
-        System.out.println("Number of nodes: " + this.dcNetSize);
+        dcNetSize = directory.nodes.length;
+        System.out.println("Number of nodes: " + dcNetSize);
 
         // We need to connect every pair of nodes in order to synchronize the sending of values at the beginning of each round
         // For this, we need that in every pair of nodes there will be one requestor and one replier
@@ -168,7 +170,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
 
         // Throw receiver thread which runs the method 'run' described above
-        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, this.directoryIp), myIp);
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, this.directoryIp), dcNetSize);
 
         /*System.out.println("waiting to all nodes be connected");
         // Synchronize Publishers and Subscribers
