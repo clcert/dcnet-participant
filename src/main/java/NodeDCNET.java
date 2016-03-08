@@ -335,6 +335,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                         // There are no messages sent in a real round, so we do it once again
                         addRoundToHappenFirst(nextRoundsToHappen, round/2);
                         removeRoundToHappen(nextRoundsToHappen, round+1);
+                        nextRoundsToHappen.sort(null);
                         if (nextRoundAllowedToSend == round+1)
                             nextRoundAllowedToSend = round/2;
                     }
