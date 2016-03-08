@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import org.w3c.dom.Node;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
@@ -21,7 +22,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     // private final int SYNC = 0;
     private final int DCNET = 1;
 
-    private final int dcNetSize;
+    private int dcNetSize;
     private final String myIp;
     private final String name;
     private final int message;
@@ -29,14 +30,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final boolean NONPROBABILISTIC = true;
     private final String directoryIp;
 
-    //private static Hashtable<Integer, String> directory = new Hashtable();
     private static HashMap<Integer, String> directory = new HashMap<>();
 
-    public NodeDCNET(String myIp, String name, String message, String dcNetSize, String directoryIp) {
+    public NodeDCNET(String myIp, String name, String message, String directoryIp) {
         this.myIp = myIp;
         this.name = name;
         this.message = Integer.parseInt(message);
-        this.dcNetSize = Integer.parseInt(dcNetSize);
         this.directoryIp = directoryIp;
     }
 
@@ -44,7 +43,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     public static void main(String[] args) throws IOException {
         String myIp = getLocalNetworkIp();
         System.out.println("my IP: " + myIp + "\n");
-        new NodeDCNET(myIp, "Node", args[0], args[1], args[2]).createNode();
+        new NodeDCNET(myIp, "Node", args[0], args[1]).createNode();
     }
 
     // Receiver Thread
@@ -157,6 +156,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         }
         System.out.println("My index is: " + this.nodeIndex);
 
+        // Set number of nodes in the room
+        this.dcNetSize = directory.nodes.length;
+        System.out.println("Number of nodes: " + this.dcNetSize);
+
         // We need to connect every pair of nodes in order to synchronize the sending of values at the beginning of each round
         // For this, we need that in every pair of nodes there will be one requestor and one replier
         // In every pair of nodes {i,j} where i<j, node i will work as a requestor and node j will work as a replier
@@ -165,7 +168,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
 
         // Throw receiver thread which runs the method 'run' described above
-        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, "" + this.dcNetSize, this.directoryIp), myIp);
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, this.directoryIp), myIp);
 
         /*System.out.println("waiting to all nodes be connected");
         // Synchronize Publishers and Subscribers
