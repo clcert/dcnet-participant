@@ -60,17 +60,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         receiver.subscribe("".getBytes());
 
         int dcNetRoomSize = (int) args[0];
+        System.out.println("RCVR dcNetSize: " + dcNetRoomSize);
 
         // Synchronize publishers and subscribers
         // waitForAllPublishers(pipe, receiver);
-
-        // CREATE DIRECTORY
-        /*for (int i = 0; i < dcNetSize; i++) {
-            String[] info = receiver.recvStr().split("%");
-            System.out.println(info[0] + " " + info[1]);
-            directory.put(Integer.parseInt(info[0]), info[1]);
-        }
-        pipe.send("");*/
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
@@ -127,25 +120,25 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
         bindSenderPort(sender);
 
-        System.out.println("Creating SUBSCRIBER and connecting");
+        // System.out.println("Creating SUBSCRIBER and connecting");
         ZMQ.Socket directorySubscriber = context.createSocket(ZMQ.SUB);
         directorySubscriber.connect("tcp://" + directoryIp + ":5555");
         directorySubscriber.subscribe("".getBytes());
 
-        System.out.println("Creating PUSH and connecting");
+        // System.out.println("Creating PUSH and connecting");
         ZMQ.Socket directoryPush = context.createSocket(ZMQ.PUSH);
         directoryPush.connect("tcp://" + directoryIp + ":5554");
 
-        System.out.println("SEND my ip");
+        // System.out.println("SEND my ip");
         directoryPush.send(myIp);
 
-        System.out.println("WAITING message from directory");
+        // System.out.println("WAITING message from directory");
         String directoryJson = directorySubscriber.recvStr();
         Directory directory = new Gson().fromJson(directoryJson, Directory.class);
         for (int i = 0; i < directory.nodes.length; i++) {
             NodeDCNET.directory.put(directory.nodes[i].index, directory.nodes[i].ip);
         }
-        System.out.println("FINISHED directory process");
+        // System.out.println("FINISHED directory process");
 
         // Rescue index (key) of the node given my ip (value)
         Set directorySet = NodeDCNET.directory.entrySet();
@@ -283,6 +276,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 int messagesReceivedInThisRound = 0;
                 while (messagesReceivedInThisRound < dcNetSize) {
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
+                    System.out.println(messageReceivedFromReceiverThread);
                     int incomingOutputMessage = Integer.parseInt(messageReceivedFromReceiverThread);
                     sumOfO += incomingOutputMessage;
                     messagesReceivedInThisRound++;
