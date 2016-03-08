@@ -238,7 +238,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             }
 
             if (round == 1)
-                t1 = System.currentTimeMillis();
+                t1 = System.nanoTime();
 
             // PRINTING INFO ABOUT THE ROUND
             System.out.println("ROUND " + round);
@@ -375,10 +375,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         }
 
-        long t2 = System.currentTimeMillis();
+        long t2 = System.nanoTime();
 
         long total_time = t2-t1;
-        System.out.println("Total Time: " + total_time + " milliseconds");
+        System.out.println("Total Time: " + total_time + " nanoseconds");
 
         // Close all the threads and destroy the context
         receiverThread.close();
