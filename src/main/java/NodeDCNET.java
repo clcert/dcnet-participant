@@ -39,7 +39,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         this.directoryIp = directoryIp;
     }
 
-    // Usage: ./gradlew run -PappArgs=[<message>,<numberOfNodes>,<directoryIP>]
+    // Usage: ./gradlew run -PappArgs=[<message>,<directoryIP>]
     public static void main(String[] args) throws IOException {
         String myIp = getLocalNetworkIp();
         System.out.println("my IP: " + myIp + "\n");
@@ -56,7 +56,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Set size of the dcnet room
         int dcNetRoomSize = (int) args[0];
 
-        // Connect as a subscriber to each of the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
+        // Connect as a subscriber to each of the nodes on the DC-NET room
         connectReceiverThread(receiver, dcNetRoomSize);
 
         // Subscribe to whatever the nodes say
@@ -114,28 +114,27 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create the sender socket that works as a publisher
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
 
-        // Explore in all the ports, starting from 9001, until find one available. This port will also used as the index for the node, which range will be: [1, ..., n]
+        // Bind sender port in 9000
         bindSenderPort(sender);
 
-        // System.out.println("Creating SUBSCRIBER and connecting");
+        // Create Directory Subscriber and connect to 5555 port
         ZMQ.Socket directorySubscriber = context.createSocket(ZMQ.SUB);
         directorySubscriber.connect("tcp://" + directoryIp + ":5555");
         directorySubscriber.subscribe("".getBytes());
 
-        // System.out.println("Creating PUSH and connecting");
+        // Create Directory Push and connect to 5554 port
         ZMQ.Socket directoryPush = context.createSocket(ZMQ.PUSH);
         directoryPush.connect("tcp://" + directoryIp + ":5554");
 
-        // System.out.println("SEND my ip");
+        // Send my IP to the Directory
         directoryPush.send(myIp);
 
-        // System.out.println("WAITING message from directory");
+        // Wait message from the Directory with all the {index,ip} pairs
         String directoryJson = directorySubscriber.recvStr();
         Directory directory = new Gson().fromJson(directoryJson, Directory.class);
         for (int i = 0; i < directory.nodes.length; i++) {
             NodeDCNET.directory.put(directory.nodes[i].index, directory.nodes[i].ip);
         }
-        // System.out.println("FINISHED directory process");
 
         // Rescue index (key) of the node given my ip (value)
         Set directorySet = NodeDCNET.directory.entrySet();
@@ -146,11 +145,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             if (ipValue.equals(myIp))
                 nodeIndex = indexKey;
         }
-        System.out.println("My index is: " + nodeIndex);
 
         // Set number of nodes in the room
         dcNetSize = directory.nodes.length;
+
         System.out.println("Number of nodes: " + dcNetSize);
+        System.out.println("My index is: " + nodeIndex);
 
         // We need to connect every pair of nodes in order to synchronize the sending of values at the beginning of each round
         // For this, we need that in every pair of nodes there will be one requestor and one replier
@@ -161,11 +161,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Throw receiver thread which runs the method 'run' described above
         ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, this.directoryIp), dcNetSize);
-
-        /*System.out.println("waiting to all nodes be connected");
-        // Synchronize Publishers and Subscribers
-        waitForAllSubscribers(receiverThread, sender, nodeIndex);
-        System.out.println("all nodes connected");*/
 
         // Sleep to overlap slow joiner problem
         try {
@@ -189,15 +184,15 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         }
         String outputMessageJson = new Gson().toJson(outputMessage);
 
-        System.out.println();
-        System.out.println("m_" + nodeIndex + " = " + message);
-        System.out.println();
+        // Print message to send
+        System.out.println("\nm_" + nodeIndex + " = " + message + "\n");
 
         // Variable to check that the message was transmitted to the rest of the room (was sent in a round with no collisions)
         boolean messageTransmitted = false;
 
         // Index to know in what round we are
         int round;
+        boolean realround;
 
         // Index to know in which round i'm allowed to resend my message
         int nextRoundAllowedToSend = 1;
@@ -255,6 +250,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // REAL ROUND
             if (round == 1 || round%2 == 0) {
+                realround = true;
                 System.out.println("REAL ROUND");
 
                 if (messageTransmitted) {
@@ -282,6 +278,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // VIRTUAL ROUND
             else {
+                realround = false;
                 System.out.println("VIRTUAL ROUND");
 
                 // Recover messages sent in rounds 2k and k
@@ -332,7 +329,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
             else {
-                if (sumOfT == 0) {}
+                if (sumOfT == 0) {
+                    if (realround) {
+                        // There are no messages sent in a real round, so we do it once again
+                        addRoundToHappenNext(nextRoundsToHappen, round);
+                    }
+                }
                 else {
                     // New collision produced, it means that <sumOfT> > 1
                     // Check if my message was involved in the collision, seeing that this round i was allowed to send my message
@@ -382,6 +384,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         System.out.println("\nMessages received: ");
         messagesReceived.forEach(System.out::println);
 
+    }
+
+    private void addRoundToHappenNext(LinkedList<Integer> nextRoundsToHappen, int round) {
+        nextRoundsToHappen.add(round);
     }
 
     private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
