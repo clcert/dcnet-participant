@@ -18,15 +18,11 @@ import java.util.*;
 
 class NodeDCNET implements ZThread.IAttachedRunnable {
 
-    // private final int SYNC = 0;
-    private final int DCNET = 1;
-
     private int dcNetSize;
     private final String myIp;
     private final String name;
     private final int message;
     private int nodeIndex;
-    private final boolean NONPROBABILISTIC = true;
     private final String directoryIp;
 
     private static HashMap<Integer, String> directory = new HashMap<>();
@@ -171,6 +167,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create OutputMessage object
         OutputMessage outputMessage = new OutputMessage();
         outputMessage.setSenderId("Node_" + nodeIndex);
+        int DCNET = 1;
         outputMessage.setCmd(DCNET);
 
         // This is the actual message that the node wants to communicate (<m>)
@@ -343,6 +340,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                     // New collision produced, it means that <sumOfT> > 1
                     // Check if my message was involved in the collision, seeing that this round i was allowed to send my message
                     if (nextRoundAllowedToSend == round) {
+                        boolean NONPROBABILISTIC = true;
                         if (NONPROBABILISTIC) {
                             // See if i need to send in the next (2*round) round, checking the average condition
                             if (message < sumOfM / sumOfT) {
@@ -448,11 +446,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 requestor.send("".getBytes(), 0);
                 requestor.recv(0);
             }
-    }
-
-    private static String cut_ip(String ip) {
-        String[] numbers = ip.split("\\.");
-        return "" + numbers[0] + "." + numbers[1] + "." + numbers[2] + ".";
     }
 
     public static String getLocalNetworkIp() {
