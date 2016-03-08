@@ -135,8 +135,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket directoryPush = context.createSocket(ZMQ.PUSH);
         directoryPush.connect("tcp://" + directoryIp + ":5554");
 
-        System.out.println("SEND my ip and index");
-        directoryPush.send(nodeIndex + "%" + myIp);
+        System.out.println("SEND my ip");
+        directoryPush.send(myIp);
 
         System.out.println("WAITING message from directory");
         String directoryJson = directorySubscriber.recvStr();
