@@ -330,29 +330,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
             else {
                 if (sumOfT == 0) {
+                    // This could happen only in probabilistic mode, in non probabilistic is impossible
                     if (realround) {
                         // There are no messages sent in a real round, so we do it once again
-                        addRoundToHappenFirst(nextRoundsToHappen, round);
-                        if (nextRoundAllowedToSend == round) {
-                            if (NONPROBABILISTIC) {
-                                // See if i need to send in the next (2*round) round, checking the average condition
-                                if (message < sumOfM / sumOfT) {
-                                    nextRoundAllowedToSend = 2 * round;
-                                }
-                                // If not, i'm "allowed to send" in the (2*round + 1) round, which will be a virtual round
-                                else {
-                                    nextRoundAllowedToSend = 2 * round + 1;
-                                }
-                            } else {
-                                // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
-                                int coin = new SecureRandom().nextInt(2);
-                                if (coin == 0) {
-                                    nextRoundAllowedToSend = 2 * round;
-                                } else {
-                                    nextRoundAllowedToSend = 2 * round + 1;
-                                }
-                            }
-                        }
+                        addRoundToHappenFirst(nextRoundsToHappen, round/2);
+                        if (nextRoundAllowedToSend == round)
+                            nextRoundAllowedToSend = round/2;
                     }
                 }
                 else {
