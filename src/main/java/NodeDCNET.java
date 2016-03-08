@@ -332,7 +332,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 if (sumOfT == 0) {
                     if (realround) {
                         // There are no messages sent in a real round, so we do it once again
-                        addRoundToHappenNext(nextRoundsToHappen, round);
+                        addRoundToHappenFirst(nextRoundsToHappen, round);
                     }
                 }
                 else {
@@ -386,8 +386,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     }
 
-    private void addRoundToHappenNext(LinkedList<Integer> nextRoundsToHappen, int round) {
-        nextRoundsToHappen.add(round);
+    private void addRoundToHappenFirst(LinkedList<Integer> nextRoundsToHappen, int round) {
+        nextRoundsToHappen.addFirst(round);
     }
 
     private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
