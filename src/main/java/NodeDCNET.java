@@ -53,6 +53,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create the receiver socket that work as a subscriber
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
+        // Set size of the dcnet room
         int dcNetRoomSize = (int) args[0];
 
         // Connect as a subscriber to each of the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
@@ -60,9 +61,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
-
-        // Synchronize publishers and subscribers
-        // waitForAllPublishers(pipe, receiver);
 
         // Read from other nodes
         while (!Thread.currentThread().isInterrupted()) {
@@ -273,11 +271,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // Receive information from the receiver thread
                 // Count how many messages were receive from the receiver thread. When this number equals <dcNetSize> i've received all the messages in this round
                 int messagesReceivedInThisRound = 0;
-                System.out.println("im here");
                 while (messagesReceivedInThisRound < dcNetSize) {
-                    System.out.println("dcnetsize: " + dcNetSize);
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                    System.out.println(messageReceivedFromReceiverThread);
                     int incomingOutputMessage = Integer.parseInt(messageReceivedFromReceiverThread);
                     sumOfO += incomingOutputMessage;
                     messagesReceivedInThisRound++;
