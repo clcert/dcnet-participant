@@ -53,13 +53,13 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create the receiver socket that work as a subscriber
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
+        int dcNetRoomSize = (int) args[0];
+
         // Connect as a subscriber to each of the nodes on the DC-NET room, from port 9001 to (9000 + <dcNetSize>)
-        connectReceiverThread(receiver);
+        connectReceiverThread(receiver, dcNetRoomSize);
 
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
-
-        int dcNetRoomSize = (int) args[0];
 
         // Synchronize publishers and subscribers
         // waitForAllPublishers(pipe, receiver);
@@ -101,7 +101,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     }
 
-    private void connectReceiverThread(ZMQ.Socket receiver) {
+    private void connectReceiverThread(ZMQ.Socket receiver, int dcNetSize) {
         for (int i = 1; i <= dcNetSize; i++) {
             receiver.connect("tcp://" + directory.get(i) + ":9000");
         }
