@@ -1,5 +1,4 @@
 import com.google.gson.Gson;
-import org.w3c.dom.Node;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
@@ -355,8 +354,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                             }
                         } else {
                             // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
-                            int coin = new SecureRandom().nextInt(2);
-                            if (coin == 0) {
+                            boolean coin = new SecureRandom().nextBoolean();
+                            if (coin) {
                                 nextRoundAllowedToSend = 2 * round;
                             } else {
                                 nextRoundAllowedToSend = 2 * round + 1;
