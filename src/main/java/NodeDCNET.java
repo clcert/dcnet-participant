@@ -59,8 +59,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
 
-        int dcNetRoomSize = (int) args[0];
-        System.out.println("RCVR dcNetSize: " + dcNetRoomSize);
+        System.out.println("RCVR dcNetSize: " + dcNetSize);
 
         // Synchronize publishers and subscribers
         // waitForAllPublishers(pipe, receiver);
@@ -80,7 +79,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 continue;
             }
 
-            for (int i = 0; i < dcNetRoomSize; i++) {
+            for (int i = 0; i < dcNetSize; i++) {
                 // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();
 
