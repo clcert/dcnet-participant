@@ -329,7 +329,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
             // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
             else {
-                if (sumOfT == 0) {
+                if (sumOfT == 0 || sumOfO == messagesSentInPreviousRounds.get(round/2)) {
                     // This could happen only in probabilistic mode, in non probabilistic is impossible
                     if (realround) {
                         // There are no messages sent in a real round, so we do it once again
