@@ -373,7 +373,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                         // TODO: See if this really improves something or is not necessary
                         nextRoundsToHappen.sort(null);
                         // As we removed the next round from happening, we have to reassign the sending round to the "father" round once more
-                        if (nextRoundAllowedToSend == round+1)
+                        if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
                             nextRoundAllowedToSend = round/2;
                     }
                 }
