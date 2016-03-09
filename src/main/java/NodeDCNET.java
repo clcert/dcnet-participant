@@ -12,8 +12,10 @@ import java.util.*;
 /*
     This application runs a collision resolution protocol, in order
     to use within a DC-NET.
-    The nodes that are created by this class are run all in the same
-    computer, running on different ports.
+    The nodes that are created by this class are run in computers
+    connected through a LAN.
+    Also is necessary to run within the same LAN a Directory Node,
+    in order to inform the IP address of the rest of the room.
 */
 
 class NodeDCNET implements ZThread.IAttachedRunnable {
@@ -24,7 +26,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final int message;
     private int nodeIndex;
     private final String directoryIp;
-
     private static HashMap<Integer, String> directory = new HashMap<>();
 
     public NodeDCNET(String myIp, String name, String message, String directoryIp) {
@@ -48,7 +49,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create the receiver socket that work as a subscriber
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
-        // Set size of the dcnet room
+        // Set size of the DC-NET room
         int dcNetRoomSize = (int) args[0];
 
         // Connect as a subscriber to each of the nodes on the DC-NET room
@@ -57,21 +58,25 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Subscribe to whatever the nodes say
         receiver.subscribe("".getBytes());
 
-        // Read from other nodes
+        // Read from other nodes while is not being interrupted
         while (!Thread.currentThread().isInterrupted()) {
 
+            // Receive message from the sender thread
             String inputFromSender = pipe.recvStr();
 
+            // Check if the message is a Finished signal
             if (inputFromSender.equals("FINISHED"))
                 break;
 
+            // If not is finished, it is the number of the round that the room is playing
             int round = Integer.parseInt(inputFromSender);
 
-            // Wait for sender thread let know that a new round will begin, if it is a virtual round, i wait two times
+            // If the round is virtual, the receiver thread will not receive any message from the room, so we skip it
             if (round != 1 && round%2 != 0) {
                 continue;
             }
 
+            // We are in a real round, so we iterate in order to receive all the messages from the other nodes
             for (int i = 0; i < dcNetRoomSize; i++) {
                 // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();
@@ -94,10 +99,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     }
 
+    // Connect Receiver thread to the rest of the nodes publishers sockets
     private void connectReceiverThread(ZMQ.Socket receiver, int dcNetSize) {
-        for (int i = 1; i <= dcNetSize; i++) {
+        for (int i = 1; i <= dcNetSize; i++)
             receiver.connect("tcp://" + directory.get(i) + ":9000");
-        }
     }
 
     // Sender Thread and Collision Resolution Protocol
@@ -109,7 +114,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create the sender socket that works as a publisher
         ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
 
-        // Bind sender port in 9000
+        // Bind sender port (by default is in port 9000 when working on a LAN)
         bindSenderPort(sender);
 
         // Create Directory Subscriber and connect to 5555 port
@@ -121,17 +126,19 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket directoryPush = context.createSocket(ZMQ.PUSH);
         directoryPush.connect("tcp://" + directoryIp + ":5554");
 
-        // Send my IP to the Directory
+        // Send my IP to the Directory through the PUSH socket
         directoryPush.send(myIp);
 
-        // Wait message from the Directory with all the {index,ip} pairs
+        // Wait message from the Directory node (using the SUB socket) with all the {index,ip} pairs of the room
         String directoryJson = directorySubscriber.recvStr();
+
+        // Create object Directory serializing the Json message received from the directory node
         Directory directory = new Gson().fromJson(directoryJson, Directory.class);
         for (int i = 0; i < directory.nodes.length; i++) {
             NodeDCNET.directory.put(directory.nodes[i].index, directory.nodes[i].ip);
         }
 
-        // Rescue index (key) of the node given my ip (value)
+        // Rescue index (key) of this node given my ip (value)
         Set directorySet = NodeDCNET.directory.entrySet();
         for (Object aDirectorySet : directorySet) {
             Map.Entry mapEntry = (Map.Entry) aDirectorySet;
@@ -144,6 +151,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Set number of nodes in the room
         dcNetSize = directory.nodes.length;
 
+        // Print info about the room
         System.out.println("Number of nodes: " + dcNetSize);
         System.out.println("My index is: " + nodeIndex);
 
@@ -158,6 +166,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, this.directoryIp), dcNetSize);
 
         // Sleep to overlap slow joiner problem
+        // TODO: fix this using a better solution
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -167,17 +176,19 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Create OutputMessage object
         OutputMessage outputMessage = new OutputMessage();
         outputMessage.setSenderId("Node_" + nodeIndex);
-        int DCNET = 1;
-        outputMessage.setCmd(DCNET);
+        outputMessage.setCmd(1);
 
-        // This is the actual message that the node wants to communicate (<m>)
+        // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         int message = this.message;
+        // If the message is 0, the node doesn't want to send any message to the room
         if (message == 0) {
             outputMessage.setMessage(0);
         }
+        // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
             outputMessage.setMessage(message*(dcNetSize+1) + 1);
         }
+        // Create Json with the message that the node wants to communicate to the rest of the room
         String outputMessageJson = new Gson().toJson(outputMessage);
 
         // Print message to send
@@ -186,9 +197,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Variable to check that the message was transmitted to the rest of the room (was sent in a round with no collisions)
         boolean messageTransmitted = false;
 
-        // Index to know in what round we are
+        // Index to know in what round we are and if this round is either real or virtual
         int round;
-        boolean realround;
+        boolean realRound;
 
         // Index to know in which round i'm allowed to resend my message
         int nextRoundAllowedToSend = 1;
@@ -199,7 +210,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Store messages sent in previous rounds in order to build the message in the virtual rounds
         Dictionary<Integer, Integer> messagesSentInPreviousRounds = new Hashtable<>();
 
-        // Count how many messages were sent without collisions. When this number equals the collision size, the first collision was resolved
+        // Count how many messages were sent without collisions
+        // When this number equals the collision size, the first collision was resolved and the protocol over
         int messagesSentWithNoCollisions = 0;
 
         // Variable to see if the first collision was solved or not
@@ -209,95 +221,115 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         LinkedList<Integer> nextRoundsToHappen = new LinkedList<>();
         nextRoundsToHappen.addFirst(1);
 
-        // Create the zeroMessage which is used several times on the protocol
-        String zeroMessageJson = new Gson().toJson(new OutputMessage("Node_" + nodeIndex, DCNET, 0));
+        // Create the zeroMessage which is used several times on the protocol (either when is not my turn to send or i already sent my message)
+        String zeroMessageJson = new Gson().toJson(new OutputMessage("Node_" + nodeIndex, 1, 0));
 
-        // Store all the messages received in this round to show them later
+        // Store all the messages received to show them at the end of the protocol
         List<Integer> messagesReceived = new LinkedList<>();
 
+        // Measure execution time (real time)
         long t1 = 0;
 
+        // Mode of resending messages when was involved in a collision (see Reference for more information)
+        boolean nonProbabilistic = true;
+
         // Begin the collision resolution protocol
+        // Every loop is a new round that is being played
         while (!Thread.currentThread().isInterrupted()) {
 
             // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors);
 
+            // Check if the protocol was finished in the last round played
+            // If it so, let know to the receiver thread, wait for his response and break the loop
             if (finished) {
                 receiverThread.send("FINISHED");
                 receiverThread.recvStr();
                 break;
             }
+            // If not is finished yet, get which round we need to play and send this round to the receiver thread
             else {
-                // Get actual round to play and send this round to the receiver thread
                 round = nextRoundsToHappen.removeFirst();
                 receiverThread.send("" + round);
             }
 
+            // If it is the first round, "start the clock" in order to measure total time of execution (real time)
             if (round == 1)
                 t1 = System.nanoTime();
 
-            // PRINTING INFO ABOUT THE ROUND
+            // Print round number
             System.out.println("ROUND " + round);
 
             // Variables to store the resulting message of the round
-            int sumOfM, sumOfT;
-            int sumOfO = 0;
+            int sumOfM, sumOfT, sumOfO = 0;
 
-            // REAL ROUND
+            // The protocol separates his operation if it's being played a real round or a virtual one (see Reference for more information)
+            // REAL ROUND (first and even rounds)
             if (round == 1 || round%2 == 0) {
-                realround = true;
+                // Set variable that we are playing a real round and print it
+                realRound = true;
                 System.out.println("REAL ROUND");
 
+                // If my message was already sent in a round with no collisions, i send a zero message
                 if (messageTransmitted) {
                     sender.send(zeroMessageJson);
                 }
 
+                // If not, check first if i'm allowed to send my message in this round
+                // If so i send my message as the Json string constructed before the round began
                 else if (nextRoundAllowedToSend == round) {
                     sender.send(outputMessageJson);
                 }
+                // If not, i send a zero message
                 else {
                     sender.send(zeroMessageJson);
                 }
 
-                // Receive information from the receiver thread
-                // Count how many messages were receive from the receiver thread. When this number equals <dcNetSize> i've received all the messages in this round
+                // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
+                // Count how many messages were receive from the receiver thread
                 int messagesReceivedInThisRound = 0;
+                // When this number equals <dcNetSize> i've received all the messages in this round
                 while (messagesReceivedInThisRound < dcNetSize) {
+                    // Receive a message
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
+                    // Transform incoming message to an int
                     int incomingOutputMessage = Integer.parseInt(messageReceivedFromReceiverThread);
+                    // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
                     sumOfO += incomingOutputMessage;
+                    // Increase the number of messages received
                     messagesReceivedInThisRound++;
                 }
 
             }
 
-            // VIRTUAL ROUND
+            // VIRTUAL ROUND (odd rounds)
             else {
-                realround = false;
+                // Set variable that we are playing a virtual round and print it
+                realRound = false;
                 System.out.println("VIRTUAL ROUND");
 
-                // Recover messages sent in rounds 2k and k
+                // Recover messages sent in rounds 2k and k in order to construct the resulting message of this round (see Reference for more information)
                 int sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
                 int sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
 
-                // If not, is a virtual round that needs to happen, so calculate the resulting message
+                // Construct the resulting message of this round
                 sumOfO = sumOfOSentInRoundK - sumOfOSentInRound2K;
             }
 
             // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
             messagesSentInPreviousRounds.put(round, sumOfO);
 
-            // Divide sumOfO in sumOfM and sumOfT
+            // Divide sumOfO in sumOfM and sumOfT (see Reference for more information)
             sumOfM = sumOfO/(dcNetSize + 1);
             sumOfT = sumOfO - (sumOfM*(dcNetSize + 1));
 
-            // Display round message
+            // Print resulting message of this round
             System.out.println("C_" + round +  " = (" + sumOfM + "," + sumOfT + ")");
 
-            // Assign the size of the collision produced in the first round
+            // If we are playing the first round, assign the size of the collision
             if (round == 1) {
                 collisionSize = sumOfT;
+                // If the size is 0, it means that no messages were sent during this session, so we finish the protocol
                 if (collisionSize == 0) {
                     System.out.println("NO MESSAGES WERE SENT");
                     finished = true;
@@ -305,52 +337,66 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 }
             }
 
-            // NO COLLISION ROUND => <sumOfT> = 1
+            // Depending on the resulting message, we have to analyze either there was a collision or not in this round
+            // <sumOfT> = 1 => No Collision Round => a message went through clearly, received by the rest of the nodes
             if (sumOfT == 1) {
                 // Increase the number of messages that went through the protocol
                 messagesSentWithNoCollisions++;
 
-                // Add message received in this round
+                // Add message received in this round in order to calculate messages in subsequently virtual rounds
                 messagesReceived.add(sumOfM);
 
-                // If the message that went through equals mine, my message was transmitted
+                // If the message that went through is mine, my message was transmitted
+                // We have to set the variable in order to start sending zero messages in subsequently rounds
                 if (sumOfM == message)
                     messageTransmitted = true;
 
                 // If the number of messages that went through equals the collision size, the collision was completely resolved
-                if (messagesSentWithNoCollisions == collisionSize) {
+                // Set variable to finalize the protocol in the next round
+                if (messagesSentWithNoCollisions == collisionSize)
                     finished = true;
-                }
             }
 
-            // COLLISION OR NO MESSAGES SENT IN THIS ROUND => <sumOfT> != 1
+            // <sumOfT> != 1 => Collision produced or no messages sent in this round (last can only occur in probabilistic mode)
             else {
+                // In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
+                // 1) No messages were sent in a real round (<sumOfT> = 0)
+                // 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced
                 if (round != 1 && (sumOfT == 0 || sumOfO == messagesSentInPreviousRounds.get(round/2))) {
-                    // This could happen only in probabilistic mode, in non probabilistic is impossible
-                    if (realround) {
-                        // There are no messages sent in a real round, so we do it once again
+                    // TODO: Check if this verification is needed
+                    if (realRound) {
+                        // We have to re-do the "father" round in order to expect that no all nodes involved in the collision re-send their message in the same round
+                        // Add the "father" round to happen after this one
                         addRoundToHappenFirst(nextRoundsToHappen, round/2);
+                        // Remove the virtual round related to this problematic round
                         removeRoundToHappen(nextRoundsToHappen, round+1);
+                        // Sort the rounds again
+                        // TODO: See if this really improves something or is not necessary
                         nextRoundsToHappen.sort(null);
+                        // As we removed the next round from happening, we have to reassign the sending round to the "father" round once more
                         if (nextRoundAllowedToSend == round+1)
                             nextRoundAllowedToSend = round/2;
                     }
                 }
+                // In either re-sending modes, a "normal" collision can be produced
+                // <sumOfT> > 1 => A Collision was produced
                 else {
-                    // New collision produced, it means that <sumOfT> > 1
-                    // Check if my message was involved in the collision, seeing that this round i was allowed to send my message
+                    // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
                     if (nextRoundAllowedToSend == round) {
-                        boolean NONPROBABILISTIC = true;
-                        if (NONPROBABILISTIC) {
-                            // See if i need to send in the next (2*round) round, checking the average condition
+                        // Check in which mode of re-sending my message we are
+                        // Non probabilistic mode (see Reference for more information)
+                        if (nonProbabilistic) {
+                            // Calculate average message, if my message is below that value i re-send in the round (2*round)
                             if (message < sumOfM / sumOfT) {
                                 nextRoundAllowedToSend = 2 * round;
                             }
-                            // If not, i'm "allowed to send" in the (2*round + 1) round, which will be a virtual round
+                            // If not, i re-send my message in the round (2*round + 1)
                             else {
                                 nextRoundAllowedToSend = 2 * round + 1;
                             }
-                        } else {
+                        }
+                        // Probabilistic mode (see Reference for more information)
+                        else {
                             // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
                             boolean coin = new SecureRandom().nextBoolean();
                             if (coin) {
@@ -360,11 +406,12 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                             }
                         }
                     }
-                    // Add 2k and 2k+1 rounds to future plays
+                    // Add (2*round) and (2*round + 1) rounds to future plays
                     addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
                 }
             }
 
+            // Print a blank line
             System.out.println();
 
             // Prevent infinite loops
@@ -373,8 +420,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         }
 
+        // "Stop" the clock
         long t2 = System.nanoTime();
 
+        // Calculate total time of execution and print it
         long total_time = t2-t1;
         System.out.println("Total Time: " + total_time + " nanoseconds");
 
@@ -383,71 +432,92 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         sender.close();
         context.destroy();
 
+        // Print all the messages received in this session
         System.out.println("\nMessages received: ");
         messagesReceived.forEach(System.out::println);
 
     }
 
+    // Remove a round to happen afterwards
     private void removeRoundToHappen(LinkedList<Integer> nextRoundsToHappen, int round) {
         nextRoundsToHappen.removeFirstOccurrence(round);
     }
 
+    // Add a round to happen immediately after the running one
     private void addRoundToHappenFirst(LinkedList<Integer> nextRoundsToHappen, int round) {
         nextRoundsToHappen.addFirst(round);
     }
 
+    // Add two rounds to happen afterwards (they are added at the end of the LinkedList)
     private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
         nextRoundsToHappen.add(firstRoundToAdd);
         nextRoundsToHappen.add(secondRoundToAdd);
     }
 
+    // Create all the requestors (the quantity depends on the index of the node) socket necessary to run the protocol (see Reference for more information)
     private ZMQ.Socket[] initializeRequestorsArray(int nodeIndex, ZContext context) {
+        // Create an array of sockets
         ZMQ.Socket[] requestors = null;
+        // The "last" node doesn't have any requestor sockets
         if (nodeIndex != dcNetSize) {
+            // Initialize the array with exactly (<n> - <nodeIndex>) sockets
             requestors = new ZMQ.Socket[dcNetSize - nodeIndex];
             for (int i = 0; i < requestors.length; i++) {
+                // Create the REQ socket
                 requestors[i] = context.createSocket(ZMQ.REQ);
+                // Connect this REQ socket to his correspondent REP socket of another node
                 requestors[i].connect("tcp://" + directory.get(nodeIndex + i + 1) + ":" + (7000 + nodeIndex - 1));
             }
         }
+        // Return the array with the requestor sockets
         return requestors;
     }
 
+    // Create all the repliers (the quantity depends on the index of the node) socket necessary to run the protocol (see Reference for more information)
     private ZMQ.Socket[] initializeRepliersArray(int nodeIndex, ZContext context) {
+        // Create an array of sockets
         ZMQ.Socket[] repliers = null;
-
+        // The "first" node doesn't have any replier sockets
         if (nodeIndex != 1) {
+            // Initialize the array with exactly (<nodeIndex> - 1) sockets
             repliers = new ZMQ.Socket[nodeIndex-1];
-
             for (int i = 0; i < repliers.length; i++) {
+                // Create the REP socket
                 repliers[i] = context.createSocket(ZMQ.REP);
+                // Bind this REP socket to the correspondent port in order to be connected by his correspondent REQ socket of another node
                 repliers[i].bind("tcp://*:" + (7000+i));
             }
-
         }
-
+        // Return the array with the replier sockets
         return repliers;
-
     }
 
+    // Bind the sender port of the PUB socket (9000 by default)
     private void bindSenderPort(ZMQ.Socket sender) {
         sender.bind("tcp://*:9000");
     }
 
+    // Synchronize the nodes of the room using the replier and requestor socket of each of the nodes (see Reference for more information)
     private void synchronizeNodes(int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors) {
+        // The "first" node doesn't have any replier sockets
         if (nodeIndex != 1)
             for (ZMQ.Socket replier : repliers) {
+                // The replier wait to receive a message
                 replier.recv(0);
+                // When the replier receives the message, replies with another message
                 replier.send("", 0);
             }
-
+        // The "last" node doesn't have any requestor sockets
         if (nodeIndex != dcNetSize)
             for (ZMQ.Socket requestor : requestors) {
+                // The requestor sends a message
                 requestor.send("".getBytes(), 0);
+                // The requestor waits to receive a reply by the correspondent replier
                 requestor.recv(0);
             }
     }
 
+    // Get the LAN IP address of the node
     public static String getLocalNetworkIp() {
         String networkIp = "";
         InetAddress ip;
@@ -460,161 +530,3 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         return networkIp;
     }
 }
-
-    /* private void waitForAllSubscribers(ZMQ.Socket receiverThread, ZMQ.Socket sender, int nodeIndex) {
-        // Let know the receiver thread what is my nodeIndex
-        receiverThread.send("" + nodeIndex);
-
-        // Set timeout on the receiver thread
-        receiverThread.setReceiveTimeOut(2000);
-
-        // Store the message received from receiver thread
-        String inputSyncMessage;
-
-        while (true) {
-            // Send nodeIndex to the rest of the room
-            sender.send("" + nodeIndex);
-
-            // While the receiver doesn't inform me i send again my nodeIndex to the rest of the room
-            while ((inputSyncMessage = receiverThread.recvStr()) == null)
-                sender.send("" + nodeIndex);
-
-            // If the receiver tells me we are ready to go, break the cycle and continue
-            if (inputSyncMessage.equals("ready")) {
-                sender.send("" + nodeIndex);
-                sender.send("go" + nodeIndex);
-                for (int i = 0; i < dcNetSize; i++)
-                    sender.send("r" + (i+1) + "#" + nodeIndex);
-            }
-
-            else if (inputSyncMessage.equals("all ready")) {
-                break;
-            }
-
-            // If not, it means that the receiver received a message from other node, so i let know to the rest of the room that i'm already connected to them
-            else
-                // "rX#Y" means that node Y already received message from node X
-                sender.send("r" + inputSyncMessage + "#" + nodeIndex);
-        }
-
-        // Set timeout to infinity to continue the protocol
-        receiverThread.setReceiveTimeOut(-1);
-    } */
-
-    /* private void waitForAllPublishers(ZMQ.Socket pipe, ZMQ.Socket receiver) {
-        // Receive message from sender that indicates our nodeIndex
-        int nodeIndex = Integer.parseInt(pipe.recvStr());
-
-        // Store the message received from receiver thread
-        String inputSyncMessage;
-
-        // Set time out of the receiver socket
-        receiver.setReceiveTimeOut(2000);
-
-        // Array to store what nodes received my message
-        boolean[] nodesConnectedtoMe = new boolean[dcNetSize];
-
-        // Array to store what nodes i'm connected to
-        boolean[] nodesConnectedTo = new boolean[dcNetSize];
-
-        // Array to store nodes ready
-        boolean[] nodesReady = new boolean[dcNetSize];
-
-        for (boolean value : nodesConnectedtoMe)
-            value = false;
-        for (boolean value : nodesConnectedTo)
-            value = false;
-
-        // Variable to know if i'm connected to the rest of the room
-        boolean connectedToAllRoom = false;
-
-        // Variable to know if all the room is connected to me
-        boolean allRoomConnectedToMe = false;
-
-        // Variable to know if all the room is connected between them
-        boolean allRoomConnected = false;
-
-        while (true) {
-            // Wait until receive any message from any node of the room
-            while ((inputSyncMessage = receiver.recvStr()) == null)
-                ;
-
-            // If the first character is not an 'r' it means that i can hear a certain node that is transmitting
-            if (inputSyncMessage.charAt(0) != 'r' && inputSyncMessage.charAt(0) != 'g') {
-                // <inputSyncMessage> = node that I can hear
-                // Let know to sender thread that i can hear a certain node stored on <inputSyncMessage>
-                pipe.send(inputSyncMessage);
-
-                if (!nodesConnectedTo[Integer.parseInt(inputSyncMessage) - 1]) {
-                    nodesConnectedTo[Integer.parseInt(inputSyncMessage) - 1] = true;
-                    System.out.println("Node " + nodeIndex + " can hear node " + inputSyncMessage);
-                }
-            }
-
-            else if (inputSyncMessage.charAt(0) == 'g') {
-                int nodeReady = Integer.parseInt(inputSyncMessage.substring(2,3));
-                nodesReady[nodeReady - 1] = true;
-                for (boolean value : nodesReady) {
-                    if (value)
-                        allRoomConnected = true;
-                    else {
-                        allRoomConnected = false;
-                        break;
-                    }
-                }
-            }
-
-            // If the first character is an 'r', it means that is a response that a node can hear a certain other node
-            // <inputSyncMessage> = 'rX#Y' => node Y can hear node X
-            else {
-                // Separate values that what node is being heard and what node is the one that is hearing it
-                int nodeThatIsHeard = Integer.parseInt(inputSyncMessage.substring(1, 2));
-                int nodeThatIsHearing = Integer.parseInt(inputSyncMessage.substring(3, 4));
-
-                // See if other node is being hearing me
-                if (nodeThatIsHeard == nodeIndex) {
-                    if (!nodesConnectedtoMe[nodeThatIsHearing - 1]) {
-                        nodesConnectedtoMe[nodeThatIsHearing - 1] = true;
-                        System.out.println("Node " + nodeIndex + " is being heard by node " + nodeThatIsHearing);
-                    }
-                }
-            }
-
-            // To be ready i need that all the nodes are connected to me and i am connected to all the nodes
-            // Check that all the nodes are connected to me
-            for (boolean value : nodesConnectedtoMe) {
-                if (value)
-                    connectedToAllRoom = true;
-                else {
-                    connectedToAllRoom = false;
-                    break;
-                }
-            }
-
-            // Check that i am connected to all the nodes
-            for (boolean value : nodesConnectedTo) {
-                if (value)
-                    allRoomConnectedToMe = true;
-                else {
-                    allRoomConnectedToMe = false;
-                    break;
-                }
-            }
-
-            // If both values are true, it means that i am ready to go
-            if (connectedToAllRoom && allRoomConnectedToMe) {
-                pipe.send("ready");
-                // ¿Let know to the rest of the room that i'm ready?
-            }
-
-            if (allRoomConnected) {
-                pipe.send("all ready");
-                break;
-            }
-
-
-        }
-
-        receiver.setReceiveTimeOut(-1);
-
-    } */
