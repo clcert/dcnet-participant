@@ -26,20 +26,22 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final int message;
     private int nodeIndex;
     private final String directoryIp;
+    private final boolean nonProbabilistic;
     private static HashMap<Integer, String> directory = new HashMap<>();
 
-    public NodeDCNET(String myIp, String name, String message, String directoryIp) {
+    public NodeDCNET(String myIp, String name, String message, String directoryIp, String nonProbabilistic) {
         this.myIp = myIp;
         this.name = name;
         this.message = Integer.parseInt(message);
         this.directoryIp = directoryIp;
+        this.nonProbabilistic = Boolean.parseBoolean(nonProbabilistic);
     }
 
-    // Usage: ./gradlew run -PappArgs=[<message>,<directoryIP>]
+    // Usage: ./gradlew run -PappArgs=[<message>,<directoryIP>,<probabilisticMode>]
     public static void main(String[] args) throws IOException {
         String myIp = getLocalNetworkIp();
         System.out.println("my IP: " + myIp + "\n");
-        new NodeDCNET(myIp, "Node", args[0], args[1]).createNode();
+        new NodeDCNET(myIp, "Node", args[0], args[1], args[2]).createNode();
     }
 
     // Receiver Thread
@@ -163,7 +165,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         ZMQ.Socket[] requestors = initializeRequestorsArray(nodeIndex, context);
 
         // Throw receiver thread which runs the method 'run' described above
-        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, this.directoryIp), dcNetSize);
+        ZMQ.Socket receiverThread = ZThread.fork(context, new NodeDCNET(this.myIp, this.name, "" + this.message, this.directoryIp, "" + this.nonProbabilistic), dcNetSize);
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
@@ -229,9 +231,6 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Measure execution time (real time)
         long t1 = 0;
-
-        // Mode of resending messages when was involved in a collision (see Reference for more information)
-        boolean nonProbabilistic = true;
 
         // Begin the collision resolution protocol
         // Every loop is a new round that is being played
