@@ -425,7 +425,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Calculate total time of execution and print it
         long total_time = t2-t1;
-        System.out.println("Total Time: " + total_time/1000000000 + " seconds");
+        System.out.println("Total Time: " + total_time/1000000000.0 + " seconds");
         System.out.println("Real rounds played: " + realRoundsPlayed);
 
         // Close all the threads and destroy the context
