@@ -26,7 +26,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
     private final int message;
     private int nodeIndex;
     private final String directoryIp;
-    private final boolean nonProbabilistic;
+    private boolean nonProbabilistic;
     private static HashMap<Integer, String> directory = new HashMap<>();
 
     public NodeDCNET(String myIp, String name, String message, String directoryIp, String nonProbabilistic) {
@@ -364,6 +364,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 if (round != 1 && (sumOfT == 0 || sumOfO == messagesSentInPreviousRounds.get(round/2))) {
                     // TODO: Check if this verification is needed
                     if (realRound) {
+                        // The no splitting of messages can also happen if two messages sent are the same one
+                        // TODO: think in a way to solve this
+
                         // We have to re-do the "father" round in order to expect that no all nodes involved in the collision re-send their message in the same round
                         // Add the "father" round to happen after this one
                         addRoundToHappenFirst(nextRoundsToHappen, round/2);
@@ -386,7 +389,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                         // Non probabilistic mode (see Reference for more information)
                         if (nonProbabilistic) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            if (message < sumOfM / sumOfT) {
+                            if (message <= sumOfM / sumOfT) {
                                 nextRoundAllowedToSend = 2 * round;
                             }
                             // If not, i re-send my message in the round (2*round + 1)
