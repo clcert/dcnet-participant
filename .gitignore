@@ -1,6 +1,5 @@
 /.idea
 /collision_resolution_protocol.iml
-*.class
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
