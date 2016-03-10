@@ -199,8 +199,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         // Variable to check that the message was transmitted to the rest of the room (was sent in a round with no collisions)
         boolean messageTransmitted = false;
 
-        // Index to know in what round we are and if this round is either real or virtual
-        int round;
+        // Index to know in what round we are, how many real rounds we played and if the actual round is real or not
+        int round, realRoundsPlayed = 0;
         boolean realRound;
 
         // Index to know in which round i'm allowed to resend my message
@@ -265,8 +265,9 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             // The protocol separates his operation if it's being played a real round or a virtual one (see Reference for more information)
             // REAL ROUND (first and even rounds)
             if (round == 1 || round%2 == 0) {
-                // Set variable that we are playing a real round and print it
+                // Set variable that we are playing a real round, add one to the count and print it
                 realRound = true;
+                realRoundsPlayed++;
                 System.out.println("REAL ROUND");
 
                 // If my message was already sent in a round with no collisions, i send a zero message
@@ -362,23 +363,20 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // 1) No messages were sent in a real round (<sumOfT> = 0)
                 // 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced
                 if (round != 1 && (sumOfT == 0 || sumOfO == messagesSentInPreviousRounds.get(round/2))) {
-                    // TODO: Check if this verification is needed
-                    //if (realRound) {
-                        // The no splitting of messages can also happen if two messages sent are the same one
-                        // TODO: think in a way to solve this
+                    // The no splitting of messages can also happen if two messages sent are the same one
+                    // TODO: think in a way to solve this
 
-                        // We have to re-do the "father" round in order to expect that no all nodes involved in the collision re-send their message in the same round
-                        // Add the "father" round to happen after this one
-                        addRoundToHappenFirst(nextRoundsToHappen, round/2);
-                        // Remove the virtual round related to this problematic round
-                        removeRoundToHappen(nextRoundsToHappen, round+1);
-                        // Sort the rounds again
-                        // TODO: See if this really improves something or is not necessary
-                        nextRoundsToHappen.sort(null);
-                        // As we removed the next round from happening, we have to reassign the sending round to the "father" round once more
-                        if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
-                            nextRoundAllowedToSend = round/2;
-                    //}
+                    // We have to re-do the "father" round in order to expect that no all nodes involved in the collision re-send their message in the same round
+                    // Add the "father" round to happen after this one
+                    addRoundToHappenFirst(nextRoundsToHappen, round/2);
+                    // Remove the virtual round related to this problematic round
+                    removeRoundToHappen(nextRoundsToHappen, round+1);
+                    // Sort the rounds again
+                    // TODO: See if this really improves something or is not necessary
+                    nextRoundsToHappen.sort(null);
+                    // As we removed the next round from happening, we have to reassign the sending round to the "father" round once more
+                    if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
+                        nextRoundAllowedToSend = round/2;
                 }
                 // In either re-sending modes, a "normal" collision can be produced
                 // <sumOfT> > 1 => A Collision was produced
@@ -427,7 +425,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
         // Calculate total time of execution and print it
         long total_time = t2-t1;
-        System.out.println("Total Time: " + total_time + " nanoseconds");
+        System.out.println("Total Time: " + total_time/1000000000 + " seconds");
+        System.out.println("Real rounds played: " + realRoundsPlayed);
 
         // Close all the threads and destroy the context
         receiverThread.close();
