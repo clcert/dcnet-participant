@@ -363,7 +363,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced
                 if (round != 1 && (sumOfT == 0 || sumOfO == messagesSentInPreviousRounds.get(round/2))) {
                     // TODO: Check if this verification is needed
-                    if (realRound) {
+                    //if (realRound) {
                         // The no splitting of messages can also happen if two messages sent are the same one
                         // TODO: think in a way to solve this
 
@@ -378,7 +378,7 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                         // As we removed the next round from happening, we have to reassign the sending round to the "father" round once more
                         if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
                             nextRoundAllowedToSend = round/2;
-                    }
+                    //}
                 }
                 // In either re-sending modes, a "normal" collision can be produced
                 // <sumOfT> > 1 => A Collision was produced
