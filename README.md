@@ -4,6 +4,10 @@ Java program that simulates nodes participating on a DC-NET room sending message
 
 If two or more nodes send a message in the same session, a collision is produced and this program runs a collision resolution protocol in order to solve it.
 
+## System Requirements
+
+* [Java 8](http://www.oracle.com/technetwork/java/index.html)
+
 ## Instructions
 
 This program simulates a node running in a machine connected via LAN to another machines that simulates other nodes, all participating in a room.
@@ -16,3 +20,10 @@ In order to this nodes to work and start communicating with each other, one mach
 
     ```./gradlew run -PappArgs=[<message>,<directoryIP>]```
 
+### Using Docker
+
+* Also you can use [docker](https://www.docker.com/) in order to run a node, using the following commands: (first build and create the image, and then running this image)
+
+    ```docker build -t dcNetNode .```
+    
+    ```docker run --env MSG=<message> --env DIRECTORY=<directoryIP> dcNetNode```
