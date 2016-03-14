@@ -18,7 +18,7 @@ In order to this nodes to work and start communicating with each other, one mach
 
 * In order to start a session, all the machines (nodes) must run the following command:
 
-    ```./gradlew run -PappArgs=[<message>,<directoryIP>]```
+    ```./gradlew run -PappArgs=[<message>,<directoryIP>,<nonProbMode>]```
 
 ### Using Docker
 
@@ -26,4 +26,5 @@ In order to this nodes to work and start communicating with each other, one mach
 
     ```docker build -t dcNetNode .```
     
-    ```docker run --env MSG=<message> --env DIRECTORY=<directoryIP> dcNetNode```
+    ```docker run --env MSG=<message> --env DIRECTORY=<directoryIP> --env 
+NONPROB=<true|false> dcNetNode```
