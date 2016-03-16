@@ -15,5 +15,4 @@ RUN	cd collision_resolution_protocol/ && \
 	git pull && \
     	./gradlew build
 
-CMD cd collision_resolution_protocol/ && git pull && ./gradlew run -PappArgs="[$MSG,'$DIRECTORY','$NONPROB']"
-#CMD ["collision_resolution_protocol/gradlew","run","-PappArgs=[$MSG,$N,$INDEX]"]
+CMD cd collision_resolution_protocol/ && git pull > /dev/null 2>&1 && ./gradlew -q run -PappArgs="[$MSG,'$DIRECTORY','$NONPROB']"

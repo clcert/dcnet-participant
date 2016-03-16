@@ -426,6 +426,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         System.out.println("Real rounds played: " + realRoundsPlayed);
 
         // Close all the threads and destroy the context
+        directorySubscriber.close();
+        directoryPush.close();
         receiverThread.close();
         sender.close();
         context.destroy();
