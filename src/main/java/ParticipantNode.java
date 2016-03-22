@@ -61,8 +61,8 @@ public class ParticipantNode {
         // Wait message from the Directory node (using the SUB socket) with all the {index,ip} pairs of the room
         String directoryJson = directorySubscriber.recvStr();
 
-        ParticipantNode[] nodesInTheRoom = new Gson().fromJson(directoryJson, ParticipantNode[].class);
-        room.setDirectoryMapFromNodes(nodesInTheRoom);
+        NodesInTheRoom nodesInTheRoom = new Gson().fromJson(directoryJson, NodesInTheRoom.class);
+        room.setDirectoryMapFromNodesInfo(nodesInTheRoom);
 
         directorySubscriber.close();
         directoryPush.close();

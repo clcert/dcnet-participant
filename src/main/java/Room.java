@@ -10,19 +10,8 @@ public class Room {
 
     public Room() {}
 
-    public void setRoomSize(int n) {
-        this.roomSize = n;
-    }
-
     public int getRoomSize() {
         return this.roomSize;
-    }
-
-    public void setDirectoryMapFromNodes(ParticipantNode[] nodes) {
-        this.setRoomSize(nodes.length);
-        for (int i = 0; i < nodes.length; i++) {
-            this.directoryMap.put(i, nodes[i]);
-        }
     }
 
     // Rescue index (key) of the given node
@@ -48,5 +37,12 @@ public class Room {
 
     public void setNonProbabilisticMode(boolean nonProbabilisticMode) {
         this.nonProbabilisticMode = nonProbabilisticMode;
+    }
+
+    public void setDirectoryMapFromNodesInfo(NodesInTheRoom directoryMapFromNodesInfo) {
+        ParticipantNodeInfoFromDirectory[] nodes = directoryMapFromNodesInfo.getNodes();
+        for (int i = 0; i < nodes.length; i++) {
+            this.directoryMap.put(nodes[i].index, new ParticipantNode(nodes[i].ip));
+        }
     }
 }
