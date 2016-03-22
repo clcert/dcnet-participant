@@ -1,14 +1,11 @@
-import com.google.gson.annotations.Expose;
-
 public class OutputMessage {
 
-    ParticipantNode senderNode;
-    @Expose
+    String ip;
     private int cmd;
     private int message;
 
-    public OutputMessage(ParticipantNode node, int cmd, int message) {
-        this.senderNode = node;
+    public OutputMessage(String ip, int cmd, int message) {
+        this.ip = ip;
         this.cmd = cmd;
         this.message = message;
     }
@@ -18,8 +15,8 @@ public class OutputMessage {
         this.message = 0;
     }
 
-    public void setSenderNode(ParticipantNode node) {
-        this.senderNode = node;
+    public void setSenderNodeIp(String ip) {
+        this.ip = ip;
     }
 
     public void setMessage(String message, Room room) {

@@ -39,7 +39,7 @@ public class SessionParameters {
     }
 
     public String zeroMessageJson(ParticipantNode participantNode) {
-        return new Gson().toJson(new OutputMessage(participantNode, 1, 0));
+        return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), 1, 0));
     }
 
     public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, String outputMessageJson) {

@@ -50,11 +50,11 @@ public class DCNETProtocol {
             e.printStackTrace();
         }
 
-        outputMessage.setSenderNode(participantNode);
+        outputMessage.setSenderNodeIp(participantNode.getNodeIp());
         outputMessage.setCmd(1);
         outputMessage.setMessage(message, room);
 
-        String outputMessageJson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create().toJson(outputMessage);
+        String outputMessageJson = new Gson().toJson(outputMessage);
 
         room.setNonProbabilisticMode(nonProbabilistic);
 
