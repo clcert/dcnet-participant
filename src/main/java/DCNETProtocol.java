@@ -1,5 +1,4 @@
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
@@ -36,11 +35,7 @@ public class DCNETProtocol {
         sessionParameters.initializeRepliersArray(nodeIndex, context);
         sessionParameters.initializeRequestorsArray(nodeIndex, context, room);
 
-        System.out.println("Arrays initialized!");
-
         ZMQ.Socket receiverThread = ZThread.fork(context, new Receiver(), room);
-
-        System.out.println("Receiver Thread initialized!");
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
