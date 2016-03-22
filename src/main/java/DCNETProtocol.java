@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
@@ -51,7 +52,8 @@ public class DCNETProtocol {
         outputMessage.setSenderNode(participantNode);
         outputMessage.setCmd(1);
         outputMessage.setMessage(message, room);
-        outputMessage.setOutputMessageJson(outputMessage);
+
+        String outputMessageJson = new Gson().toJson(outputMessage);
 
         room.setNonProbabilisticMode(nonProbabilistic);
 
@@ -63,7 +65,7 @@ public class DCNETProtocol {
         // Measure execution time (real time)
         long t1 = System.nanoTime();
 
-        sessionParameters.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread);
+        sessionParameters.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread, outputMessageJson);
 
         long t2 = System.nanoTime();
 

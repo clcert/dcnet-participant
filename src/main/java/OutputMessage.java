@@ -5,7 +5,6 @@ public class OutputMessage {
     ParticipantNode senderNode;
     private int cmd;
     private int message;
-    private String outputMessageJson;
 
     public OutputMessage(ParticipantNode node, int cmd, int message) {
         this.senderNode = node;
@@ -33,14 +32,6 @@ public class OutputMessage {
         else {
             this.setMessage(messageNumber*(room.getRoomSize()+1) + 1);
         }
-    }
-
-    public void setOutputMessageJson(Object object) {
-        this.outputMessageJson = new Gson().toJson(object);
-    }
-
-    public String getOutputMessageJson() {
-        return this.outputMessageJson;
     }
 
     public void setCmd(int cmd) {

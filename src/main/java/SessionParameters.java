@@ -42,7 +42,7 @@ public class SessionParameters {
         return new Gson().toJson(new OutputMessage(participantNode, 1, 0));
     }
 
-    public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
+    public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, String outputMessageJson) {
         while (!Thread.currentThread().isInterrupted()) {
 
             // Synchronize nodes at the beginning of each round
@@ -83,7 +83,7 @@ public class SessionParameters {
                 // If not, check first if i'm allowed to send my message in this round
                 // If so i send my message as the Json string constructed before the round began
                 else if (nextRoundAllowedToSend == round) {
-                    node.getSender().send(outputMessage.getOutputMessageJson());
+                    node.getSender().send(outputMessageJson);
                 }
                 // If not, i send a zero message
                 else {
