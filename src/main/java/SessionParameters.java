@@ -95,6 +95,7 @@ public class SessionParameters {
                 int messagesReceivedInThisRound = 0;
                 // When this number equals <dcNetSize> i've received all the messages in this round
                 while (messagesReceivedInThisRound < room.getRoomSize()) {
+                    System.out.println("Waiting message from Receiver Thread");
                     // Receive a message
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
                     // Transform incoming message to an int
@@ -169,7 +170,7 @@ public class SessionParameters {
                 // 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced
                 if (round != 1 && (sumOfT == 0 || sumOfO == messagesSentInPreviousRounds.get(round/2))) {
                     // The no splitting of messages can also happen if two messages sent are the same one
-                    // TODO: think in a way to solve this
+                    // TODO: add randomness to all the messages, and when you receive one, you extract that randomness (certain number of bits placed in a certain position)
 
                     // We have to re-do the "father" round in order to expect that no all nodes involved in the collision re-send their message in the same round
                     // Add the "father" round to happen after this one
