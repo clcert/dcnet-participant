@@ -41,6 +41,7 @@ public class Room {
 
     public void setDirectoryMapFromNodesInfo(NodesInTheRoom directoryMapFromNodesInfo) {
         ParticipantNodeInfoFromDirectory[] nodes = directoryMapFromNodesInfo.getNodes();
+        this.roomSize = nodes.length;
         for (int i = 0; i < nodes.length; i++) {
             this.directoryMap.put(nodes[i].index, new ParticipantNode(nodes[i].ip));
         }
