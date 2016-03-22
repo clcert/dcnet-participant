@@ -33,7 +33,11 @@ public class OutputMessage {
         else {
             this.setMessage(messageNumber*(room.getRoomSize()+1) + 1);
         }
-        this.outputMessageJson = new Gson().toJson(this);
+        try {
+            this.outputMessageJson = new Gson().toJson(this.clone());
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getOutputMessageJson() {
@@ -51,5 +55,7 @@ public class OutputMessage {
     public void setMessage(int message) {
         this.message = message;
     }
+
+
 
 }
