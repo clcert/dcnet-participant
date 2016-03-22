@@ -1,27 +1,43 @@
+import com.google.gson.Gson;
+
 public class OutputMessage {
 
-    private String senderId;
+    ParticipantNode senderNode;
     private int cmd;
     private int message;
+    private String outputMessageJson;
 
-    public OutputMessage(String nodeId, int cmd, int message) {
-        this.senderId = nodeId;
+    public OutputMessage(ParticipantNode node, int cmd, int message) {
+        this.senderNode = node;
         this.cmd = cmd;
         this.message = message;
     }
 
     public OutputMessage() {
-        this.senderId = "";
         this.cmd = 0;
         this.message = 0;
     }
 
-    public void setSenderId(String senderId) {
-        this.senderId = senderId;
+    public void setSenderNode(ParticipantNode node) {
+        this.senderNode = node;
     }
 
-    public int getCmd() {
-        return cmd;
+    public void setMessage(String message, Room room) {
+        // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
+        int messageNumber = Integer.parseInt(message);
+        // If the message is 0, the node doesn't want to send any message to the room
+        if (messageNumber == 0) {
+            this.setMessage(0);
+        }
+        // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
+        else {
+            this.setMessage(messageNumber*(room.getRoomSize()+1) + 1);
+        }
+        this.outputMessageJson = new Gson().toJson(this);
+    }
+
+    public String getOutputMessageJson() {
+        return this.outputMessageJson;
     }
 
     public void setCmd(int cmd) {
@@ -36,7 +52,4 @@ public class OutputMessage {
         this.message = message;
     }
 
-    public String getSenderId() {
-        return senderId;
-    }
 }
