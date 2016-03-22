@@ -13,6 +13,7 @@ public class DCNETProtocol {
         DirectoryNode directoryNode = new DirectoryNode(directoryIp);
 
         String nodeIp = ParticipantNode.getLocalNetworkIp();
+        System.out.println("My IP: " + nodeIp);
         ParticipantNode participantNode = new ParticipantNode(nodeIp);
 
         Room room = new Room();
@@ -33,7 +34,11 @@ public class DCNETProtocol {
         sessionParameters.initializeRepliersArray(nodeIndex, context);
         sessionParameters.initializeRequestorsArray(nodeIndex, context, room);
 
+        System.out.println("Arrays initialized!");
+
         ZMQ.Socket receiverThread = ZThread.fork(context, new Receiver(), room);
+
+        System.out.println("Receiver Thread initialized!");
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
