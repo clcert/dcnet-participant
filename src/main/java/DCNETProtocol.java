@@ -51,6 +51,7 @@ public class DCNETProtocol {
         outputMessage.setSenderNode(participantNode);
         outputMessage.setCmd(1);
         outputMessage.setMessage(message, room);
+        outputMessage.setOutputMessageJson(outputMessage);
 
         room.setNonProbabilisticMode(nonProbabilistic);
 
