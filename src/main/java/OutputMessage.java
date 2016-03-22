@@ -1,8 +1,9 @@
-import com.google.gson.Gson;
+import com.google.gson.annotations.Expose;
 
 public class OutputMessage {
 
     ParticipantNode senderNode;
+    @Expose
     private int cmd;
     private int message;
 

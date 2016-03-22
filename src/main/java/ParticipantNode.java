@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import com.google.gson.annotations.Expose;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 

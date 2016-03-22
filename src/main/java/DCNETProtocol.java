@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
@@ -53,7 +54,7 @@ public class DCNETProtocol {
         outputMessage.setCmd(1);
         outputMessage.setMessage(message, room);
 
-        String outputMessageJson = new Gson().toJson(outputMessage);
+        String outputMessageJson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create().toJson(outputMessage);
 
         room.setNonProbabilisticMode(nonProbabilistic);
 
