@@ -18,7 +18,7 @@ public class DCNETProtocol {
         ParticipantNode participantNode = new ParticipantNode(nodeIp);
 
         Room room = new Room();
-        SessionParameters sessionParameters = new SessionParameters();
+        SessionManager sessionManager = new SessionManager();
         OutputMessage outputMessage = new OutputMessage();
 
         // Create context where to run the receiver and sender threads
@@ -32,18 +32,10 @@ public class DCNETProtocol {
         System.out.println("Number of nodes: " + room.getRoomSize());
         System.out.println("My index is: " + nodeIndex);
 
-        sessionParameters.initializeRepliersArray(nodeIndex, context);
-        sessionParameters.initializeRequestorsArray(nodeIndex, context, room);
+        sessionManager.initializeRepliersArray(nodeIndex, context);
+        sessionManager.initializeRequestorsArray(nodeIndex, context, room);
 
         ZMQ.Socket receiverThread = ZThread.fork(context, new Receiver(), room);
-
-        // Sleep to overlap slow joiner problem
-        // TODO: fix this using a better solution
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         outputMessage.setSenderNodeIp(participantNode.getNodeIp());
         outputMessage.setCmd(1);
@@ -61,14 +53,14 @@ public class DCNETProtocol {
         // Measure execution time (real time)
         long t1 = System.nanoTime();
 
-        sessionParameters.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread, outputMessageJson);
+        sessionManager.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread, outputMessageJson);
 
         long t2 = System.nanoTime();
 
         // Calculate total time of execution and print it
         long total_time = t2-t1;
         System.out.println("Total Time: " + total_time/1000000000.0 + " seconds");
-        System.out.println("Real rounds played: " + sessionParameters.getRealRoundsPlayed());
+        System.out.println("Real rounds played: " + sessionManager.getRealRoundsPlayed());
 
         receiverThread.close();
         participantNode.closeSender();
@@ -76,7 +68,7 @@ public class DCNETProtocol {
 
         // Print all the messages received in this session
         System.out.println("\nMessages received: ");
-        sessionParameters.getMessagesReceived().forEach(System.out::println);
+        sessionManager.getMessagesReceived().forEach(System.out::println);
 
     }
 

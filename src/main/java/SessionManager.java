@@ -8,7 +8,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SessionParameters {
+public class SessionManager {
 
     ZMQ.Socket[] repliers;
     ZMQ.Socket[] requestors;
@@ -23,7 +23,7 @@ public class SessionParameters {
     List<Integer> messagesReceived;
     boolean realRound;
 
-    public SessionParameters() {
+    public SessionManager() {
         realRound = true;
         messageTransmitted = false;
         round = 1;
@@ -43,6 +43,14 @@ public class SessionParameters {
     }
 
     public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, String outputMessageJson) {
+        // Sleep to overlap slow joiner problem
+        // TODO: fix this using a better solution
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         while (!Thread.currentThread().isInterrupted()) {
 
             // Synchronize nodes at the beginning of each round
