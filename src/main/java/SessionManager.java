@@ -10,18 +10,19 @@ import java.util.List;
 
 public class SessionManager {
 
-    ZMQ.Socket[] repliers;
-    ZMQ.Socket[] requestors;
-    boolean messageTransmitted;
-    int round, realRoundsPlayed;
-    int nextRoundAllowedToSend;
-    int collisionSize;
+    ZMQ.Socket[] repliers,
+                 requestors;
+    boolean messageTransmitted,
+            finished,
+            realRound;
+    int round,
+        realRoundsPlayed,
+        nextRoundAllowedToSend,
+        collisionSize,
+        messagesSentWithNoCollisions;
     Dictionary<Integer, Integer> messagesSentInPreviousRounds;
-    int messagesSentWithNoCollisions;
-    boolean finished;
     LinkedList<Integer> nextRoundsToHappen;
     List<Integer> messagesReceived;
-    boolean realRound;
 
     public SessionManager() {
         realRound = true;

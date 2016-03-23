@@ -1,5 +1,4 @@
 import com.google.gson.Gson;
-import com.google.gson.annotations.Expose;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
@@ -9,7 +8,6 @@ import java.net.UnknownHostException;
 public class ParticipantNode {
 
     String nodeIp;
-    String name;
     ZMQ.Socket sender;
 
     public ParticipantNode(String nodeIp) {
