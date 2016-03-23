@@ -62,8 +62,10 @@ public class Receiver implements ZThread.IAttachedRunnable {
     }
 
     private void connectReceiverThread(ZMQ.Socket receiver, Room room) {
-        for (int i = 1; i <= room.getRoomSize(); i++)
+        for (int i = 1; i <= room.getRoomSize(); i++) {
             receiver.connect("tcp://" + room.getNodeIpFromIndex(i) + ":9000");
+            System.out.println("RCVR: Receiver connected to " + room.getNodeIpFromIndex(i));
+        }
     }
 
 }
