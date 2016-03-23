@@ -26,8 +26,6 @@ public class Receiver implements ZThread.IAttachedRunnable {
             // Receive message from the sender thread
             String inputFromSender = pipe.recvStr();
 
-            System.out.println("RCVR: Message received from sessionManager: " + inputFromSender);
-
             // Check if the message is a Finished signal
             if (inputFromSender.equals("FINISHED"))
                 break;
@@ -42,7 +40,6 @@ public class Receiver implements ZThread.IAttachedRunnable {
 
             // We are in a real round, so we iterate in order to receive all the messages from the other nodes
             for (int i = 0; i < roomSize; i++) {
-                System.out.println("RCVR: Waiting message from other nodes");
                 // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();
 

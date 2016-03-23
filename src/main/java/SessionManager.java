@@ -43,6 +43,9 @@ public class SessionManager {
     }
 
     public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, String outputMessageJson) {
+        System.out.println("My outputMessageJson is: " + outputMessageJson);
+        System.out.println("My outputMessageNumber is: " + outputMessage.getMessage());
+
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
         try {
@@ -103,7 +106,6 @@ public class SessionManager {
                 int messagesReceivedInThisRound = 0;
                 // When this number equals <dcNetSize> i've received all the messages in this round
                 while (messagesReceivedInThisRound < room.getRoomSize()) {
-                    System.out.println("Waiting message from Receiver Thread");
                     // Receive a message
                     String messageReceivedFromReceiverThread = receiverThread.recvStr();
                     // Transform incoming message to an int
