@@ -45,7 +45,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
 
                 // Format the message that is incoming to "extract" the actual message
                 OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);
-                int numericInputMessage = incomingOutputMessage.getMessage();
+                int numericInputMessage = incomingOutputMessage.getMessageProtocol();
 
                 // Send to the sender thread the message received
                 pipe.send("" + numericInputMessage);

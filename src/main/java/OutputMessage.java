@@ -2,18 +2,18 @@ public class OutputMessage {
 
     String ip;
     private int cmd;
-    private int message;
+    private int messageProtocol;
     private int messageNumber;
 
-    public OutputMessage(String ip, int cmd, int message) {
+    public OutputMessage(String ip, int cmd, int messageProtocol) {
         this.ip = ip;
         this.cmd = cmd;
-        this.message = message;
+        this.messageProtocol = messageProtocol;
     }
 
     public OutputMessage() {
         this.cmd = 0;
-        this.message = 0;
+        this.messageProtocol = 0;
     }
 
     public void setSenderNodeIp(String ip) {
@@ -26,11 +26,11 @@ public class OutputMessage {
         this.messageNumber = messageNumber;
         // If the message is 0, the node doesn't want to send any message to the room
         if (messageNumber == 0) {
-            this.setMessage(0);
+            this.setMessageProtocol(0);
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
-            this.setMessage(messageNumber*(room.getRoomSize()+1) + 1);
+            this.setMessageProtocol(messageNumber*(room.getRoomSize()+1) + 1);
         }
     }
 
@@ -42,12 +42,12 @@ public class OutputMessage {
         this.cmd = cmd;
     }
 
-    public int getMessage() {
-        return message;
+    public int getMessageProtocol() {
+        return messageProtocol;
     }
 
-    public void setMessage(int message) {
-        this.message = message;
+    public void setMessageProtocol(int messageProtocol) {
+        this.messageProtocol = messageProtocol;
     }
 
 

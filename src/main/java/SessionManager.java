@@ -43,10 +43,6 @@ public class SessionManager {
     }
 
     public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, String outputMessageJson) {
-        System.out.println("My outputMessageJson is: " + outputMessageJson);
-        System.out.println("My outputMessageProtocol is: " + outputMessage.getMessage());
-        System.out.println("My outputMessageNumber is: "+ outputMessage.getMessageNumber());
-
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
         try {
