@@ -26,6 +26,8 @@ public class Receiver implements ZThread.IAttachedRunnable {
             // Receive message from the sender thread
             String inputFromSender = pipe.recvStr();
 
+            System.out.println("RCVR: Message received from sessionManager: " + inputFromSender);
+
             // Check if the message is a Finished signal
             if (inputFromSender.equals("FINISHED"))
                 break;
@@ -62,10 +64,8 @@ public class Receiver implements ZThread.IAttachedRunnable {
     }
 
     private void connectReceiverThread(ZMQ.Socket receiver, Room room) {
-        for (int i = 1; i <= room.getRoomSize(); i++) {
+        for (int i = 1; i <= room.getRoomSize(); i++)
             receiver.connect("tcp://" + room.getNodeIpFromIndex(i) + ":9000");
-            System.out.println("RCVR: Receiver connected to " + room.getNodeIpFromIndex(i));
-        }
     }
 
 }
