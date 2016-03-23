@@ -3,6 +3,7 @@ public class OutputMessage {
     String ip;
     private int cmd;
     private int message;
+    private int messageNumber;
 
     public OutputMessage(String ip, int cmd, int message) {
         this.ip = ip;
@@ -22,6 +23,7 @@ public class OutputMessage {
     public void setMessage(String message, Room room) {
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         int messageNumber = Integer.parseInt(message);
+        this.messageNumber = messageNumber;
         // If the message is 0, the node doesn't want to send any message to the room
         if (messageNumber == 0) {
             this.setMessage(0);
@@ -30,6 +32,10 @@ public class OutputMessage {
         else {
             this.setMessage(messageNumber*(room.getRoomSize()+1) + 1);
         }
+    }
+
+    public int getMessageNumber() {
+        return this.messageNumber;
     }
 
     public void setCmd(int cmd) {

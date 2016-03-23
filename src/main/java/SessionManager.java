@@ -44,7 +44,8 @@ public class SessionManager {
 
     public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, String outputMessageJson) {
         System.out.println("My outputMessageJson is: " + outputMessageJson);
-        System.out.println("My outputMessageNumber is: " + outputMessage.getMessage());
+        System.out.println("My outputMessageProtocol is: " + outputMessage.getMessage());
+        System.out.println("My outputMessageNumber is: "+ outputMessage.getMessageNumber());
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
@@ -164,7 +165,7 @@ public class SessionManager {
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
-                if (sumOfM == outputMessage.getMessage())
+                if (sumOfM == outputMessage.getMessageNumber())
                     messageTransmitted = true;
 
                 // If the number of messages that went through equals the collision size, the collision was completely resolved
@@ -200,7 +201,7 @@ public class SessionManager {
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            if (outputMessage.getMessage() <= sumOfM / sumOfT) {
+                            if (outputMessage.getMessageNumber() <= sumOfM / sumOfT) {
                                 nextRoundAllowedToSend = 2 * round;
                             }
                             // If not, i re-send my message in the round (2*round + 1)
