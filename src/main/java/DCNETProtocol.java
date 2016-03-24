@@ -1,22 +1,25 @@
-import com.google.gson.Gson;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
 public class DCNETProtocol {
 
-    // Usage: ./gradlew run -PappArgs=[<message>,<directoryIP>,<probabilisticMode>]
+    // Usage: ./gradlew run -PappArgs=[<message>,<directoryIP>,<nonProbabilisticMode>]
     public static void main(String[] args) {
+        // Parse arguments
         String message = args[0];
         String directoryIp = args[1];
         boolean nonProbabilistic = Boolean.parseBoolean(args[2]);
 
+        // Create DirectoryNode object with the IP from arguments
         DirectoryNode directoryNode = new DirectoryNode(directoryIp);
 
+        // Create ParticipantNode object, extracting before the local IP address of the machine where is the node running
         String nodeIp = ParticipantNode.getLocalNetworkIp();
         System.out.println("My IP: " + nodeIp);
         ParticipantNode participantNode = new ParticipantNode(nodeIp);
 
+        // Create empty objects Room, SessionManager and OutputMessage
         Room room = new Room();
         SessionManager sessionManager = new SessionManager();
         OutputMessage outputMessage = new OutputMessage();
@@ -24,44 +27,45 @@ public class DCNETProtocol {
         // Create context where to run the receiver and sender threads
         ZContext context = new ZContext();
 
+        // Connect ParticipantNode to DirectoryNode and wait response from DirectoryNode with the information of the rest of the room
         participantNode.connectToDirectoryNode(directoryNode, room, context);
 
+        // Retrieve nodeIndex of this ParticipantNode
         int nodeIndex = room.getNodeIndex(participantNode);
 
         // Print info about the room
         System.out.println("Number of nodes: " + room.getRoomSize());
         System.out.println("My index is: " + nodeIndex);
 
+        // Initialize Repliers and Requestors sockets, in order to synchronize the room between rounds
         sessionManager.initializeRepliersArray(nodeIndex, context);
         sessionManager.initializeRequestorsArray(nodeIndex, context, room);
 
+        // Create a thread with the Receiver in order to receive the messages from the rest of the room
         ZMQ.Socket receiverThread = ZThread.fork(context, new Receiver(), room);
 
+        // Set parameters to the OutputMessage object: IP address of sender, command type of the message, message itself and room where is going to be send
         outputMessage.setSenderNodeIp(participantNode.getNodeIp());
         outputMessage.setCmd(1);
         outputMessage.setMessage(message, room);
 
-        String outputMessageJson = new Gson().toJson(outputMessage);
-
+        // Set resending ProbabilisticMode to the room: true or false
         room.setNonProbabilisticMode(nonProbabilistic);
 
         // Print message to send
         System.out.println("\nm_" + nodeIndex + " = " + message + "\n");
 
+        // Create sender socket
         participantNode.createSender(context);
 
-        // Measure execution time (real time)
-        long t1 = System.nanoTime();
+        // Run session with the established parameters
+        sessionManager.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread);
 
-        sessionManager.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread, outputMessageJson);
-
-        long t2 = System.nanoTime();
-
-        // Calculate total time of execution and print it
-        long total_time = t2-t1;
-        System.out.println("Total Time: " + total_time/1000000000.0 + " seconds");
+        // Print total time of execution and how many rounds the session played
+        System.out.println("Total Time: " + sessionManager.getExecutionTime() / 1000000000.0 + " seconds");
         System.out.println("Real rounds played: " + sessionManager.getRealRoundsPlayed());
 
+        // Close the threads and destroy the context
         receiverThread.close();
         participantNode.closeSender();
         context.destroy();

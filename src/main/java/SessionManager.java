@@ -24,6 +24,8 @@ public class SessionManager {
     LinkedList<Integer> nextRoundsToHappen;
     List<Integer> messagesReceived;
 
+    long executionTime;
+
     public SessionManager() {
         realRound = true;
         messageTransmitted = false;
@@ -37,13 +39,17 @@ public class SessionManager {
         nextRoundsToHappen = new LinkedList<>();
         nextRoundsToHappen.addFirst(1);
         messagesReceived = new LinkedList<>();
+        executionTime = 0;
     }
 
     public String zeroMessageJson(ParticipantNode participantNode) {
         return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), 1, 0));
     }
 
-    public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, String outputMessageJson) {
+    public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
+
+        String outputMessageJson = new Gson().toJson(outputMessage);
+
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
         try {
@@ -51,6 +57,8 @@ public class SessionManager {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        long t1 = System.nanoTime();
 
         while (!Thread.currentThread().isInterrupted()) {
 
@@ -230,6 +238,15 @@ public class SessionManager {
                 finished = true;*/
 
         }
+
+        long t2 = System.nanoTime();
+
+        executionTime = t2-t1;
+
+    }
+
+    public long getExecutionTime() {
+        return executionTime;
     }
 
     private void synchronizeNodes(int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
@@ -305,7 +322,6 @@ public class SessionManager {
         this.requestors = requestors;
     }
 
-
     public int getRealRoundsPlayed() {
         return realRoundsPlayed;
     }
@@ -313,4 +329,5 @@ public class SessionManager {
     public List<Integer> getMessagesReceived() {
         return messagesReceived;
     }
+
 }
