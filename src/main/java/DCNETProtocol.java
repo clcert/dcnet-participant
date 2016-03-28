@@ -69,7 +69,7 @@ public class DCNETProtocol {
         receiverThread.close();
         participantNode.closeSender();
         context.destroy();
-        sessionManager.closeRepliersAndRequestorsSockets();
+        sessionManager.closeRepliersAndRequestorsSockets(nodeIndex, room.getRoomSize());
 
         // Print all the messages received in this session
         System.out.println("\nMessages received: ");
