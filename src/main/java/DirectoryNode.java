@@ -9,4 +9,5 @@ public class DirectoryNode {
     public DirectoryNode(String directoryIp) {
         this.directoryIp = directoryIp;
     }
+
 }

@@ -71,4 +71,5 @@ public class ParticipantNode {
     public void closeSender() {
         this.sender.close();
     }
+
 }

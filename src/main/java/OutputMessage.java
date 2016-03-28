@@ -50,6 +50,4 @@ public class OutputMessage {
         this.messageProtocol = messageProtocol;
     }
 
-
-
 }

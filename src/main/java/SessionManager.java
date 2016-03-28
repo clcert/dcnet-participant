@@ -330,4 +330,11 @@ public class SessionManager {
         return messagesReceived;
     }
 
+    public void closeRepliersAndRequestorsSockets() {
+        for (ZMQ.Socket replier : repliers)
+            replier.close();
+        for (ZMQ.Socket requestor : requestors)
+            requestor.close();
+    }
+
 }

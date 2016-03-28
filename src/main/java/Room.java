@@ -45,4 +45,5 @@ public class Room {
         for (ParticipantNodeInfoFromDirectory node : nodes)
             this.directoryMap.put(node.index, new ParticipantNode(node.ip));
     }
+
 }
