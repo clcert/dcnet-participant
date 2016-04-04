@@ -40,10 +40,10 @@ public class OutputMessage {
         this.messageBigInteger = new BigInteger(message.getBytes());
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
-        int messageNumber = Integer.parseInt(message);
+        // int messageNumber = Integer.parseInt(message);
         //this.messageNumber = messageNumber;
         // If the message is 0, the node doesn't want to send any message to the room
-        if (messageNumber == 0) {
+        if (message.equals("0")) {
             // this.setMessageProtocol(0);
             this.messageBigIntegerProtocol = BigInteger.ZERO;
         }
