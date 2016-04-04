@@ -18,10 +18,8 @@ public class SessionManager {
         nextRoundAllowedToSend,
         collisionSize,
         messagesSentWithNoCollisions;
-    // Dictionary<Integer, Integer> messagesSentInPreviousRounds;
     Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     LinkedList<Integer> nextRoundsToHappen;
-    // List<Integer> messagesReceived;
     List<BigInteger> messagesReceived;
 
     long executionTime;
@@ -82,7 +80,6 @@ public class SessionManager {
             System.out.println("ROUND " + round);
 
             // Variables to store the resulting message of the round
-            //int sumOfM, sumOfT, sumOfO = 0;
             BigInteger sumOfM, sumOfT, sumOfO = BigInteger.ZERO;
 
             // The protocol separates his operation if it's being played a real round or a virtual one (see Reference for more information)
@@ -114,13 +111,10 @@ public class SessionManager {
                 // When this number equals <dcNetSize> i've received all the messages in this round
                 while (messagesReceivedInThisRound < room.getRoomSize()) {
                     // Receive a message
-                    // String messageReceivedFromReceiverThread = receiverThread.recvStr();
                     byte[] messageReceivedFromReceiverThread = receiverThread.recv();
                     // Transform incoming message to an int
-                    //int incomingOutputMessage = Integer.parseInt(messageReceivedFromReceiverThread);
                     BigInteger incomingOutputMessage = new BigInteger(messageReceivedFromReceiverThread);
                     // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
-                    // sumOfO += incomingOutputMessage;
                     sumOfO = sumOfO.add(incomingOutputMessage);
                     // Increase the number of messages received
                     messagesReceivedInThisRound++;
@@ -135,13 +129,10 @@ public class SessionManager {
                 System.out.println("VIRTUAL ROUND");
 
                 // Recover messages sent in rounds 2k and k in order to construct the resulting message of this round (see Reference for more information)
-                // int sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
-                // int sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
                 BigInteger sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
                 BigInteger sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
 
                 // Construct the resulting message of this round
-                // sumOfO = sumOfOSentInRoundK - sumOfOSentInRound2K;
                 sumOfO = sumOfOSentInRoundK.subtract(sumOfOSentInRound2K);
             }
 
@@ -149,9 +140,7 @@ public class SessionManager {
             messagesSentInPreviousRounds.put(round, sumOfO);
 
             // Divide sumOfO in sumOfM and sumOfT (see Reference for more information)
-            // sumOfM = sumOfO/(room.getRoomSize() + 1);
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
-            // sumOfT = sumOfO - (sumOfM*(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
 
             // Print resulting message of this round
@@ -171,7 +160,6 @@ public class SessionManager {
 
             // Depending on the resulting message, we have to analyze either there was a collision or not in this round
             // <sumOfT> = 1 => No Collision Round => a message went through clearly, received by the rest of the nodes
-            // if (sumOfT == 1) {
             if (sumOfT.equals(BigInteger.ONE)) {
                 // Increase the number of messages that went through the protocol
                 messagesSentWithNoCollisions++;
@@ -181,8 +169,6 @@ public class SessionManager {
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
-                //if (sumOfM == outputMessage.getMessageNumber())
-                    //messageTransmitted = true;
                 if (outputMessage.getMessageBigInteger().equals(sumOfM))
                     messageTransmitted = true;
 
@@ -220,9 +206,6 @@ public class SessionManager {
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            //if (outputMessage.getMessageNumber() <= sumOfM / sumOfT) {
-                            //    nextRoundAllowedToSend = 2 * round;
-                            //}
                             if (outputMessage.getMessageBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
                                 nextRoundAllowedToSend = 2 * round;
                             // If not, i re-send my message in the round (2*round + 1)
@@ -248,10 +231,6 @@ public class SessionManager {
 
             // Print a blank line
             System.out.println();
-
-            // Prevent infinite loops
-            /*if (round >= Math.pow(2, collisionSize)*4)
-                finished = true;*/
 
         }
 
