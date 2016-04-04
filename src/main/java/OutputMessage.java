@@ -20,9 +20,11 @@ public class OutputMessage {
 
     private BigInteger messageBigIntegerProtocol;
 
-    public OutputMessage(String ip, int cmd, int messageProtocol) {
+    public OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
         this.ip = ip;
         this.cmd = cmd;
+        this.messageBigIntegerProtocol = messageProtocol;
+        this.messageBigInteger = BigInteger.ZERO;
         // this.messageProtocol = messageProtocol;
 
     }

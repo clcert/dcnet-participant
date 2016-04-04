@@ -46,7 +46,7 @@ public class SessionManager {
     }
 
     public String zeroMessageJson(ParticipantNode participantNode) {
-        return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), 1, 0));
+        return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), 1, BigInteger.ZERO));
     }
 
     public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
