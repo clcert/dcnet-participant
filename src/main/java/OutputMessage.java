@@ -1,4 +1,3 @@
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 
 public class OutputMessage {

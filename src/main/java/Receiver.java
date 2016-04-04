@@ -42,7 +42,6 @@ public class Receiver implements ZThread.IAttachedRunnable {
             for (int i = 0; i < roomSize; i++) {
                 // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();
-                System.out.println("RCVR input message: " + inputMessage);
 
                 // Format the message that is incoming to "extract" the actual message
                 OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);

@@ -73,7 +73,7 @@ public class DCNETProtocol {
 
         // Print all the messages received in this session
         System.out.println("\nMessages received: ");
-        sessionManager.getMessagesReceived().forEach(System.out::println);
+        sessionManager.printMessagesReceived();
 
     }
 

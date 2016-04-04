@@ -4,10 +4,7 @@ import org.zeromq.ZMQ;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.Dictionary;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class SessionManager {
 
@@ -345,14 +342,6 @@ public class SessionManager {
         return realRoundsPlayed;
     }
 
-    public List<String> getMessagesReceived() {
-        List<String> messagesString = new LinkedList<>();
-        while (messagesReceived.iterator().hasNext()) {
-            messagesString.add(new String(messagesReceived.iterator().next().toByteArray()));
-        }
-        return messagesString;
-    }
-
     public void closeRepliersAndRequestorsSockets(int nodeIndex, int roomSize) {
         if (nodeIndex != 1) {
             for (ZMQ.Socket replier : repliers)
@@ -362,6 +351,11 @@ public class SessionManager {
             for (ZMQ.Socket requestor : requestors)
                 requestor.close();
         }
+    }
+
+    public void printMessagesReceived() {
+        for (BigInteger aMessagesReceived : messagesReceived)
+            System.out.println(new String(aMessagesReceived.toByteArray()));
     }
 
 }
