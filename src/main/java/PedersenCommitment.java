@@ -28,6 +28,8 @@ public class PedersenCommitment {
         this.p = p;
     }
 
+    public PedersenCommitment() {}
+
     public BigInteger generateQ(int messageSize) {
         return new BigInteger((messageSize+1)*8, new Random()).nextProbablePrime();
     }

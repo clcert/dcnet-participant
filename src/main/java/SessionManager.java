@@ -21,6 +21,9 @@ public class SessionManager {
     Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     LinkedList<Integer> nextRoundsToHappen;
     List<BigInteger> messagesReceived;
+    String messageRoundJson;
+    PedersenCommitment pedersenCommitment;
+    BigInteger commitment;
 
     long executionTime;
 
@@ -38,6 +41,8 @@ public class SessionManager {
         nextRoundsToHappen.addFirst(1);
         messagesReceived = new LinkedList<>();
         executionTime = 0;
+        pedersenCommitment = new PedersenCommitment();
+        commitment = BigInteger.ZERO;
     }
 
     public String zeroMessageJson(ParticipantNode participantNode) {
@@ -92,18 +97,33 @@ public class SessionManager {
 
                 // If my message was already sent in a round with no collisions, i send a zero message
                 if (messageTransmitted) {
-                    node.getSender().send(this.zeroMessageJson(node));
+                    //node.getSender().send(this.zeroMessageJson(node));
+                    messageRoundJson = this.zeroMessageJson(node);
                 }
 
                 // If not, check first if i'm allowed to send my message in this round
                 // If so i send my message as the Json string constructed before the round began
                 else if (nextRoundAllowedToSend == round) {
-                    node.getSender().send(outputMessageJson);
+                    // node.getSender().send(outputMessageJson);
+                    messageRoundJson = outputMessageJson;
                 }
                 // If not, i send a zero message
                 else {
-                    node.getSender().send(this.zeroMessageJson(node));
+                    // node.getSender().send(this.zeroMessageJson(node));
+                    messageRoundJson = this.zeroMessageJson(node);
                 }
+
+                // Calculate commitment on message
+                pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
+                if (messageRoundJson.equals(zeroMessageJson(node)))
+                    commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
+                else
+                    commitment = pedersenCommitment.calculateCommitment(outputMessage.getMessageBigInteger());
+
+                // TODO: Send the commitment
+
+                // Send the message
+                node.getSender().send(messageRoundJson);
 
                 // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
                 // Count how many messages were receive from the receiver thread
