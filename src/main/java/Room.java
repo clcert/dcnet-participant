@@ -39,7 +39,7 @@ public class Room {
         this.nonProbabilisticMode = nonProbabilisticMode;
     }
 
-    public void setDirectoryMapFromNodesInfo(NodesInTheRoom directoryMapFromNodesInfo) {
+    public void setDirectoryMapFromNodesInfo(InfoFromDirectory directoryMapFromNodesInfo) {
         ParticipantNodeInfoFromDirectory[] nodes = directoryMapFromNodesInfo.getNodes();
         this.roomSize = nodes.length;
         for (ParticipantNodeInfoFromDirectory node : nodes)
