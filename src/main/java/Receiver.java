@@ -45,7 +45,6 @@ public class Receiver implements ZThread.IAttachedRunnable {
                 String inputCommitment = receiver.recvStr().trim();
 
                 // TODO: Do something with the commitment
-                System.out.println(inputCommitment);
             }
             pipe.send("");
 
