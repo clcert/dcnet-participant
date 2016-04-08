@@ -61,7 +61,7 @@ public class ParticipantNode {
         String directoryJson = directorySubscriber.recvStr();
 
         InfoFromDirectory infoFromDirectory = new Gson().fromJson(directoryJson, InfoFromDirectory.class);
-        room.setDirectoryMapFromNodesInfo(infoFromDirectory);
+        room.setRoomInfoFromDirectory(infoFromDirectory);
 
         directorySubscriber.close();
         directoryPush.close();

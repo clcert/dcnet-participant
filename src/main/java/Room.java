@@ -41,12 +41,12 @@ public class Room {
         return directoryMap.get(i).getNodeIp();
     }
 
-    public void setDirectoryMapFromNodesInfo(InfoFromDirectory directoryMapFromNodesInfo) {
-        this.g = directoryMapFromNodesInfo.getG();
-        this.h = directoryMapFromNodesInfo.getH();
-        this.q = directoryMapFromNodesInfo.getQ();
-        this.p = directoryMapFromNodesInfo.getP();
-        ParticipantNodeInfoFromDirectory[] nodes = directoryMapFromNodesInfo.getNodes();
+    public void setRoomInfoFromDirectory(InfoFromDirectory infoFromDirectory) {
+        this.g = infoFromDirectory.getG();
+        this.h = infoFromDirectory.getH();
+        this.q = infoFromDirectory.getQ();
+        this.p = infoFromDirectory.getP();
+        ParticipantNodeInfoFromDirectory[] nodes = infoFromDirectory.getNodes();
         this.roomSize = nodes.length;
         for (ParticipantNodeInfoFromDirectory node : nodes)
             this.directoryMap.put(node.index, new ParticipantNode(node.ip));
