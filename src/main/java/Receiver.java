@@ -39,6 +39,17 @@ public class Receiver implements ZThread.IAttachedRunnable {
             }
 
             // We are in a real round, so we iterate in order to receive all the messages from the other nodes
+            // First iterates to receive all commitments messages
+            for (int i = 0; i < roomSize; i++) {
+                // Receive commitment from a node in the room
+                String inputCommitment = receiver.recvStr().trim();
+
+                // TODO: Do something with the commitment
+                System.out.println(inputCommitment);
+            }
+            pipe.send("");
+
+            // Then iterates to receive all output messages
             for (int i = 0; i < roomSize; i++) {
                 // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();

@@ -121,6 +121,14 @@ public class SessionManager {
                     commitment = pedersenCommitment.calculateCommitment(outputMessage.getMessageBigInteger());
 
                 // TODO: Send the commitment
+                // Send commitment to the room
+                node.getSender().send(commitment.toString());
+
+                // Wait response from Receiver thread
+                receiverThread.recvStr();
+
+                // Synchronize nodes
+                synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // Send the message
                 node.getSender().send(messageRoundJson);
