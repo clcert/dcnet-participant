@@ -128,7 +128,7 @@ public class SessionManager {
                 // TODO: Do something with the commitments
 
                 // Synchronize nodes
-                // synchronizeNodes(nodeIndex, repliers, requestors, room);
+                synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // Send the message
                 node.getSender().send(messageRoundJson);
