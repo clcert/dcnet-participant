@@ -58,12 +58,16 @@ public class DCNETProtocol {
         // Create sender socket
         participantNode.createSender(context);
 
-        // Run session with the established parameters
-        sessionManager.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread);
+        for (int i = 0; i < 3; i++) {
 
-        // Print total time of execution and how many rounds the session played
-        System.out.println("Total Time: " + sessionManager.getExecutionTime() / 1000000000.0 + " seconds");
-        System.out.println("Real rounds played: " + sessionManager.getRealRoundsPlayed());
+            // Run session with the established parameters
+            sessionManager.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread);
+
+            // Print total time of execution and how many rounds the session played
+            System.out.println("Total Time: " + sessionManager.getExecutionTime() / 1000000000.0 + " seconds");
+            System.out.println("Real rounds played: " + sessionManager.getRealRoundsPlayed());
+
+        }
 
         // Close the threads and destroy the context
         receiverThread.close();
