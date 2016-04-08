@@ -7,14 +7,6 @@ public class OutputMessage {
     private BigInteger messageBigInteger;
     private BigInteger messageBigIntegerProtocol;
 
-    public BigInteger getMessageBigInteger() {
-        return messageBigInteger;
-    }
-
-    public BigInteger getMessageBigIntegerProtocol() {
-        return messageBigIntegerProtocol;
-    }
-
     public OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
         this.ip = ip;
         this.cmd = cmd;
@@ -25,6 +17,14 @@ public class OutputMessage {
 
     public OutputMessage() {
         this.cmd = 0;
+    }
+
+    public BigInteger getMessageBigInteger() {
+        return messageBigInteger;
+    }
+
+    public BigInteger getMessageBigIntegerProtocol() {
+        return messageBigIntegerProtocol;
     }
 
     public void setSenderNodeIp(String ip) {

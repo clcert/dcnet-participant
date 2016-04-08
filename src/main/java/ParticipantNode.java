@@ -14,6 +14,19 @@ public class ParticipantNode {
         this.nodeIp = nodeIp;
     }
 
+    // Get the LAN IP address of the node
+    public static String getLocalNetworkIp() {
+        String networkIp = "";
+        InetAddress ip;
+        try {
+            ip = InetAddress.getLocalHost();
+            networkIp = ip.getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        return networkIp;
+    }
+
     public void createSender(ZContext context) {
         this.sender = context.createSocket(ZMQ.PUB);
         bindSenderPort(this.sender);
@@ -29,19 +42,6 @@ public class ParticipantNode {
 
     public String getNodeIp() {
         return nodeIp;
-    }
-
-    // Get the LAN IP address of the node
-    public static String getLocalNetworkIp() {
-        String networkIp = "";
-        InetAddress ip;
-        try {
-            ip = InetAddress.getLocalHost();
-            networkIp = ip.getHostAddress();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-        return networkIp;
     }
 
     public void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context) {

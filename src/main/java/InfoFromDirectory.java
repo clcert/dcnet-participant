@@ -2,13 +2,13 @@ import java.math.BigInteger;
 
 public class InfoFromDirectory {
 
-    public ParticipantNodeInfoFromDirectory[] getNodes() {
-        return nodes;
-    }
-
     ParticipantNodeInfoFromDirectory[] nodes;
     BigInteger g, h;
     BigInteger q, p;
+
+    public ParticipantNodeInfoFromDirectory[] getNodes() {
+        return nodes;
+    }
 
     public BigInteger getG() {
         return g;
@@ -25,4 +25,5 @@ public class InfoFromDirectory {
     public BigInteger getP() {
         return p;
     }
+
 }

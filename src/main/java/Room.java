@@ -33,12 +33,12 @@ public class Room {
         return this.nonProbabilisticMode;
     }
 
-    public String getNodeIpFromIndex(int i) {
-        return directoryMap.get(i).getNodeIp();
-    }
-
     public void setNonProbabilisticMode(boolean nonProbabilisticMode) {
         this.nonProbabilisticMode = nonProbabilisticMode;
+    }
+
+    public String getNodeIpFromIndex(int i) {
+        return directoryMap.get(i).getNodeIp();
     }
 
     public void setDirectoryMapFromNodesInfo(InfoFromDirectory directoryMapFromNodesInfo) {
@@ -67,4 +67,5 @@ public class Room {
     public BigInteger getP() {
         return p;
     }
+
 }
