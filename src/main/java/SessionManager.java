@@ -196,7 +196,7 @@ class SessionManager {
                 messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
-                System.out.println("Anonymous: " + sumOfM);
+                System.out.println("Anonymous: " + new String(sumOfM.toByteArray()));
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
