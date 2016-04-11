@@ -81,7 +81,7 @@ class SessionManager {
             }
 
             // Print round number
-            System.out.println("ROUND " + round);
+            // System.out.println("ROUND " + round);
 
             // Variables to store the resulting message of the round
             BigInteger sumOfM, sumOfT, sumOfO = BigInteger.ZERO;
@@ -92,7 +92,7 @@ class SessionManager {
                 // Set variable that we are playing a real round, add one to the count and print it
                 realRound = true;
                 realRoundsPlayed++;
-                System.out.println("REAL ROUND");
+                // System.out.println("REAL ROUND");
 
                 // If my message was already sent in a round with no collisions, i send a zero message
                 String messageRoundJson;
@@ -154,7 +154,7 @@ class SessionManager {
             else {
                 // Set variable that we are playing a virtual round and print it
                 realRound = false;
-                System.out.println("VIRTUAL ROUND");
+                // System.out.println("VIRTUAL ROUND");
 
                 // Recover messages sent in rounds 2k and k in order to construct the resulting message of this round (see Reference for more information)
                 BigInteger sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
@@ -172,7 +172,7 @@ class SessionManager {
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
 
             // Print resulting message of this round
-            System.out.println("C_" + round +  " = (" + sumOfM + "," + sumOfT + ")");
+            // System.out.println("C_" + round +  " = (" + sumOfM + "," + sumOfT + ")");
 
             // If we are playing the first round, assign the size of the collision
             if (round == 1) {
@@ -194,6 +194,9 @@ class SessionManager {
 
                 // Add message received in this round in order to calculate messages in subsequently virtual rounds
                 messagesReceived.add(sumOfM);
+
+                // Print message that went through the protocol
+                System.out.println("Anonymous: " + sumOfM);
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
@@ -258,7 +261,7 @@ class SessionManager {
             }
 
             // Print a blank line
-            System.out.println();
+            // System.out.println();
 
         }
 
