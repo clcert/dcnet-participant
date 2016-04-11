@@ -62,7 +62,7 @@ public class DCNETProtocol {
         sessionManager.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread);
 
         // Print total time of execution and how many rounds the session played
-        System.out.println("Total Time: " + sessionManager.getExecutionTime() / 1000000000.0 + " seconds");
+        System.out.println("\nTotal Time: " + sessionManager.getExecutionTime() / 1000000000.0 + " seconds");
         System.out.println("Real rounds played: " + sessionManager.getRealRoundsPlayed());
 
         // Close the threads and destroy the context
@@ -72,8 +72,8 @@ public class DCNETProtocol {
         sessionManager.closeRepliersAndRequestorsSockets(nodeIndex, room.getRoomSize());
 
         // Print all the messages received in this session
-        System.out.println("\nMessages received: ");
-        sessionManager.printMessagesReceived();
+        // System.out.println("\nMessages received: ");
+        // sessionManager.printMessagesReceived();
 
     }
 
