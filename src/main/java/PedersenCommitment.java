@@ -1,10 +1,9 @@
 import java.math.BigInteger;
 import java.util.Random;
 
-public class PedersenCommitment {
+class PedersenCommitment {
 
-    final int CERTAINTY = 100;
-    int messageSize;
+    private int messageSize;
 
     private BigInteger g, h;
     private BigInteger q, p;
@@ -21,16 +20,16 @@ public class PedersenCommitment {
         this.h = findGenerator();
     }
 
-    public PedersenCommitment(BigInteger g, BigInteger h, BigInteger q, BigInteger p) {
+    PedersenCommitment(BigInteger g, BigInteger h, BigInteger q, BigInteger p) {
         this.g = g;
         this.h = h;
         this.q = q;
         this.p = p;
     }
 
-    public PedersenCommitment() {}
+    PedersenCommitment() {}
 
-    public BigInteger generateQ(int messageSize) {
+    private BigInteger generateQ(int messageSize) {
         return new BigInteger((messageSize+1)*8, new Random()).nextProbablePrime();
     }
 
@@ -38,6 +37,7 @@ public class PedersenCommitment {
         int i = 1;
         BigInteger p = this.q.multiply(new BigInteger("" + i)).add(BigInteger.ONE);
         while (true) {
+            int CERTAINTY = 100;
             if (p.isProbablePrime(CERTAINTY))
                 break;
             p = this.q.multiply(new BigInteger("" + i)).add(BigInteger.ONE);
@@ -46,7 +46,7 @@ public class PedersenCommitment {
         return p;
     }
 
-    public BigInteger findGenerator() {
+    private BigInteger findGenerator() {
         // Select a random possible <generator> in Z_p
         BigInteger generator = new BigInteger(this.p.bitCount(), new Random()).mod(this.p);
         BigInteger result;
@@ -71,7 +71,7 @@ public class PedersenCommitment {
         return random.mod(this.q);
     }
 
-    public BigInteger calculateCommitment(BigInteger secret) {
+    BigInteger calculateCommitment(BigInteger secret) {
         return this.g.modPow(secret, this.p).multiply(this.h.modPow(generateRandom(), this.p)).mod(this.p);
         // return myPow(this.g, secret).multiply(myPow(this.h,generateRandom()));
     }

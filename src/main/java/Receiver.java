@@ -3,7 +3,7 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
-public class Receiver implements ZThread.IAttachedRunnable {
+class Receiver implements ZThread.IAttachedRunnable {
 
     @Override
     public void run(Object[] args, ZContext context, ZMQ.Socket pipe) {

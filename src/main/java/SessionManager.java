@@ -6,28 +6,27 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.*;
 
-public class SessionManager {
+class SessionManager {
 
-    ZMQ.Socket[] repliers,
+    private ZMQ.Socket[] repliers,
                  requestors;
-    boolean messageTransmitted,
+    private boolean messageTransmitted,
             finished,
             realRound;
-    int round,
+    private int round,
         realRoundsPlayed,
         nextRoundAllowedToSend,
         collisionSize,
         messagesSentWithNoCollisions;
-    Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
-    LinkedList<Integer> nextRoundsToHappen;
-    List<BigInteger> messagesReceived;
-    String messageRoundJson;
-    PedersenCommitment pedersenCommitment;
-    BigInteger commitment;
+    private Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
+    private LinkedList<Integer> nextRoundsToHappen;
+    private List<BigInteger> messagesReceived;
+    private PedersenCommitment pedersenCommitment;
+    private BigInteger commitment;
 
-    long executionTime;
+    private long executionTime;
 
-    public SessionManager() {
+    SessionManager() {
         realRound = true;
         messageTransmitted = false;
         round = 1;
@@ -45,11 +44,11 @@ public class SessionManager {
         commitment = BigInteger.ZERO;
     }
 
-    public String zeroMessageJson(ParticipantNode participantNode) {
+    private String zeroMessageJson(ParticipantNode participantNode) {
         return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), 1, BigInteger.ZERO));
     }
 
-    public void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
+    void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
 
         String outputMessageJson = new Gson().toJson(outputMessage);
 
@@ -96,6 +95,7 @@ public class SessionManager {
                 System.out.println("REAL ROUND");
 
                 // If my message was already sent in a round with no collisions, i send a zero message
+                String messageRoundJson;
                 if (messageTransmitted) {
                     //node.getSender().send(this.zeroMessageJson(node));
                     messageRoundJson = this.zeroMessageJson(node);
@@ -268,7 +268,7 @@ public class SessionManager {
 
     }
 
-    public long getExecutionTime() {
+    long getExecutionTime() {
         return executionTime;
     }
 
@@ -308,7 +308,7 @@ public class SessionManager {
     }
 
     // Create all the repliers (the quantity depends on the index of the node) socket necessary to run the protocol (see Reference for more information)
-    public void initializeRepliersArray(int nodeIndex, ZContext context) {
+    void initializeRepliersArray(int nodeIndex, ZContext context) {
         // Create an array of sockets
         ZMQ.Socket[] repliers = null;
         // The "first" node doesn't have any replier sockets
@@ -327,7 +327,7 @@ public class SessionManager {
     }
 
     // Create all the requestors (the quantity depends on the index of the node) socket necessary to run the protocol (see Reference for more information)
-    public void initializeRequestorsArray(int nodeIndex, ZContext context, Room room) {
+    void initializeRequestorsArray(int nodeIndex, ZContext context, Room room) {
         // Create an array of sockets
         ZMQ.Socket[] requestors = null;
         // The "last" node doesn't have any requestor sockets
@@ -345,11 +345,11 @@ public class SessionManager {
         this.requestors = requestors;
     }
 
-    public int getRealRoundsPlayed() {
+    int getRealRoundsPlayed() {
         return realRoundsPlayed;
     }
 
-    public void closeRepliersAndRequestorsSockets(int nodeIndex, int roomSize) {
+    void closeRepliersAndRequestorsSockets(int nodeIndex, int roomSize) {
         if (nodeIndex != 1) {
             for (ZMQ.Socket replier : repliers)
                 replier.close();
@@ -360,7 +360,7 @@ public class SessionManager {
         }
     }
 
-    public void printMessagesReceived() {
+    void printMessagesReceived() {
         for (BigInteger aMessagesReceived : messagesReceived)
             System.out.println(new String(aMessagesReceived.toByteArray()));
     }

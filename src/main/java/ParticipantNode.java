@@ -5,17 +5,17 @@ import org.zeromq.ZMQ;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public class ParticipantNode {
+class ParticipantNode {
 
-    String nodeIp;
-    ZMQ.Socket sender;
+    private String nodeIp;
+    private ZMQ.Socket sender;
 
-    public ParticipantNode(String nodeIp) {
+    ParticipantNode(String nodeIp) {
         this.nodeIp = nodeIp;
     }
 
     // Get the LAN IP address of the node
-    public static String getLocalNetworkIp() {
+    static String getLocalNetworkIp() {
         String networkIp = "";
         InetAddress ip;
         try {
@@ -27,7 +27,7 @@ public class ParticipantNode {
         return networkIp;
     }
 
-    public void createSender(ZContext context) {
+    void createSender(ZContext context) {
         this.sender = context.createSocket(ZMQ.PUB);
         bindSenderPort(this.sender);
     }
@@ -36,15 +36,15 @@ public class ParticipantNode {
         sender.bind("tcp://*:9000");
     }
 
-    public ZMQ.Socket getSender() {
+    ZMQ.Socket getSender() {
         return this.sender;
     }
 
-    public String getNodeIp() {
+    String getNodeIp() {
         return nodeIp;
     }
 
-    public void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context) {
+    void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context) {
         // Create Directory Subscriber and connect to 5555 port
         ZMQ.Socket directorySubscriber = context.createSocket(ZMQ.SUB);
         directorySubscriber.connect("tcp://" + directoryNode.getDirectoryIp() + ":5555");
@@ -68,7 +68,7 @@ public class ParticipantNode {
 
     }
 
-    public void closeSender() {
+    void closeSender() {
         this.sender.close();
     }
 

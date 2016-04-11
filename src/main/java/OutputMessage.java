@@ -1,13 +1,13 @@
 import java.math.BigInteger;
 
-public class OutputMessage {
+class OutputMessage {
 
-    String ip;
+    private String ip;
     private int cmd;
     private BigInteger messageBigInteger;
     private BigInteger messageBigIntegerProtocol;
 
-    public OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
+    OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
         this.ip = ip;
         this.cmd = cmd;
         this.messageBigIntegerProtocol = messageProtocol;
@@ -15,23 +15,23 @@ public class OutputMessage {
 
     }
 
-    public OutputMessage() {
+    OutputMessage() {
         this.cmd = 0;
     }
 
-    public BigInteger getMessageBigInteger() {
+    BigInteger getMessageBigInteger() {
         return messageBigInteger;
     }
 
-    public BigInteger getMessageBigIntegerProtocol() {
+    BigInteger getMessageBigIntegerProtocol() {
         return messageBigIntegerProtocol;
     }
 
-    public void setSenderNodeIp(String ip) {
+    void setSenderNodeIp(String ip) {
         this.ip = ip;
     }
 
-    public void setMessage(String message, Room room) {
+    void setMessage(String message, Room room) {
         this.messageBigInteger = new BigInteger(message.getBytes());
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
@@ -46,7 +46,7 @@ public class OutputMessage {
         }
     }
 
-    public void setCmd(int cmd) {
+    void setCmd(int cmd) {
         this.cmd = cmd;
     }
 

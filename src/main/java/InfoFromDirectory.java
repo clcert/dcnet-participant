@@ -1,28 +1,28 @@
 import java.math.BigInteger;
 
-public class InfoFromDirectory {
+class InfoFromDirectory {
 
-    ParticipantNodeInfoFromDirectory[] nodes;
-    BigInteger g, h;
-    BigInteger q, p;
+    private ParticipantNodeInfoFromDirectory[] nodes;
+    private BigInteger g, h;
+    private BigInteger q, p;
 
-    public ParticipantNodeInfoFromDirectory[] getNodes() {
+    ParticipantNodeInfoFromDirectory[] getNodes() {
         return nodes;
     }
 
-    public BigInteger getG() {
+    BigInteger getG() {
         return g;
     }
 
-    public BigInteger getH() {
+    BigInteger getH() {
         return h;
     }
 
-    public BigInteger getQ() {
+    BigInteger getQ() {
         return q;
     }
 
-    public BigInteger getP() {
+    BigInteger getP() {
         return p;
     }
 

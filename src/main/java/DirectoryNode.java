@@ -1,12 +1,12 @@
-public class DirectoryNode {
+class DirectoryNode {
 
-    String directoryIp;
+    private String directoryIp;
 
-    public DirectoryNode(String directoryIp) {
+    DirectoryNode(String directoryIp) {
         this.directoryIp = directoryIp;
     }
 
-    public String getDirectoryIp() {
+    String getDirectoryIp() {
         return directoryIp;
     }
 

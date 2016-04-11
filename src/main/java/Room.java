@@ -3,21 +3,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class Room {
+class Room {
 
-    HashMap<Integer, ParticipantNode> directoryMap = new HashMap<>();
-    int roomSize;
-    boolean nonProbabilisticMode;
-    BigInteger g, h, q, p;
+    private HashMap<Integer, ParticipantNode> directoryMap = new HashMap<>();
+    private int roomSize;
+    private boolean nonProbabilisticMode;
+    private BigInteger g, h, q, p;
 
-    public Room() {}
+    Room() {}
 
-    public int getRoomSize() {
+    int getRoomSize() {
         return this.roomSize;
     }
 
     // Rescue index (key) of the given node
-    public int getNodeIndex(ParticipantNode node) {
+    int getNodeIndex(ParticipantNode node) {
         Set directorySet = this.directoryMap.entrySet();
         for (Object aDirectorySet : directorySet) {
             Map.Entry mapEntry = (Map.Entry) aDirectorySet;
@@ -29,19 +29,19 @@ public class Room {
         return 0;
     }
 
-    public boolean getNonProbabilisticMode() {
+    boolean getNonProbabilisticMode() {
         return this.nonProbabilisticMode;
     }
 
-    public void setNonProbabilisticMode(boolean nonProbabilisticMode) {
+    void setNonProbabilisticMode(boolean nonProbabilisticMode) {
         this.nonProbabilisticMode = nonProbabilisticMode;
     }
 
-    public String getNodeIpFromIndex(int i) {
+    String getNodeIpFromIndex(int i) {
         return directoryMap.get(i).getNodeIp();
     }
 
-    public void setRoomInfoFromDirectory(InfoFromDirectory infoFromDirectory) {
+    void setRoomInfoFromDirectory(InfoFromDirectory infoFromDirectory) {
         this.g = infoFromDirectory.getG();
         this.h = infoFromDirectory.getH();
         this.q = infoFromDirectory.getQ();
@@ -52,19 +52,19 @@ public class Room {
             this.directoryMap.put(node.index, new ParticipantNode(node.ip));
     }
 
-    public BigInteger getG() {
+    BigInteger getG() {
         return g;
     }
 
-    public BigInteger getH() {
+    BigInteger getH() {
         return h;
     }
 
-    public BigInteger getQ() {
+    BigInteger getQ() {
         return q;
     }
 
-    public BigInteger getP() {
+    BigInteger getP() {
         return p;
     }
 
