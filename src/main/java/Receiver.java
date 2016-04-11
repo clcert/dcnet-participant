@@ -7,6 +7,8 @@ class Receiver implements ZThread.IAttachedRunnable {
 
     @Override
     public void run(Object[] args, ZContext context, ZMQ.Socket pipe) {
+        System.out.println("RCVR Thread running");
+
         // Create the receiver socket that work as a subscriber
         ZMQ.Socket receiver = context.createSocket(ZMQ.SUB);
 
