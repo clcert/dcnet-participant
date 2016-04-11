@@ -1,42 +1,53 @@
-public class OutputMessage {
+import java.math.BigInteger;
 
-    private String senderId;
+class OutputMessage {
+
+    private String ip;
     private int cmd;
-    private int message;
+    private BigInteger messageBigInteger;
+    private BigInteger messageBigIntegerProtocol;
 
-    public OutputMessage(String nodeId, int cmd, int message) {
-        this.senderId = nodeId;
+    OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
+        this.ip = ip;
         this.cmd = cmd;
-        this.message = message;
+        this.messageBigIntegerProtocol = messageProtocol;
+        this.messageBigInteger = BigInteger.ZERO;
+
     }
 
-    public OutputMessage() {
-        this.senderId = "";
+    OutputMessage() {
         this.cmd = 0;
-        this.message = 0;
     }
 
-    public void setSenderId(String senderId) {
-        this.senderId = senderId;
+    BigInteger getMessageBigInteger() {
+        return messageBigInteger;
     }
 
-    public int getCmd() {
-        return cmd;
+    BigInteger getMessageBigIntegerProtocol() {
+        return messageBigIntegerProtocol;
     }
 
-    public void setCmd(int cmd) {
+    void setSenderNodeIp(String ip) {
+        this.ip = ip;
+    }
+
+    void setMessage(String message, Room room) {
+        this.messageBigInteger = new BigInteger(message.getBytes());
+
+        // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
+        // If the message is 0, the node doesn't want to send any message to the room
+        if (message.equals("0")) {
+            this.messageBigIntegerProtocol = BigInteger.ZERO;
+        }
+        // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
+        else {
+            int a = room.getRoomSize()+1;
+            this.messageBigIntegerProtocol = messageBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
+        }
+    }
+
+    void setCmd(int cmd) {
         this.cmd = cmd;
     }
 
-    public int getMessage() {
-        return message;
-    }
-
-    public void setMessage(int message) {
-        this.message = message;
-    }
-
-    public String getSenderId() {
-        return senderId;
-    }
 }

@@ -1,3 +1,4 @@
+/*
 import com.google.gson.Gson;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -9,6 +10,7 @@ import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.*;
 
+*/
 /*
     This application runs a collision resolution protocol, in order
     to use within a DC-NET.
@@ -16,7 +18,8 @@ import java.util.*;
     connected through a LAN.
     Also is necessary to run within the same LAN a Directory Node,
     in order to inform the IP address of the rest of the room.
-*/
+*//*
+
 
 class NodeDCNET implements ZThread.IAttachedRunnable {
 
@@ -412,8 +415,10 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
             System.out.println();
 
             // Prevent infinite loops
-            /*if (round >= Math.pow(2, collisionSize)*4)
-                finished = true;*/
+            */
+/*if (round >= Math.pow(2, collisionSize)*4)
+                finished = true;*//*
+
 
         }
 
@@ -485,7 +490,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
                 // Create the REP socket
                 repliers[i] = context.createSocket(ZMQ.REP);
                 // Bind this REP socket to the correspondent port in order to be connected by his correspondent REQ socket of another node
-                repliers[i].bind("tcp://*:" + (7000+i));
+                repliers[i].bind("tcp:/*/
+/*:" + (7000+i));
             }
         }
         // Return the array with the replier sockets
@@ -494,7 +500,8 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
 
     // Bind the sender port of the PUB socket (9000 by default)
     private void bindSenderPort(ZMQ.Socket sender) {
-        sender.bind("tcp://*:9000");
+        sender.bind("tcp:/*/
+/*:9000");
     }
 
     // Synchronize the nodes of the room using the replier and requestor socket of each of the nodes (see Reference for more information)
@@ -530,3 +537,4 @@ class NodeDCNET implements ZThread.IAttachedRunnable {
         return networkIp;
     }
 }
+*/
