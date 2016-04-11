@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y software-properties-common \
 	git clone https://github.com/niclabs/collision_resolution_protocol.git
 RUN	cd collision_resolution_protocol/ && \
 	git pull && \
-	git checkout classesRefactoring && \
-    	./gradlew build
+    ./gradlew build
 
 CMD cd collision_resolution_protocol/ && git pull > /dev/null 2>&1 && ./gradlew -q run -PappArgs="['$MSG','$DIRECTORY','$NONPROB']"
