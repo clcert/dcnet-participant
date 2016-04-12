@@ -54,6 +54,9 @@ class SessionManager {
         System.out.println("Number of nodes: " + room.getRoomSize());
         System.out.println("My index is: " + nodeIndex);
 
+        // Print message to send
+        System.out.println("\nm_" + nodeIndex + " = " + OutputMessage.getMessageWithoutRandomness(outputMessage.getMessageBigInteger()) + "\n");
+
         String outputMessageJson = new Gson().toJson(outputMessage);
 
         // Sleep to overlap slow joiner problem

@@ -1,3 +1,5 @@
+import javafx.scene.control.RadioMenuItem;
+
 import java.math.BigInteger;
 import java.util.Random;
 
@@ -7,6 +9,8 @@ class OutputMessage {
     private int cmd;
     private BigInteger messageBigInteger;
     private BigInteger messageBigIntegerProtocol;
+
+    static private final int RANDOM_PADDING_LENGTH = 10;
 
     OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
         this.ip = ip;
@@ -34,7 +38,7 @@ class OutputMessage {
 
     void setMessage(String message, Room room) {
         // Generate random characters to prevent infinite protocol when equal messages collide
-        String randomString = generateRandomString(10);
+        String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
 
         this.messageBigInteger = new BigInteger(randomString.concat(message).getBytes());
 
@@ -68,6 +72,6 @@ class OutputMessage {
     }
 
     static String getMessageWithoutRandomness(BigInteger sumOfM) {
-        return new String(sumOfM.toByteArray()).substring(10);
+        return new String(sumOfM.toByteArray()).substring(RANDOM_PADDING_LENGTH);
     }
 }

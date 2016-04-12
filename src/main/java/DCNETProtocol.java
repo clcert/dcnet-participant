@@ -48,9 +48,6 @@ public class DCNETProtocol {
         // Set resending ProbabilisticMode to the room: true or false
         room.setNonProbabilisticMode(nonProbabilistic);
 
-        // Print message to send
-        System.out.println("\nm_" + nodeIndex + " = " + message + "\n");
-
         // Create sender socket
         participantNode.createSender(context);
 
