@@ -17,7 +17,7 @@ class OutputMessage {
      *
      * @param ip ip address of the sender node
      * @param cmd command of the message
-     * @param messageProtocol message written as the protocol describes: <m,1> or <0,0>
+     * @param messageProtocol message written as the protocol describes: {m,1} or {0,0}
      */
     OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
         this.ip = ip;
