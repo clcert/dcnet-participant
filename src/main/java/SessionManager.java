@@ -6,6 +6,9 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.*;
 
+/**
+ *
+ */
 class SessionManager {
 
     private ZMQ.Socket[] repliers,
@@ -26,6 +29,9 @@ class SessionManager {
 
     private long executionTime;
 
+    /**
+     *
+     */
     SessionManager() {
         realRound = true;
         messageTransmitted = false;
@@ -44,10 +50,23 @@ class SessionManager {
         commitment = BigInteger.ZERO;
     }
 
+    /**
+     *
+     * @param participantNode participant node
+     * @return json with the info of participantNode
+     */
     private String zeroMessageJson(ParticipantNode participantNode) {
         return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), 1, BigInteger.ZERO));
     }
 
+    /**
+     *
+     * @param nodeIndex index of the participant node
+     * @param outputMessage object with the message that participant node wants to communicate
+     * @param room room where the message is going to be send
+     * @param node participant node
+     * @param receiverThread thread where participant node is listening
+     */
     void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
 
         // Print info about the room
@@ -203,7 +222,7 @@ class SessionManager {
                 messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
-                System.out.println("Anonymous: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
+                System.out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
@@ -278,10 +297,21 @@ class SessionManager {
 
     }
 
+    /**
+     *
+     * @return total execution time of this session
+     */
     long getExecutionTime() {
         return executionTime;
     }
 
+    /**
+     *
+     * @param nodeIndex index of the participant node
+     * @param repliers array with zmq sockets that work as repliers
+     * @param requestors array with zmq sockets that work as requestors
+     * @param room room where the messages are going send
+     */
     private void synchronizeNodes(int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         // The "first" node doesn't have any replier sockets
         if (nodeIndex != 1)
@@ -301,23 +331,41 @@ class SessionManager {
             }
     }
 
-    // Remove a round to happen afterwards
+    /**
+     * Remove a round to happen afterwards
+     * @param nextRoundsToHappen list with rounds that are going to happen in the future
+     * @param round index of the round that wants to remove from happening
+     */
     private void removeRoundToHappen(LinkedList<Integer> nextRoundsToHappen, int round) {
         nextRoundsToHappen.removeFirstOccurrence(round);
     }
 
-    // Add a round to happen immediately after the running one
+    /**
+     * Add a round to happen immediately after the running one
+     * @param nextRoundsToHappen list with rounds that are going to happen in the future
+     * @param round index of the round that wants to add to happen in the future
+     */
     private void addRoundToHappenFirst(LinkedList<Integer> nextRoundsToHappen, int round) {
         nextRoundsToHappen.addFirst(round);
     }
 
-    // Add two rounds to happen afterwards (they are added at the end of the LinkedList)
+    /**
+     * Add two rounds to happen afterwards (they are added at the end of the LinkedList)
+     * @param nextRoundsToHappen list with rounds that are going to happen in the future
+     * @param firstRoundToAdd index of the round
+     * @param secondRoundToAdd index of the round
+     */
     private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
         nextRoundsToHappen.add(firstRoundToAdd);
         nextRoundsToHappen.add(secondRoundToAdd);
     }
 
-    // Create all the repliers (the quantity depends on the index of the node) socket necessary to run the protocol (see Reference for more information)
+    /**
+     * Create all the repliers (the quantity depends on the index of the node) socket
+     * necessary to run the protocol (see Reference for more information)
+     * @param nodeIndex index of the participant node
+     * @param context context where the zmq sockets are going to run
+     */
     void initializeRepliersArray(int nodeIndex, ZContext context) {
         // Create an array of sockets
         ZMQ.Socket[] repliers = null;
@@ -336,7 +384,13 @@ class SessionManager {
         this.repliers = repliers;
     }
 
-    // Create all the requestors (the quantity depends on the index of the node) socket necessary to run the protocol (see Reference for more information)
+    /**
+     * Create all the requestors (the quantity depends on the index of the node) socket necessary to run the protocol
+     * (see Reference for more information)
+     * @param nodeIndex index of the participant node
+     * @param context context where the zmq sockets are going to run
+     * @param room room where the messages are being sent
+     */
     void initializeRequestorsArray(int nodeIndex, ZContext context, Room room) {
         // Create an array of sockets
         ZMQ.Socket[] requestors = null;
@@ -355,10 +409,19 @@ class SessionManager {
         this.requestors = requestors;
     }
 
+    /**
+     *
+     * @return number of real rounds played in this session
+     */
     int getRealRoundsPlayed() {
         return realRoundsPlayed;
     }
 
+    /**
+     *
+     * @param nodeIndex index of the participant node
+     * @param roomSize size of the room
+     */
     void closeRepliersAndRequestorsSockets(int nodeIndex, int roomSize) {
         if (nodeIndex != 1) {
             for (ZMQ.Socket replier : repliers)
@@ -370,6 +433,9 @@ class SessionManager {
         }
     }
 
+    /**
+     *
+     */
     void printMessagesReceived() {
         for (BigInteger aMessagesReceived : messagesReceived)
             System.out.println(new String(aMessagesReceived.toByteArray()));

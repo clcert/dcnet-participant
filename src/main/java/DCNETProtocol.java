@@ -2,9 +2,15 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
+/**
+ *
+ */
 public class DCNETProtocol {
 
-    // Usage: ./gradlew run -PappArgs=[<message>,<directoryIP>,<nonProbabilisticMode>]
+    /**
+     * Usage: ./gradlew run -PappArgs=[{message},{directoryIP},{nonProbabilisticMode}]
+     * @param args message, ip address of directory node and non probabilistic mode?
+     */
     public static void main(String[] args) {
         // Parse arguments
         String message = args[0];

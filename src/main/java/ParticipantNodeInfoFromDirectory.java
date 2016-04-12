@@ -1,3 +1,6 @@
+/**
+ *
+ */
 class ParticipantNodeInfoFromDirectory {
 
     int index;

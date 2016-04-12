@@ -5,16 +5,26 @@ import org.zeromq.ZMQ;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+/**
+ *
+ */
 class ParticipantNode {
 
     private String nodeIp;
     private ZMQ.Socket sender;
 
+    /**
+     *
+     * @param nodeIp ip address of the participant node
+     */
     ParticipantNode(String nodeIp) {
         this.nodeIp = nodeIp;
     }
 
-    // Get the LAN IP address of the node
+    /**
+     * Get the LAN IP address of the node
+     * @return local network ip address of the participant node
+     */
     static String getLocalNetworkIp() {
         String networkIp = "";
         InetAddress ip;
@@ -27,23 +37,45 @@ class ParticipantNode {
         return networkIp;
     }
 
+    /**
+     *
+     * @param context context where the zmq sockets need to run
+     */
     void createSender(ZContext context) {
         this.sender = context.createSocket(ZMQ.PUB);
         bindSenderPort(this.sender);
     }
 
+    /**
+     *
+     * @param sender zmq socket which is going to send broadcast messages
+     */
     private void bindSenderPort(ZMQ.Socket sender) {
         sender.bind("tcp://*:9000");
     }
 
+    /**
+     *
+     * @return zmq socket where the broadcast messages are going send through
+     */
     ZMQ.Socket getSender() {
         return this.sender;
     }
 
+    /**
+     *
+     * @return ip address of the participant node
+     */
     String getNodeIp() {
         return nodeIp;
     }
 
+    /**
+     *
+     * @param directoryNode directory node where this participant node is connected to
+     * @param room room where this participant node is going to send messages
+     * @param context context where the zmq sockets need to run
+     */
     void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context) {
         // Create Directory Subscriber and connect to 5555 port
         ZMQ.Socket directorySubscriber = context.createSocket(ZMQ.SUB);
@@ -68,6 +100,9 @@ class ParticipantNode {
 
     }
 
+    /**
+     *
+     */
     void closeSender() {
         this.sender.close();
     }

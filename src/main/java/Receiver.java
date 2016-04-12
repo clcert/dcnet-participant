@@ -3,8 +3,17 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
+/**
+ *
+ */
 class Receiver implements ZThread.IAttachedRunnable {
 
+    /**
+     *
+     * @param args room where the receiver thread needs to listen messages
+     * @param context context where the zmq sockets need to run
+     * @param pipe zmq socket created to connect both threads
+     */
     @Override
     public void run(Object[] args, ZContext context, ZMQ.Socket pipe) {
         // Create the receiver socket that work as a subscriber
@@ -71,6 +80,11 @@ class Receiver implements ZThread.IAttachedRunnable {
         pipe.send("");
     }
 
+    /**
+     *
+     * @param receiver zmq socket that will receive messages
+     * @param room room where the receiver thread is listening messages
+     */
     private void connectReceiverThread(ZMQ.Socket receiver, Room room) {
         for (int i = 1; i <= room.getRoomSize(); i++)
             receiver.connect("tcp://" + room.getNodeIpFromIndex(i) + ":9000");

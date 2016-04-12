@@ -1,8 +1,9 @@
-import javafx.scene.control.RadioMenuItem;
-
 import java.math.BigInteger;
 import java.util.Random;
 
+/**
+ *
+ */
 class OutputMessage {
 
     private String ip;
@@ -12,6 +13,12 @@ class OutputMessage {
 
     static private final int RANDOM_PADDING_LENGTH = 10;
 
+    /**
+     *
+     * @param ip ip address of the sender node
+     * @param cmd command of the message
+     * @param messageProtocol message written as the protocol describes: <m,1> or <0,0>
+     */
     OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
         this.ip = ip;
         this.cmd = cmd;
@@ -20,22 +27,42 @@ class OutputMessage {
 
     }
 
+    /**
+     *
+     */
     OutputMessage() {
         this.cmd = 0;
     }
 
+    /**
+     *
+     * @return message in BigInteger form
+     */
     BigInteger getMessageBigInteger() {
         return messageBigInteger;
     }
 
+    /**
+     *
+     * @return protocol message in BigInteger form
+     */
     BigInteger getMessageBigIntegerProtocol() {
         return messageBigIntegerProtocol;
     }
 
+    /**
+     *
+     * @param ip ip address of the sender node
+     */
     void setSenderNodeIp(String ip) {
         this.ip = ip;
     }
 
+    /**
+     *
+     * @param message message that the sender wants to communicate
+     * @param room room where the message is going to be sent
+     */
     void setMessage(String message, Room room) {
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
@@ -54,6 +81,11 @@ class OutputMessage {
         }
     }
 
+    /**
+     *
+     * @param l length of the random characters that will be append to the message
+     * @return random characters append to message
+     */
     private String generateRandomString(int l) {
         String strAllowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sbRandomString = new StringBuilder(l);
@@ -67,10 +99,19 @@ class OutputMessage {
         return sbRandomString.toString();
     }
 
+    /**
+     *
+     * @param cmd command
+     */
     void setCmd(int cmd) {
         this.cmd = cmd;
     }
 
+    /**
+     *
+     * @param sumOfM message that went through the protocol which has a random string appended
+     * @return message without the randomness
+     */
     static String getMessageWithoutRandomness(BigInteger sumOfM) {
         return new String(sumOfM.toByteArray()).substring(RANDOM_PADDING_LENGTH);
     }
