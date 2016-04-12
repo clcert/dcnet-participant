@@ -1,4 +1,4 @@
-public class ParticipantNodeInfoFromDirectory {
+class ParticipantNodeInfoFromDirectory {
 
     int index;
     String ip;

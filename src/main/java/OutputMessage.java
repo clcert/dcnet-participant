@@ -1,4 +1,5 @@
 import java.math.BigInteger;
+import java.util.Random;
 
 class OutputMessage {
 
@@ -32,7 +33,10 @@ class OutputMessage {
     }
 
     void setMessage(String message, Room room) {
-        this.messageBigInteger = new BigInteger(message.getBytes());
+        // Generate random characters to prevent infinite protocol when equal messages collide
+        String randomString = generateRandomString(10);
+
+        this.messageBigInteger = new BigInteger(randomString.concat(message).getBytes());
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
@@ -46,8 +50,24 @@ class OutputMessage {
         }
     }
 
+    private String generateRandomString(int l) {
+        String strAllowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sbRandomString = new StringBuilder(l);
+        for(int i = 0 ; i < l; i++){
+            //get random integer between 0 and string length
+            int randomInt = new Random().nextInt(strAllowedCharacters.length());
+
+            //get char from randomInt index from string and append in StringBuilder
+            sbRandomString.append( strAllowedCharacters.charAt(randomInt) );
+        }
+        return sbRandomString.toString();
+    }
+
     void setCmd(int cmd) {
         this.cmd = cmd;
     }
 
+    static String getMessageWithoutRandomness(BigInteger sumOfM) {
+        return new String(sumOfM.toByteArray()).substring(10);
+    }
 }

@@ -14,7 +14,7 @@ public class DCNETProtocol {
         // Create DirectoryNode object with the IP from arguments
         DirectoryNode directoryNode = new DirectoryNode(directoryIp);
 
-        // Create ParticipantNode object, extracting before the local IP address of the machine where is the node running
+        // Create ParticipantNode object, extracting before the local IP address of the machine where the node is running
         String nodeIp = ParticipantNode.getLocalNetworkIp();
         System.out.println("My IP: " + nodeIp);
         ParticipantNode participantNode = new ParticipantNode(nodeIp);
@@ -32,10 +32,6 @@ public class DCNETProtocol {
 
         // Retrieve nodeIndex of this ParticipantNode
         int nodeIndex = room.getNodeIndex(participantNode);
-
-        // Print info about the room
-        System.out.println("Number of nodes: " + room.getRoomSize());
-        System.out.println("My index is: " + nodeIndex);
 
         // Initialize Repliers and Requestors sockets, in order to synchronize the room between rounds
         sessionManager.initializeRepliersArray(nodeIndex, context);

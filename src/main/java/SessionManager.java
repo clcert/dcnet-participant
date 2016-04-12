@@ -50,6 +50,10 @@ class SessionManager {
 
     void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
 
+        // Print info about the room
+        System.out.println("Number of nodes: " + room.getRoomSize());
+        System.out.println("My index is: " + nodeIndex);
+
         String outputMessageJson = new Gson().toJson(outputMessage);
 
         // Sleep to overlap slow joiner problem
@@ -196,7 +200,7 @@ class SessionManager {
                 messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
-                System.out.println("Anonymous: " + new String(sumOfM.toByteArray()));
+                System.out.println("Anonymous: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
