@@ -55,28 +55,31 @@ class SessionManager {
      * @param participantNode participant node
      * @return json with the info of participantNode
      */
-    private String zeroMessageJson(ParticipantNode participantNode) {
-        return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), 1, BigInteger.ZERO));
-    }
+    //private String zeroMessageJson(ParticipantNode participantNode) {
+    //    return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), BigInteger.ZERO));
+    //}
 
     /**
      *
      * @param nodeIndex index of the participant node
-     * @param outputMessage object with the message that participant node wants to communicate
+     * @param message string with the message that participant node wants to communicate
      * @param room room where the message is going to be send
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    void runSession(int nodeIndex, OutputMessage outputMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
+    void runSession(int nodeIndex, String message, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
 
         // Print info about the room
         System.out.println("Number of nodes: " + room.getRoomSize());
         System.out.println("My index is: " + nodeIndex);
 
-        // Print message to send
-        System.out.println("\nm_" + nodeIndex + " = " + OutputMessage.getMessageWithoutRandomness(outputMessage.getMessageBigInteger()) + "\n");
+        OutputMessage outputMessage = new OutputMessage();
+        outputMessage.setSenderNodeIp(node.getNodeIp());
 
-        String outputMessageJson = new Gson().toJson(outputMessage);
+        // Print message to send
+        System.out.println("\nm_" + nodeIndex + " = " + message + "\n");
+
+        // String outputMessageJson = new Gson().toJson(outputMessage);
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
@@ -125,8 +128,12 @@ class SessionManager {
                 while (roundRandomKey.bitLength() != room.getQ().bitLength())
                     roundRandomKey = new BigInteger(room.getQ().bitLength(), new Random());
                 BigInteger[] roundRandomKeyShares = secretSharing.splitSecret(roundRandomKey);
-                // TODO: Send and receive shares to each of the nodes in the room
                 BigInteger[] otherNodesRandomKeyShares = sendRoundRandomKeyShares(roundRandomKeyShares, nodeIndex, repliers, requestors, room);
+                BigInteger randomValue = constructRandomValue(roundRandomKey, otherNodesRandomKeyShares);
+
+                String zeroMessageJson = new Gson().toJson(new OutputMessage(node.getNodeIp(), randomValue));
+                outputMessage.setMessage(randomValue.add(new BigInteger(message.getBytes())), room);
+                String outputMessageJson = new Gson().toJson(outputMessage);
 
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
@@ -134,7 +141,7 @@ class SessionManager {
                 String messageRoundJson;
                 if (messageTransmitted) {
                     //node.getSender().send(this.zeroMessageJson(node));
-                    messageRoundJson = this.zeroMessageJson(node);
+                    messageRoundJson = zeroMessageJson;
                 }
 
                 // If not, check first if i'm allowed to send my message in this round
@@ -146,12 +153,12 @@ class SessionManager {
                 // If not, i send a zero message
                 else {
                     // node.getSender().send(this.zeroMessageJson(node));
-                    messageRoundJson = this.zeroMessageJson(node);
+                    messageRoundJson = zeroMessageJson;
                 }
 
                 // Calculate commitment on message
                 pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
-                if (messageRoundJson.equals(zeroMessageJson(node)))
+                if (messageRoundJson.equals(zeroMessageJson))
                     commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
                 else
                     commitment = pedersenCommitment.calculateCommitment(outputMessage.getMessageBigInteger());
@@ -305,6 +312,15 @@ class SessionManager {
 
         executionTime = t2-t1;
 
+    }
+
+    private BigInteger constructRandomValue(BigInteger roundRandomKey, BigInteger[] otherNodesRandomKeyShares) {
+        BigInteger result = BigInteger.ZERO;
+
+        for (BigInteger otherNodeRandomKeyShare : otherNodesRandomKeyShares)
+            result = result.add(otherNodeRandomKeyShare);
+
+        return result.subtract(roundRandomKey);
     }
 
     private BigInteger[] sendRoundRandomKeyShares(BigInteger[] roundRandomKeyShares, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {

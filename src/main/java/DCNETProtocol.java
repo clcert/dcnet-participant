@@ -47,9 +47,8 @@ public class DCNETProtocol {
         ZMQ.Socket receiverThread = ZThread.fork(context, new Receiver(), room);
 
         // Set parameters to the OutputMessage object: IP address of sender, command type of the message, message itself and room where is going to be send
-        outputMessage.setSenderNodeIp(participantNode.getNodeIp());
-        outputMessage.setCmd(1);
-        outputMessage.setMessage(message, room);
+        // outputMessage.setSenderNodeIp(participantNode.getNodeIp());
+        // outputMessage.setMessage(message, room);
 
         // Set resending ProbabilisticMode to the room: true or false
         room.setNonProbabilisticMode(nonProbabilistic);
@@ -58,7 +57,7 @@ public class DCNETProtocol {
         participantNode.createSender(context);
 
         // Run session with the established parameters
-        sessionManager.runSession(nodeIndex, outputMessage, room, participantNode, receiverThread);
+        sessionManager.runSession(nodeIndex, message, room, participantNode, receiverThread);
 
         // Print total time of execution and how many rounds the session played
         System.out.println("\nTotal Time: " + sessionManager.getExecutionTime() / 1000000000.0 + " seconds");

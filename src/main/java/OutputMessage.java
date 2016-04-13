@@ -7,7 +7,6 @@ import java.util.Random;
 class OutputMessage {
 
     private String ip;
-    private int cmd;
     private BigInteger messageBigInteger;
     private BigInteger messageBigIntegerProtocol;
 
@@ -16,12 +15,10 @@ class OutputMessage {
     /**
      *
      * @param ip ip address of the sender node
-     * @param cmd command of the message
      * @param messageProtocol message written as the protocol describes: {m,1} or {0,0}
      */
-    OutputMessage(String ip, int cmd, BigInteger messageProtocol) {
+    OutputMessage(String ip, BigInteger messageProtocol) {
         this.ip = ip;
-        this.cmd = cmd;
         this.messageBigIntegerProtocol = messageProtocol;
         this.messageBigInteger = BigInteger.ZERO;
 
@@ -30,9 +27,7 @@ class OutputMessage {
     /**
      *
      */
-    OutputMessage() {
-        this.cmd = 0;
-    }
+    OutputMessage() {}
 
     /**
      *
@@ -83,6 +78,29 @@ class OutputMessage {
 
     /**
      *
+     * @param message message that the sender wants to communicate
+     * @param room room where the message is going to be sent
+     */
+    void setMessage(BigInteger message, Room room) {
+        // Generate random characters to prevent infinite protocol when equal messages collide
+        String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
+
+        this.messageBigInteger = new BigInteger(randomString.concat(message.toString()).getBytes());
+
+        // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
+        // If the message is 0, the node doesn't want to send any message to the room
+        if (message.equals(BigInteger.ZERO)) {
+            this.messageBigIntegerProtocol = BigInteger.ZERO;
+        }
+        // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
+        else {
+            int a = room.getRoomSize()+1;
+            this.messageBigIntegerProtocol = messageBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
+        }
+    }
+
+    /**
+     *
      * @param l length of the random characters that will be append to the message
      * @return random characters append to message
      */
@@ -97,14 +115,6 @@ class OutputMessage {
             sbRandomString.append( strAllowedCharacters.charAt(randomInt) );
         }
         return sbRandomString.toString();
-    }
-
-    /**
-     *
-     * @param cmd command
-     */
-    void setCmd(int cmd) {
-        this.cmd = cmd;
     }
 
     /**
