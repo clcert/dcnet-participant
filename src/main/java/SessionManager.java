@@ -74,7 +74,9 @@ class SessionManager {
         System.out.println("My index is: " + nodeIndex);
 
         OutputMessage outputMessage = new OutputMessage();
+        OutputMessage zeroMessage = new OutputMessage();
         outputMessage.setSenderNodeIp(node.getNodeIp());
+        zeroMessage.setSenderNodeIp(node.getNodeIp());
 
         // Print message to send
         System.out.println("\nm_" + nodeIndex + " = " + message + "\n");
@@ -131,8 +133,12 @@ class SessionManager {
                 BigInteger[] otherNodesRandomKeyShares = sendRoundRandomKeyShares(roundRandomKeyShares, nodeIndex, repliers, requestors, room);
                 BigInteger randomValue = constructRandomValue(roundRandomKey, otherNodesRandomKeyShares);
 
-                String zeroMessageJson = new Gson().toJson(new OutputMessage(node.getNodeIp(), randomValue));
-                outputMessage.setMessage(randomValue.add(new BigInteger(message.getBytes())), room);
+                outputMessage.setParticipantMessage(message, room);
+                zeroMessage.setParticipantMessage("0", room);
+                outputMessage.setRandomValue(randomValue);
+                zeroMessage.setRandomValue(randomValue);
+
+                String zeroMessageJson = new Gson().toJson(zeroMessage);
                 String outputMessageJson = new Gson().toJson(outputMessage);
 
                 synchronizeNodes(nodeIndex, repliers, requestors, room);

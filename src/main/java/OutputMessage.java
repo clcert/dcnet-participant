@@ -11,6 +11,8 @@ class OutputMessage {
     private BigInteger messageBigIntegerProtocol;
 
     static private final int RANDOM_PADDING_LENGTH = 10;
+    private String participantMessage;
+    private BigInteger randomValue;
 
     /**
      *
@@ -21,7 +23,6 @@ class OutputMessage {
         this.ip = ip;
         this.messageBigIntegerProtocol = messageProtocol;
         this.messageBigInteger = BigInteger.ZERO;
-
     }
 
     /**
@@ -124,5 +125,28 @@ class OutputMessage {
      */
     static String getMessageWithoutRandomness(BigInteger sumOfM) {
         return new String(sumOfM.toByteArray()).substring(RANDOM_PADDING_LENGTH);
+    }
+
+    void setParticipantMessage(String participantMessage, Room room) {
+        // Generate random characters to prevent infinite protocol when equal messages collide
+        String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
+
+        BigInteger messageBigInteger = new BigInteger(randomString.concat(participantMessage).getBytes());
+
+        // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
+        // If the message is 0, the node doesn't want to send any message to the room
+        if (participantMessage.equals("0")) {
+            this.messageBigIntegerProtocol = BigInteger.ZERO;
+        }
+        // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
+        else {
+            int a = room.getRoomSize()+1;
+            this.messageBigIntegerProtocol = messageBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
+        }
+    }
+
+    void setRandomValue(BigInteger randomValue) {
+        this.randomValue = randomValue;
+        this.messageBigIntegerProtocol = this.messageBigIntegerProtocol.add(this.randomValue);
     }
 }
