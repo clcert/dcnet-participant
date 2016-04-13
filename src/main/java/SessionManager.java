@@ -120,6 +120,13 @@ class SessionManager {
                 realRoundsPlayed++;
                 // System.out.println("REAL ROUND");
 
+                SecretSharing secretSharing = new SecretSharing(room.getRoomSize()-1);
+                BigInteger roundRandomKey = new BigInteger(room.getQ().bitLength(), new Random());
+                while (roundRandomKey.bitLength() != room.getQ().bitLength())
+                    roundRandomKey = new BigInteger(room.getQ().bitLength(), new Random());
+                BigInteger[] roundRandomKeyShares = secretSharing.splitSecret(roundRandomKey);
+                // TODO: Send shares to each of the nodes in the room
+
                 // If my message was already sent in a round with no collisions, i send a zero message
                 String messageRoundJson;
                 if (messageTransmitted) {
