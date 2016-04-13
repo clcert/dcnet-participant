@@ -162,8 +162,6 @@ class SessionManager {
                     messageRoundJson = zeroMessageJson;
                 }
 
-                System.out.println("B_" + round + ": " + messageRoundJson);
-
                 // Calculate commitment on message
                 pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
                 if (messageRoundJson.equals(zeroMessageJson))
