@@ -131,7 +131,7 @@ class OutputMessage {
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
 
-        BigInteger messageBigInteger = new BigInteger(randomString.concat(participantMessage).getBytes());
+        this.messageBigInteger = new BigInteger(randomString.concat(participantMessage).getBytes());
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
