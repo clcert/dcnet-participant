@@ -125,7 +125,10 @@ class SessionManager {
                 while (roundRandomKey.bitLength() != room.getQ().bitLength())
                     roundRandomKey = new BigInteger(room.getQ().bitLength(), new Random());
                 BigInteger[] roundRandomKeyShares = secretSharing.splitSecret(roundRandomKey);
-                // TODO: Send shares to each of the nodes in the room
+                // TODO: Send and receive shares to each of the nodes in the room
+                BigInteger[] otherNodesRandomKeyShares = sendRoundRandomKeyShares(roundRandomKeyShares, nodeIndex, repliers, requestors, room);
+
+                synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // If my message was already sent in a round with no collisions, i send a zero message
                 String messageRoundJson;
@@ -302,6 +305,30 @@ class SessionManager {
 
         executionTime = t2-t1;
 
+    }
+
+    private BigInteger[] sendRoundRandomKeyShares(BigInteger[] roundRandomKeyShares, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
+        int i = 0;
+        BigInteger[] otherNodesRandomKeyShares = new BigInteger[room.getRoomSize()-1];
+        // The "first" node doesn't have any replier sockets
+        if (nodeIndex != 1)
+            for (ZMQ.Socket replier : repliers) {
+                // The replier wait to receive a key share
+                otherNodesRandomKeyShares[i] = new BigInteger(replier.recvStr());
+                // When the replier receives the message, replies with one of their key shares
+                replier.send(roundRandomKeyShares[i].toString());
+                i++;
+            }
+        // The "last" node doesn't have any requestor sockets
+        if (nodeIndex != room.getRoomSize())
+            for (ZMQ.Socket requestor : requestors) {
+                // The requestor sends a key share
+                requestor.send(roundRandomKeyShares[i].toString());
+                // The requestor waits to receive a reply with one of the key shares
+                otherNodesRandomKeyShares[i] = new BigInteger(requestor.recvStr());
+                i++;
+            }
+        return otherNodesRandomKeyShares;
     }
 
     /**
