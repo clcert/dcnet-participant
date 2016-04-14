@@ -124,13 +124,7 @@ class OutputMessage {
      * @return message without the randomness
      */
     static String getMessageWithoutRandomness(BigInteger sumOfM) {
-        byte[] _a = sumOfM.toByteArray();
-        byte[] _b = new byte[_a.length - RANDOM_PADDING_LENGTH];
-        for (int i = RANDOM_PADDING_LENGTH, j = 0; i < _a.length; i++, j++) {
-            _b[j] = _a[i];
-        }
-        return new String(_b);
-        // return new String(sumOfM.toByteArray()).substring(RANDOM_PADDING_LENGTH);
+        return new String(sumOfM.toByteArray()).substring(RANDOM_PADDING_LENGTH);
     }
 
     void setParticipantMessage(String participantMessage, Room room) {
