@@ -176,7 +176,6 @@ class SessionManager {
                 // MESSAGE SENDING
                 // Send the message
                 node.getSender().send(messageRoundJson);
-                System.out.println("O_" + nodeIndex + ": " + new String(outputMessage.getMessageBigInteger().toByteArray()));
 
                 // RECEIVE MESSAGES FROM OTHER NODES
                 // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
@@ -242,6 +241,7 @@ class SessionManager {
                 messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
+                System.out.println("ANON: " + sumOfM);
                 System.out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
 
                 // If the message that went through is mine, my message was transmitted
