@@ -2,6 +2,8 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
+import java.io.UnsupportedEncodingException;
+
 /**
  *
  */
@@ -11,7 +13,7 @@ public class DCNETProtocol {
      * Usage: ./gradlew run -PappArgs=[{message},{directoryIP},{nonProbabilisticMode}]
      * @param args message, ip address of directory node and non probabilistic mode?
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnsupportedEncodingException {
         // Parse arguments
         String message = args[0];
         String directoryIp = args[1];
@@ -25,10 +27,9 @@ public class DCNETProtocol {
         System.out.println("My IP: " + nodeIp);
         ParticipantNode participantNode = new ParticipantNode(nodeIp);
 
-        // Create empty objects Room, SessionManager and OutputMessage
+        // Create empty objects Room and SessionManager
         Room room = new Room();
         SessionManager sessionManager = new SessionManager();
-        OutputMessage outputMessage = new OutputMessage();
 
         // Create context where to run the receiver and sender threads
         ZContext context = new ZContext();
@@ -45,10 +46,6 @@ public class DCNETProtocol {
 
         // Create a thread with the Receiver in order to receive the messages from the rest of the room
         ZMQ.Socket receiverThread = ZThread.fork(context, new Receiver(), room);
-
-        // Set parameters to the OutputMessage object: IP address of sender, command type of the message, message itself and room where is going to be send
-        // outputMessage.setSenderNodeIp(participantNode.getNodeIp());
-        // outputMessage.setMessage(message, room);
 
         // Set resending ProbabilisticMode to the room: true or false
         room.setNonProbabilisticMode(nonProbabilistic);

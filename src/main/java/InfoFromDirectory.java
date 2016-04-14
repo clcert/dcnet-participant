@@ -8,6 +8,17 @@ class InfoFromDirectory {
     private ParticipantNodeInfoFromDirectory[] nodes;
     private BigInteger g, h;
     private BigInteger q, p;
+    private int l;
+
+    public int getL() {
+        return l;
+    }
+
+    public int getPadLength() {
+        return padLength;
+    }
+
+    private int padLength;
 
     /**
      *

@@ -1,3 +1,4 @@
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.Random;
 
@@ -7,12 +8,17 @@ import java.util.Random;
 class OutputMessage {
 
     private String ip;
-    private BigInteger messageBigInteger;
-    private BigInteger messageBigIntegerProtocol;
 
-    static private final int RANDOM_PADDING_LENGTH = 10;
     private String participantMessage;
+    private String participantMessageWithPadding;
+
+    private BigInteger protocolMessage;
     private BigInteger randomValue;
+
+    private BigInteger participantMessageWithPaddingBigInteger;
+
+    static private int RANDOM_PADDING_LENGTH;
+    private int paddingLength;
 
     /**
      *
@@ -21,8 +27,8 @@ class OutputMessage {
      */
     OutputMessage(String ip, BigInteger messageProtocol) {
         this.ip = ip;
-        this.messageBigIntegerProtocol = messageProtocol;
-        this.messageBigInteger = BigInteger.ZERO;
+        this.protocolMessage = messageProtocol;
+        this.participantMessageWithPaddingBigInteger = BigInteger.ZERO;
     }
 
     /**
@@ -34,16 +40,16 @@ class OutputMessage {
      *
      * @return message in BigInteger form
      */
-    BigInteger getMessageBigInteger() {
-        return messageBigInteger;
+    BigInteger getParticipantMessageWithPaddingBigInteger() {
+        return participantMessageWithPaddingBigInteger;
     }
 
     /**
      *
      * @return protocol message in BigInteger form
      */
-    BigInteger getMessageBigIntegerProtocol() {
-        return messageBigIntegerProtocol;
+    BigInteger getProtocolMessage() {
+        return protocolMessage;
     }
 
     /**
@@ -63,17 +69,17 @@ class OutputMessage {
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
 
-        this.messageBigInteger = new BigInteger(randomString.concat(message).getBytes());
+        this.participantMessageWithPaddingBigInteger = new BigInteger(randomString.concat(message).getBytes());
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
         if (message.equals("0")) {
-            this.messageBigIntegerProtocol = BigInteger.ZERO;
+            this.protocolMessage = BigInteger.ZERO;
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
             int a = room.getRoomSize()+1;
-            this.messageBigIntegerProtocol = messageBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
+            this.protocolMessage = participantMessageWithPaddingBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
         }
     }
 
@@ -86,17 +92,17 @@ class OutputMessage {
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
 
-        this.messageBigInteger = new BigInteger(randomString.concat(message.toString()).getBytes());
+        this.participantMessageWithPaddingBigInteger = new BigInteger(randomString.concat(message.toString()).getBytes());
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
         if (message.equals(BigInteger.ZERO)) {
-            this.messageBigIntegerProtocol = BigInteger.ZERO;
+            this.protocolMessage = BigInteger.ZERO;
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
             int a = room.getRoomSize()+1;
-            this.messageBigIntegerProtocol = messageBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
+            this.protocolMessage = participantMessageWithPaddingBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
         }
     }
 
@@ -120,33 +126,39 @@ class OutputMessage {
 
     /**
      *
-     * @param sumOfM message that went through the protocol which has a random string appended
+     * @param messageWithRandomness message that went through the protocol which has a random string appended
      * @return message without the randomness
      */
-    static String getMessageWithoutRandomness(BigInteger sumOfM) {
-        return new String(sumOfM.toByteArray()).substring(RANDOM_PADDING_LENGTH);
+    static String getMessageWithoutRandomness(BigInteger messageWithRandomness) throws UnsupportedEncodingException {
+        return new String(messageWithRandomness.toByteArray(), "UTF-8").substring(RANDOM_PADDING_LENGTH);
     }
 
     void setParticipantMessage(String participantMessage, Room room) {
+        this.participantMessage = participantMessage;
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
 
-        this.messageBigInteger = new BigInteger(randomString.concat(participantMessage).getBytes());
+        this.participantMessageWithPadding = randomString.concat(participantMessage);
+        this.participantMessageWithPaddingBigInteger = new BigInteger(this.participantMessageWithPadding.getBytes());
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
         if (participantMessage.equals("0")) {
-            this.messageBigIntegerProtocol = BigInteger.ZERO;
+            this.protocolMessage = BigInteger.ZERO;
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
             int a = room.getRoomSize()+1;
-            this.messageBigIntegerProtocol = messageBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
+            this.protocolMessage = participantMessageWithPaddingBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
         }
     }
 
     void setRandomValue(BigInteger randomValue) {
         this.randomValue = randomValue;
-        this.messageBigIntegerProtocol = this.messageBigIntegerProtocol.add(this.randomValue);
+        this.protocolMessage = this.protocolMessage.add(this.randomValue);
+    }
+
+    void setPaddingLength(int paddingLength) {
+        RANDOM_PADDING_LENGTH = paddingLength;
     }
 }

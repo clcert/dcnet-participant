@@ -2,6 +2,7 @@ import com.google.gson.Gson;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.*;
@@ -53,12 +54,12 @@ class SessionManager {
     /**
      *
      * @param nodeIndex index of the participant node
-     * @param message string with the message that participant node wants to communicate
+     * @param participantMessage string with the message that participant node wants to communicate
      * @param room room where the message is going to be send
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    void runSession(int nodeIndex, String message, Room room, ParticipantNode node, ZMQ.Socket receiverThread) {
+    void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) throws UnsupportedEncodingException {
 
         // Print info about the room
         System.out.println("Number of nodes: " + room.getRoomSize());
@@ -69,9 +70,11 @@ class SessionManager {
         OutputMessage zeroMessage = new OutputMessage();
         outputMessage.setSenderNodeIp(node.getNodeIp());
         zeroMessage.setSenderNodeIp(node.getNodeIp());
+        outputMessage.setPaddingLength(room.getPadLength());
+        // zeroMessage.setPaddingLength(room.getPadLength());
 
         // Print message to send in this session
-        System.out.println("\nm_" + nodeIndex + " = " + message + "\n");
+        System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
@@ -118,20 +121,20 @@ class SessionManager {
                 // System.out.println("REAL ROUND");
 
                 // KEY SHARING PART
-                SecretSharing secretSharing = new SecretSharing(room.getRoomSize()-1);
-                BigInteger roundRandomKey = new BigInteger(room.getQ().bitLength(), new Random());
-                while (roundRandomKey.bitLength() != room.getQ().bitLength())
-                    roundRandomKey = new BigInteger(room.getQ().bitLength(), new Random());
-                BigInteger[] roundRandomKeyShares = secretSharing.splitSecret(roundRandomKey);
-                BigInteger[] otherNodesRandomKeyShares = sendRoundRandomKeyShares(roundRandomKeyShares, nodeIndex, repliers, requestors, room);
-                BigInteger randomValue = constructRandomValue(roundRandomKey, otherNodesRandomKeyShares);
+                SecretSharing secretSharing = new SecretSharing(room.getRoomSize() - 1);
+                BigInteger randomRoundKey = new BigInteger(room.getQ().bitLength() - 1, new Random());
+                while (randomRoundKey.bitLength() != room.getQ().bitLength() - 1)
+                    randomRoundKey = new BigInteger(room.getQ().bitLength(), new Random());
+                BigInteger[] randomRoundKeyShares = secretSharing.splitSecret(randomRoundKey);
+                BigInteger[] otherNodesRandomRoundKeyShares = sendRoundRandomKeyShares(randomRoundKeyShares, nodeIndex, repliers, requestors, room);
+                BigInteger randomValue = constructRandomValue(randomRoundKey, otherNodesRandomRoundKeyShares);
 
                 // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // SET MESSAGE OF THIS ROUND
                 // We have two possibilities: or send a zero message or a different one
-                outputMessage.setParticipantMessage(message, room);
+                outputMessage.setParticipantMessage(participantMessage, room);
                 outputMessage.setRandomValue(randomValue);
                 String outputMessageJson = new Gson().toJson(outputMessage);
 
@@ -140,28 +143,28 @@ class SessionManager {
                 String zeroMessageJson = new Gson().toJson(zeroMessage);
 
                 // If my message was already sent in a round with no collisions, i set a zero message
-                String messageRoundJson;
+                String outputMessageRoundJson;
                 if (messageTransmitted) {
-                    messageRoundJson = zeroMessageJson;
+                    outputMessageRoundJson = zeroMessageJson;
                 }
 
                 // If not, check first if i'm allowed to send my message in this round
                 // If so i set my message as outputMessage set before
                 else if (nextRoundAllowedToSend == round) {
-                    messageRoundJson = outputMessageJson;
+                    outputMessageRoundJson = outputMessageJson;
                 }
                 // If not, i set a zero message
                 else {
-                    messageRoundJson = zeroMessageJson;
+                    outputMessageRoundJson = zeroMessageJson;
                 }
 
                 // COMMITMENT ON MESSAGE PART
                 // Calculate commitment on message
                 pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
-                if (messageRoundJson.equals(zeroMessageJson))
+                if (outputMessageRoundJson.equals(zeroMessageJson))
                     commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
                 else
-                    commitment = pedersenCommitment.calculateCommitment(outputMessage.getMessageBigInteger());
+                    commitment = pedersenCommitment.calculateCommitment(outputMessage.getProtocolMessage());
 
                 // Send commitment to the room
                 node.getSender().send(commitment.toString());
@@ -175,7 +178,7 @@ class SessionManager {
 
                 // MESSAGE SENDING
                 // Send the message
-                node.getSender().send(messageRoundJson);
+                node.getSender().send(outputMessageRoundJson);
 
                 // RECEIVE MESSAGES FROM OTHER NODES
                 // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
@@ -241,12 +244,12 @@ class SessionManager {
                 messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
-                System.out.println("ANON: " + new String(sumOfM.toByteArray()));
+                System.out.println("ANON: " + new String(sumOfM.toByteArray(), "UTF-8"));
                 System.out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
-                if (outputMessage.getMessageBigInteger().equals(sumOfM))
+                if (outputMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
                     messageTransmitted = true;
 
                 // If the number of messages that went through equals the collision size, the collision was completely resolved
@@ -262,9 +265,6 @@ class SessionManager {
                 // 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced
                 // if (round != 1 && (sumOfT == 0 || sumOfO == messagesSentInPreviousRounds.get(round/2))) {
                 if (round != 1 && (sumOfT.equals(BigInteger.ZERO) || sumOfO.equals(messagesSentInPreviousRounds.get(round/2)))) {
-                    // The no splitting of messages can also happen if two messages sent are the same one
-                    // TODO: add randomness to all the messages, and when you receive one, you extract that randomness (certain number of bits placed in a certain position)
-
                     // We have to re-do the "father" round in order to expect that no all nodes involved in the collision re-send their message in the same round
                     // Add the "father" round to happen after this one
                     addRoundToHappenFirst(nextRoundsToHappen, round/2);
@@ -283,7 +283,7 @@ class SessionManager {
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            if (outputMessage.getMessageBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
+                            if (outputMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
                                 nextRoundAllowedToSend = 2 * round;
                             // If not, i re-send my message in the round (2*round + 1)
                             else {

@@ -12,6 +12,13 @@ class Room {
     private int roomSize;
     private boolean nonProbabilisticMode;
     private BigInteger g, h, q, p;
+    private int l;
+
+    public int getPadLength() {
+        return padLength;
+    }
+
+    private int padLength;
 
     /**
      *
@@ -77,6 +84,8 @@ class Room {
         this.h = infoFromDirectory.getH();
         this.q = infoFromDirectory.getQ();
         this.p = infoFromDirectory.getP();
+        this.l = infoFromDirectory.getL();
+        this.padLength = infoFromDirectory.getPadLength();
         ParticipantNodeInfoFromDirectory[] nodes = infoFromDirectory.getNodes();
         this.roomSize = nodes.length;
         for (ParticipantNodeInfoFromDirectory node : nodes)
