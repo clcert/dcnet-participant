@@ -241,7 +241,7 @@ class SessionManager {
                 messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
-                System.out.println("ANON: " + sumOfM);
+                System.out.println("ANON: " + new String(sumOfM.toByteArray()));
                 System.out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
 
                 // If the message that went through is mine, my message was transmitted
