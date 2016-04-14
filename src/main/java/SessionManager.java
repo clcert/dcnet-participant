@@ -52,15 +52,6 @@ class SessionManager {
 
     /**
      *
-     * @param participantNode participant node
-     * @return json with the info of participantNode
-     */
-    //private String zeroMessageJson(ParticipantNode participantNode) {
-    //    return new Gson().toJson(new OutputMessage(participantNode.getNodeIp(), BigInteger.ZERO));
-    //}
-
-    /**
-     *
      * @param nodeIndex index of the participant node
      * @param message string with the message that participant node wants to communicate
      * @param room room where the message is going to be send
@@ -73,15 +64,14 @@ class SessionManager {
         System.out.println("Number of nodes: " + room.getRoomSize());
         System.out.println("My index is: " + nodeIndex);
 
+        // Create an outputMessage and a zeroMessage OutputMessage objects
         OutputMessage outputMessage = new OutputMessage();
         OutputMessage zeroMessage = new OutputMessage();
         outputMessage.setSenderNodeIp(node.getNodeIp());
         zeroMessage.setSenderNodeIp(node.getNodeIp());
 
-        // Print message to send
+        // Print message to send in this session
         System.out.println("\nm_" + nodeIndex + " = " + message + "\n");
-
-        // String outputMessageJson = new Gson().toJson(outputMessage);
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
@@ -93,6 +83,7 @@ class SessionManager {
 
         long t1 = System.nanoTime();
 
+        // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
 
             // Synchronize nodes at the beginning of each round
@@ -120,11 +111,13 @@ class SessionManager {
             // The protocol separates his operation if it's being played a real round or a virtual one (see Reference for more information)
             // REAL ROUND (first and even rounds)
             if (round == 1 || round%2 == 0) {
-                // Set variable that we are playing a real round, add one to the count and print it
+
+                // Set variable that we are playing a real round and add one to the count
                 realRound = true;
                 realRoundsPlayed++;
                 // System.out.println("REAL ROUND");
 
+                // KEY SHARING PART
                 SecretSharing secretSharing = new SecretSharing(room.getRoomSize()-1);
                 BigInteger roundRandomKey = new BigInteger(room.getQ().bitLength(), new Random());
                 while (roundRandomKey.bitLength() != room.getQ().bitLength())
@@ -133,35 +126,36 @@ class SessionManager {
                 BigInteger[] otherNodesRandomKeyShares = sendRoundRandomKeyShares(roundRandomKeyShares, nodeIndex, repliers, requestors, room);
                 BigInteger randomValue = constructRandomValue(roundRandomKey, otherNodesRandomKeyShares);
 
-                outputMessage.setParticipantMessage(message, room);
-                zeroMessage.setParticipantMessage("0", room);
-                outputMessage.setRandomValue(randomValue);
-                zeroMessage.setRandomValue(randomValue);
-
-                String zeroMessageJson = new Gson().toJson(zeroMessage);
-                String outputMessageJson = new Gson().toJson(outputMessage);
-
+                // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                // If my message was already sent in a round with no collisions, i send a zero message
+                // SET MESSAGE OF THIS ROUND
+                // We have two possibilities: or send a zero message or a different one
+                outputMessage.setParticipantMessage(message, room);
+                outputMessage.setRandomValue(randomValue);
+                String outputMessageJson = new Gson().toJson(outputMessage);
+
+                zeroMessage.setParticipantMessage("0", room);
+                zeroMessage.setRandomValue(randomValue);
+                String zeroMessageJson = new Gson().toJson(zeroMessage);
+
+                // If my message was already sent in a round with no collisions, i set a zero message
                 String messageRoundJson;
                 if (messageTransmitted) {
-                    //node.getSender().send(this.zeroMessageJson(node));
                     messageRoundJson = zeroMessageJson;
                 }
 
                 // If not, check first if i'm allowed to send my message in this round
-                // If so i send my message as the Json string constructed before the round began
+                // If so i set my message as outputMessage set before
                 else if (nextRoundAllowedToSend == round) {
-                    // node.getSender().send(outputMessageJson);
                     messageRoundJson = outputMessageJson;
                 }
-                // If not, i send a zero message
+                // If not, i set a zero message
                 else {
-                    // node.getSender().send(this.zeroMessageJson(node));
                     messageRoundJson = zeroMessageJson;
                 }
 
+                // COMMITMENT ON MESSAGE PART
                 // Calculate commitment on message
                 pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
                 if (messageRoundJson.equals(zeroMessageJson))
@@ -176,12 +170,15 @@ class SessionManager {
                 receiverThread.recvStr();
                 // TODO: Do something with the commitments
 
-                // Synchronize nodes
+                // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
+                // MESSAGE SENDING
                 // Send the message
                 node.getSender().send(messageRoundJson);
+                System.out.println("O_" + nodeIndex + ": " + new String(outputMessage.getMessageBigInteger().toByteArray()));
 
+                // RECEIVE MESSAGES FROM OTHER NODES
                 // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
                 // Count how many messages were receive from the receiver thread
                 int messagesReceivedInThisRound = 0;
