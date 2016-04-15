@@ -130,7 +130,8 @@ class OutputMessage {
      * @return message without the randomness
      */
     static String getMessageWithoutRandomness(BigInteger messageWithRandomness) throws UnsupportedEncodingException {
-        return new String(messageWithRandomness.toByteArray(), "UTF-8").substring(RANDOM_PADDING_LENGTH);
+        String _a = new String(messageWithRandomness.toByteArray(), "UTF-8");
+        return _a.substring(0, _a.length() - RANDOM_PADDING_LENGTH);
     }
 
     void setParticipantMessage(String participantMessage, Room room) {
@@ -138,7 +139,8 @@ class OutputMessage {
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
 
-        this.participantMessageWithPadding = randomString.concat(participantMessage);
+        // this.participantMessageWithPadding = randomString.concat(participantMessage);
+        this.participantMessageWithPadding = participantMessage.concat(randomString);
         this.participantMessageWithPaddingBigInteger = new BigInteger(this.participantMessageWithPadding.getBytes());
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
