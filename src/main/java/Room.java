@@ -14,7 +14,7 @@ class Room {
     private BigInteger g, h, q, p;
     private int l;
 
-    public int getPadLength() {
+    int getPadLength() {
         return padLength;
     }
 

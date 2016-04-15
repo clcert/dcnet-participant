@@ -4,7 +4,7 @@ import java.util.Random;
 class SecretSharing {
 
     // Number of shares to split the secret
-    int n;
+    private int n;
 
     SecretSharing(int n) {
         this.n = n;

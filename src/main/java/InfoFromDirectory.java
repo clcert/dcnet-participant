@@ -10,11 +10,11 @@ class InfoFromDirectory {
     private BigInteger q, p;
     private int l;
 
-    public int getL() {
+    int getL() {
         return l;
     }
 
-    public int getPadLength() {
+    int getPadLength() {
         return padLength;
     }
 

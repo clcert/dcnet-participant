@@ -112,7 +112,6 @@ class PedersenCommitment {
      */
     BigInteger calculateCommitment(BigInteger secret) {
         return this.g.modPow(secret, this.p).multiply(this.h.modPow(generateRandom(), this.p)).mod(this.p);
-        // return myPow(this.g, secret).multiply(myPow(this.h,generateRandom()));
     }
 
     /**
@@ -145,22 +144,6 @@ class PedersenCommitment {
      */
     public BigInteger getP() {
         return p;
-    }
-
-    /**
-     *
-     * @param base base
-     * @param exponent exponent
-     * @return base pow exponent
-     */
-    private BigInteger myPow(BigInteger base, BigInteger exponent) {
-        BigInteger result = BigInteger.ONE;
-        while (exponent.signum() > 0) {
-            if (exponent.testBit(0)) result = result.multiply(base);
-            base = base.multiply(base);
-            exponent = exponent.shiftRight(1);
-        }
-        return result;
     }
 
 }
