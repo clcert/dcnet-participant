@@ -221,7 +221,7 @@ class SessionManager {
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
 
             // Print resulting message of this round
-            // System.out.println("C_" + round +  " = (" + sumOfM + "," + sumOfT + ")");
+            System.out.println("C_" + round +  " = (" + sumOfM + "," + sumOfT + ")");
 
             // If we are playing the first round, assign the size of the collision
             if (round == 1) {
