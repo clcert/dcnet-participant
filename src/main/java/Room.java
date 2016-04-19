@@ -60,14 +60,6 @@ class Room {
 
     /**
      *
-     * @param nonProbabilisticMode non probabilistic mode?
-     */
-    void setNonProbabilisticMode(boolean nonProbabilisticMode) {
-        this.nonProbabilisticMode = nonProbabilisticMode;
-    }
-
-    /**
-     *
      * @param i index of the node
      * @return ip address of the node
      */
@@ -86,6 +78,7 @@ class Room {
         this.p = infoFromDirectory.getP();
         this.l = infoFromDirectory.getL();
         this.padLength = infoFromDirectory.getPadLength();
+        this.nonProbabilisticMode = infoFromDirectory.getNonProbabilistic();
         ParticipantNodeInfoFromDirectory[] nodes = infoFromDirectory.getNodes();
         this.roomSize = nodes.length;
         for (ParticipantNodeInfoFromDirectory node : nodes)

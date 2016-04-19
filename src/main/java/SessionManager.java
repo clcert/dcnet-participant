@@ -2,6 +2,7 @@ import com.google.gson.Gson;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -59,7 +60,7 @@ class SessionManager {
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread) throws UnsupportedEncodingException {
+    void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException {
 
         // Print info about the room
         System.out.println("Number of nodes: " + room.getRoomSize());
@@ -244,7 +245,7 @@ class SessionManager {
                 messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
-                System.out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
+                out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds

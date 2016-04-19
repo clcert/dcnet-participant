@@ -2,23 +2,12 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
 
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 
-/**
- *
- */
 public class DCNETProtocol {
 
-    /**
-     * Usage: ./gradlew run -PappArgs=[{message},{directoryIP},{nonProbabilisticMode}]
-     * @param args message, ip address of directory node and non probabilistic mode?
-     */
-    public static void main(String[] args) throws UnsupportedEncodingException {
-        // Parse arguments
-        String message = args[0];
-        String directoryIp = args[1];
-        boolean nonProbabilistic = Boolean.parseBoolean(args[2]);
-
+    static public void runProtocol(String message, String directoryIp, PrintStream out) {
         // Create DirectoryNode object with the IP from arguments
         DirectoryNode directoryNode = new DirectoryNode(directoryIp);
 
@@ -48,13 +37,18 @@ public class DCNETProtocol {
         ZMQ.Socket receiverThread = ZThread.fork(context, new Receiver(), room);
 
         // Set resending ProbabilisticMode to the room: true or false
-        room.setNonProbabilisticMode(nonProbabilistic);
+        // room.setNonProbabilisticMode(nonProbabilistic);
 
         // Create sender socket
         participantNode.createSender(context);
 
         // Run session with the established parameters
-        sessionManager.runSession(nodeIndex, message, room, participantNode, receiverThread);
+        try {
+            sessionManager.runSession(nodeIndex, message, room, participantNode, receiverThread, out);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
 
         // Print total time of execution and how many rounds the session played
         System.out.println("\nTotal Time: " + sessionManager.getExecutionTime() / 1000000000.0 + " seconds");
@@ -65,11 +59,6 @@ public class DCNETProtocol {
         participantNode.closeSender();
         context.destroy();
         sessionManager.closeRepliersAndRequestorsSockets(nodeIndex, room.getRoomSize());
-
-        // Print all the messages received in this session
-        // System.out.println("\nMessages received: ");
-        // sessionManager.printMessagesReceived();
-
     }
 
 }

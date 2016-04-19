@@ -9,6 +9,7 @@ class InfoFromDirectory {
     private BigInteger g, h;
     private BigInteger q, p;
     private int l;
+    private boolean nonProbabilistic;
 
     int getL() {
         return l;
@@ -60,4 +61,7 @@ class InfoFromDirectory {
         return p;
     }
 
+    boolean getNonProbabilistic() {
+        return nonProbabilistic;
+    }
 }
