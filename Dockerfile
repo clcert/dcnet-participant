@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y software-properties-common \
 	apt-get update && apt-get install -y oracle-java8-installer && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/cache/oracle-jdk8-installer && \
-	git clone https://github.com/niclabs/collision_resolution_protocol.git
+	git clone https://fbb260392f7ae2834a1b495a7bae104443badc3b:x-oauth-basic@github.com/niclabs/collision_resolution_protocol.git
 RUN	cd collision_resolution_protocol/ && \
 	git pull && \
     ./gradlew build
