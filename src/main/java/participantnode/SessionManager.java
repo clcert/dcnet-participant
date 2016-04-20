@@ -1,5 +1,10 @@
+package participantnode;
+
 import com.google.gson.Gson;
+import crypto.PedersenCommitment;
+import dcnet.Room;
 import keygeneration.KeyGeneration;
+import keygeneration.SecretSharing;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
@@ -12,7 +17,7 @@ import java.util.*;
 /**
  *
  */
-class SessionManager {
+public class SessionManager {
 
     private ZMQ.Socket[] repliers,
                  requestors;
@@ -35,7 +40,7 @@ class SessionManager {
     /**
      *
      */
-    SessionManager() {
+    public SessionManager() {
         realRound = true;
         messageTransmitted = false;
         round = 1;
@@ -61,13 +66,13 @@ class SessionManager {
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException {
+    public void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException {
 
         // Print info about the room
         System.out.println("Number of nodes: " + room.getRoomSize());
         System.out.println("My index is: " + nodeIndex);
 
-        // Create an outputMessage and a zeroMessage OutputMessage objects
+        // Create an outputMessage and a zeroMessage participantnode.OutputMessage objects
         OutputMessage outputMessage = new OutputMessage();
         OutputMessage zeroMessage = new OutputMessage();
         outputMessage.setSenderNodeIp(node.getNodeIp());
@@ -168,7 +173,7 @@ class SessionManager {
                 // Send commitment to the room
                 node.getSender().send(commitment.toString());
 
-                // Wait response from Receiver thread
+                // Wait response from participantnode.Receiver thread
                 receiverThread.recvStr();
                 // TODO: Do something with the commitments
 
@@ -319,7 +324,7 @@ class SessionManager {
      *
      * @return total execution time of this session
      */
-    long getExecutionTime() {
+    public long getExecutionTime() {
         return executionTime;
     }
 
@@ -384,7 +389,7 @@ class SessionManager {
      * @param nodeIndex index of the participant node
      * @param context context where the zmq sockets are going to run
      */
-    void initializeRepliersArray(int nodeIndex, ZContext context) {
+    public void initializeRepliersArray(int nodeIndex, ZContext context) {
         // Create an array of sockets
         ZMQ.Socket[] repliers = null;
         // The "first" node doesn't have any replier sockets
@@ -409,7 +414,7 @@ class SessionManager {
      * @param context context where the zmq sockets are going to run
      * @param room room where the messages are being sent
      */
-    void initializeRequestorsArray(int nodeIndex, ZContext context, Room room) {
+    public void initializeRequestorsArray(int nodeIndex, ZContext context, Room room) {
         // Create an array of sockets
         ZMQ.Socket[] requestors = null;
         // The "last" node doesn't have any requestor sockets
@@ -431,7 +436,7 @@ class SessionManager {
      *
      * @return number of real rounds played in this session
      */
-    int getRealRoundsPlayed() {
+    public int getRealRoundsPlayed() {
         return realRoundsPlayed;
     }
 
@@ -440,7 +445,7 @@ class SessionManager {
      * @param nodeIndex index of the participant node
      * @param roomSize size of the room
      */
-    void closeRepliersAndRequestorsSockets(int nodeIndex, int roomSize) {
+    public void closeRepliersAndRequestorsSockets(int nodeIndex, int roomSize) {
         if (nodeIndex != 1) {
             for (ZMQ.Socket replier : repliers)
                 replier.close();

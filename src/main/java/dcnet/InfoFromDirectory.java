@@ -1,9 +1,13 @@
+package dcnet;
+
+import json.ParticipantNodeInfoFromDirectory;
+
 import java.math.BigInteger;
 
 /**
  *
  */
-class InfoFromDirectory {
+public class InfoFromDirectory {
 
     private ParticipantNodeInfoFromDirectory[] nodes;
     private BigInteger g, h;

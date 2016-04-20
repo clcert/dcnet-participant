@@ -1,21 +1,18 @@
+package crypto;
+
 import java.math.BigInteger;
 import java.util.Random;
 
 /**
  *
  */
-class PedersenCommitment {
+public class PedersenCommitment {
 
     private int messageSize;
-
     private BigInteger g, h;
     private BigInteger q, p;
 
-    /**
-     *
-     * @param messageSize length of the maximum message possible to send
-     */
-    public PedersenCommitment(int messageSize) {
+    /*public PedersenCommitment(int messageSize) {
         this.messageSize = messageSize;
 
         // Generate prime q bigger than the message and prime p s.t. q|(p-1)
@@ -25,7 +22,7 @@ class PedersenCommitment {
         // Generate generators {g,h} of group G_q
         this.g = findGenerator();
         this.h = findGenerator();
-    }
+    }*/
 
     /**
      *
@@ -34,7 +31,7 @@ class PedersenCommitment {
      * @param q generator q
      * @param p generator p
      */
-    PedersenCommitment(BigInteger g, BigInteger h, BigInteger q, BigInteger p) {
+    public PedersenCommitment(BigInteger g, BigInteger h, BigInteger q, BigInteger p) {
         this.g = g;
         this.h = h;
         this.q = q;
@@ -44,21 +41,40 @@ class PedersenCommitment {
     /**
      *
      */
-    PedersenCommitment() {}
+    public PedersenCommitment() {}
+
+    /**
+     *
+     * @return random value in group Z_q
+     */
+    private BigInteger generateRandom() {
+        // Generate random in Z_q
+        BigInteger random = new BigInteger(this.q.bitCount(), new Random());
+        return random.mod(this.q);
+    }
+
+    /**
+     *
+     * @param secret message that will be hidden in the commitment
+     * @return commitment value
+     */
+    public BigInteger calculateCommitment(BigInteger secret) {
+        return this.g.modPow(secret, this.p).multiply(this.h.modPow(generateRandom(), this.p)).mod(this.p);
+    }
 
     /**
      *
      * @param messageSize length of the maximum message possible to send
      * @return large prime q
-     */
+     *//*
     private BigInteger generateQ(int messageSize) {
         return new BigInteger((messageSize+1)*8, new Random()).nextProbablePrime();
     }
 
-    /**
+    *//**
      *
      * @return large prime p congruent mod 1 with q
-     */
+     *//*
     private BigInteger generateP() {
         int i = 1;
         BigInteger p = this.q.multiply(new BigInteger("" + i)).add(BigInteger.ONE);
@@ -72,10 +88,10 @@ class PedersenCommitment {
         return p;
     }
 
-    /**
+    *//**
      *
      * @return generator of the group G_q
-     */
+     *//*
     private BigInteger findGenerator() {
         // Select a random possible <generator> in Z_p
         BigInteger generator = new BigInteger(this.p.bitCount(), new Random()).mod(this.p);
@@ -93,57 +109,38 @@ class PedersenCommitment {
             generator = new BigInteger(this.p.bitCount(), new Random()).mod(this.p);
         }
         return generator;
-    }
+    }*/
 
-    /**
-     *
-     * @return random value in group Z_q
-     */
-    private BigInteger generateRandom() {
-        // Generate random in Z_q
-        BigInteger random = new BigInteger(this.q.bitCount(), new Random());
-        return random.mod(this.q);
-    }
-
-    /**
-     *
-     * @param secret message that will be hidden in the commitment
-     * @return commitment value
-     */
-    BigInteger calculateCommitment(BigInteger secret) {
-        return this.g.modPow(secret, this.p).multiply(this.h.modPow(generateRandom(), this.p)).mod(this.p);
-    }
-
-    /**
+   /* *//**
      *
      * @return generator g
-     */
+     *//*
     public BigInteger getG() {
         return g;
     }
 
-    /**
+    *//**
      *
      * @return generator h
-     */
+     *//*
     public BigInteger getH() {
         return h;
     }
 
-    /**
+    *//**
      *
      * @return large prime q
-     */
+     *//*
     public BigInteger getQ() {
         return q;
     }
 
-    /**
+    *//**
      *
      * @return large prime p
-     */
+     *//*
     public BigInteger getP() {
         return p;
-    }
+    }*/
 
 }

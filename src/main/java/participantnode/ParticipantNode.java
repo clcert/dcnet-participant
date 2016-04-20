@@ -1,4 +1,9 @@
+package participantnode;
+
 import com.google.gson.Gson;
+import dcnet.DirectoryNode;
+import dcnet.InfoFromDirectory;
+import dcnet.Room;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
@@ -8,7 +13,7 @@ import java.net.UnknownHostException;
 /**
  *
  */
-class ParticipantNode {
+public class ParticipantNode {
 
     private String nodeIp;
     private ZMQ.Socket sender;
@@ -17,7 +22,7 @@ class ParticipantNode {
      *
      * @param nodeIp ip address of the participant node
      */
-    ParticipantNode(String nodeIp) {
+    public ParticipantNode(String nodeIp) {
         this.nodeIp = nodeIp;
     }
 
@@ -25,7 +30,7 @@ class ParticipantNode {
      * Get the LAN IP address of the node
      * @return local network ip address of the participant node
      */
-    static String getLocalNetworkIp() {
+    static public String getLocalNetworkIp() {
         String networkIp = "";
         InetAddress ip;
         try {
@@ -41,7 +46,7 @@ class ParticipantNode {
      *
      * @param context context where the zmq sockets need to run
      */
-    void createSender(ZContext context) {
+    public void createSender(ZContext context) {
         this.sender = context.createSocket(ZMQ.PUB);
         bindSenderPort(this.sender);
     }
@@ -66,7 +71,7 @@ class ParticipantNode {
      *
      * @return ip address of the participant node
      */
-    String getNodeIp() {
+    public String getNodeIp() {
         return nodeIp;
     }
 
@@ -76,7 +81,7 @@ class ParticipantNode {
      * @param room room where this participant node is going to send messages
      * @param context context where the zmq sockets need to run
      */
-    void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context) {
+    public void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context) {
         // Create Directory Subscriber and connect to 5555 port
         ZMQ.Socket directorySubscriber = context.createSocket(ZMQ.SUB);
         directorySubscriber.connect("tcp://" + directoryNode.getDirectoryIp() + ":5555");
@@ -103,7 +108,7 @@ class ParticipantNode {
     /**
      *
      */
-    void closeSender() {
+    public void closeSender() {
         this.sender.close();
     }
 

@@ -1,10 +1,12 @@
-import keygeneration.KeyGeneration;
+package keygeneration;
+
+import dcnet.Room;
 import org.zeromq.ZMQ;
 
 import java.math.BigInteger;
 import java.util.Random;
 
-class SecretSharing implements KeyGeneration {
+public class SecretSharing implements KeyGeneration {
 
     // Number of shares to split the secret
     private int n;
@@ -21,7 +23,7 @@ class SecretSharing implements KeyGeneration {
 
     private BigInteger[] roundRandomKeyShares;
 
-    SecretSharing(int n, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
+    public SecretSharing(int n, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         this.n = n;
         this.secret = new BigInteger(room.getQ().bitLength() - 1, new Random());
         while (this.secret.bitLength() != room.getQ().bitLength() - 1)

@@ -1,3 +1,5 @@
+import dcnet.DCNETProtocol;
+
 import java.io.UnsupportedEncodingException;
 
 public class TestInConsole {

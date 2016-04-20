@@ -1,3 +1,7 @@
+package participantnode;
+
+import dcnet.Room;
+
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.Random;
@@ -85,7 +89,7 @@ class OutputMessage {
         this.participantMessageWithPadding = participantMessage.concat(randomString);
         this.participantMessageWithPaddingBigInteger = new BigInteger(this.participantMessageWithPadding.getBytes());
 
-        // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
+        // Set to the participantnode.OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
         if (participantMessage.equals("0")) {
             this.protocolMessage = BigInteger.ZERO;

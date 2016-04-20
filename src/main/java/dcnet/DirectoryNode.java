@@ -1,8 +1,10 @@
+package dcnet;
+
 /**
- * DirectoryNode is the class that has the ip address of the directory node that is being connected to.
+ * dcnet.DirectoryNode is the class that has the ip address of the directory node that is being connected to.
  * @author Camilo J. Gomez
  */
-class DirectoryNode {
+public class DirectoryNode {
 
     private String directoryIp;
 
@@ -18,7 +20,7 @@ class DirectoryNode {
      * Get the ip address of the directory node
      * @return ip address of the directory node
      */
-    String getDirectoryIp() {
+    public String getDirectoryIp() {
         return directoryIp;
     }
 

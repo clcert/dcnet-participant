@@ -1,3 +1,8 @@
+package dcnet;
+
+import json.ParticipantNodeInfoFromDirectory;
+import participantnode.ParticipantNode;
+
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
@@ -6,7 +11,7 @@ import java.util.Set;
 /**
  *
  */
-class Room {
+public class Room {
 
     private HashMap<Integer, ParticipantNode> directoryMap = new HashMap<>();
     private int roomSize;
@@ -14,7 +19,7 @@ class Room {
     private BigInteger g, h, q, p;
     private int l;
 
-    int getPadLength() {
+    public int getPadLength() {
         return padLength;
     }
 
@@ -29,7 +34,7 @@ class Room {
      *
      * @return maximum number of nodes in the room
      */
-    int getRoomSize() {
+    public int getRoomSize() {
         return this.roomSize;
     }
 
@@ -54,7 +59,7 @@ class Room {
      *
      * @return true if the room is in non probabilistic mode or false if not
      */
-    boolean getNonProbabilisticMode() {
+    public boolean getNonProbabilisticMode() {
         return this.nonProbabilisticMode;
     }
 
@@ -63,7 +68,7 @@ class Room {
      * @param i index of the node
      * @return ip address of the node
      */
-    String getNodeIpFromIndex(int i) {
+    public String getNodeIpFromIndex(int i) {
         return directoryMap.get(i).getNodeIp();
     }
 
@@ -71,7 +76,7 @@ class Room {
      *
      * @param infoFromDirectory info of nodes
      */
-    void setRoomInfoFromDirectory(InfoFromDirectory infoFromDirectory) {
+    public void setRoomInfoFromDirectory(InfoFromDirectory infoFromDirectory) {
         this.g = infoFromDirectory.getG();
         this.h = infoFromDirectory.getH();
         this.q = infoFromDirectory.getQ();
@@ -82,14 +87,14 @@ class Room {
         ParticipantNodeInfoFromDirectory[] nodes = infoFromDirectory.getNodes();
         this.roomSize = nodes.length;
         for (ParticipantNodeInfoFromDirectory node : nodes)
-            this.directoryMap.put(node.index, new ParticipantNode(node.ip));
+            this.directoryMap.put(node.getIndex(), new ParticipantNode(node.getIp()));
     }
 
     /**
      *
      * @return generator g
      */
-    BigInteger getG() {
+    public BigInteger getG() {
         return g;
     }
 
@@ -97,7 +102,7 @@ class Room {
      *
      * @return generator h
      */
-    BigInteger getH() {
+    public BigInteger getH() {
         return h;
     }
 
@@ -105,7 +110,7 @@ class Room {
      *
      * @return large prime q
      */
-    BigInteger getQ() {
+    public BigInteger getQ() {
         return q;
     }
 
@@ -113,7 +118,7 @@ class Room {
      *
      * @return large prime p
      */
-    BigInteger getP() {
+    public BigInteger getP() {
         return p;
     }
 

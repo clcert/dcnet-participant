@@ -1,4 +1,7 @@
+package participantnode;
+
 import com.google.gson.Gson;
+import dcnet.Room;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZThread;
@@ -6,7 +9,7 @@ import org.zeromq.ZThread;
 /**
  *
  */
-class Receiver implements ZThread.IAttachedRunnable {
+public class Receiver implements ZThread.IAttachedRunnable {
 
     /**
      *
