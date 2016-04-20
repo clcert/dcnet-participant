@@ -17,7 +17,7 @@ class OutputMessage {
     private String participantMessageWithPadding;
 
     private BigInteger protocolMessage;
-    private BigInteger randomValue;
+    private BigInteger roundKeyValue;
 
     private BigInteger participantMessageWithPaddingBigInteger;
 
@@ -101,9 +101,9 @@ class OutputMessage {
         }
     }
 
-    void setRandomValue(BigInteger randomValue) {
-        this.randomValue = randomValue;
-        this.protocolMessage = this.protocolMessage.add(this.randomValue);
+    void setRoundKeyValue(BigInteger roundKeyValue) {
+        this.roundKeyValue = roundKeyValue;
+        this.protocolMessage = this.protocolMessage.add(this.roundKeyValue);
     }
 
     void setPaddingLength(int paddingLength) {
