@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import keygeneration.KeyGeneration;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
@@ -122,15 +123,8 @@ class SessionManager {
                 // System.out.println("REAL ROUND");
 
                 // KEY SHARING PART
-                // BigInteger randomRoundKey = new BigInteger(room.getQ().bitLength() - 1, new Random());
-                // while (randomRoundKey.bitLength() != room.getQ().bitLength() - 1)
-                    // randomRoundKey = new BigInteger(room.getQ().bitLength(), new Random());
-                // SecretSharing secretSharing = new SecretSharing(room.getRoomSize() - 1, randomRoundKey, nodeIndex, repliers, requestors, room);
                 KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
-                // BigInteger[] randomRoundKeyShares =
                 keyGeneration.generateParticipantNodeRoundKeys();
-                // BigInteger[] otherNodesRandomRoundKeyShares = sendRoundRandomKeyShares(randomRoundKeyShares, nodeIndex, repliers, requestors, room);
-                // BigInteger[] otherNodesRandomRoundKeyShares =
                 keyGeneration.getOtherParticipantNodesRoundKeys();
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 
@@ -320,39 +314,6 @@ class SessionManager {
         executionTime = t2-t1;
 
     }
-
-    private BigInteger constructRandomValue(BigInteger roundRandomKey, BigInteger[] otherNodesRandomKeyShares) {
-        BigInteger result = BigInteger.ZERO;
-
-        for (BigInteger otherNodeRandomKeyShare : otherNodesRandomKeyShares)
-            result = result.add(otherNodeRandomKeyShare);
-
-        return result.subtract(roundRandomKey);
-    }
-
-    /*private BigInteger[] sendRoundRandomKeyShares(BigInteger[] roundRandomKeyShares, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
-        int i = 0;
-        BigInteger[] otherNodesRandomKeyShares = new BigInteger[room.getRoomSize()-1];
-        // The "first" node doesn't have any replier sockets
-        if (nodeIndex != 1)
-            for (ZMQ.Socket replier : repliers) {
-                // The replier wait to receive a key share
-                otherNodesRandomKeyShares[i] = new BigInteger(replier.recvStr());
-                // When the replier receives the message, replies with one of their key shares
-                replier.send(roundRandomKeyShares[i].toString());
-                i++;
-            }
-        // The "last" node doesn't have any requestor sockets
-        if (nodeIndex != room.getRoomSize())
-            for (ZMQ.Socket requestor : requestors) {
-                // The requestor sends a key share
-                requestor.send(roundRandomKeyShares[i].toString());
-                // The requestor waits to receive a reply with one of the key shares
-                otherNodesRandomKeyShares[i] = new BigInteger(requestor.recvStr());
-                i++;
-            }
-        return otherNodesRandomKeyShares;
-    }*/
 
     /**
      *

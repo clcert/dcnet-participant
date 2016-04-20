@@ -1,3 +1,4 @@
+import keygeneration.KeyGeneration;
 import org.zeromq.ZMQ;
 
 import java.math.BigInteger;
@@ -14,15 +15,11 @@ class SecretSharing implements KeyGeneration {
     // Other participant nodes round keys (Shares of other participant nodes secret)
     private BigInteger[] otherNodesRandomKeyShares;
 
-    int nodeIndex;
-    ZMQ.Socket[] repliers, requestors;
-    Room room;
+    private int nodeIndex;
+    private ZMQ.Socket[] repliers, requestors;
+    private Room room;
 
     private BigInteger[] roundRandomKeyShares;
-
-    SecretSharing(int n) {
-        this.n = n;
-    }
 
     SecretSharing(int n, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         this.n = n;
@@ -34,21 +31,6 @@ class SecretSharing implements KeyGeneration {
         this.requestors = requestors;
         this.room = room;
     }
-
-    /*BigInteger[] splitSecret(BigInteger secret) {
-        int bitLength = secret.bitLength();
-        BigInteger[] shares = new BigInteger[this.n];
-        BigInteger randomnessAdded = BigInteger.ZERO;
-        for (int i = 0; i < shares.length - 1; i++) {
-            BigInteger randomValue = new BigInteger(bitLength, new Random()).negate();
-            while (randomValue.bitLength() != bitLength)
-                randomValue = new BigInteger(bitLength, new Random());
-            shares[i] = randomValue;
-            randomnessAdded = randomnessAdded.add(randomValue);
-        }
-        shares[this.n - 1] = secret.subtract(randomnessAdded);
-        return shares;
-    }*/
 
     @Override
     public BigInteger[] generateParticipantNodeRoundKeys() {
