@@ -122,13 +122,17 @@ class SessionManager {
                 // System.out.println("REAL ROUND");
 
                 // KEY SHARING PART
-                SecretSharing secretSharing = new SecretSharing(room.getRoomSize() - 1);
-                BigInteger randomRoundKey = new BigInteger(room.getQ().bitLength() - 1, new Random());
-                while (randomRoundKey.bitLength() != room.getQ().bitLength() - 1)
-                    randomRoundKey = new BigInteger(room.getQ().bitLength(), new Random());
-                BigInteger[] randomRoundKeyShares = secretSharing.splitSecret(randomRoundKey);
-                BigInteger[] otherNodesRandomRoundKeyShares = sendRoundRandomKeyShares(randomRoundKeyShares, nodeIndex, repliers, requestors, room);
-                BigInteger randomValue = constructRandomValue(randomRoundKey, otherNodesRandomRoundKeyShares);
+                // BigInteger randomRoundKey = new BigInteger(room.getQ().bitLength() - 1, new Random());
+                // while (randomRoundKey.bitLength() != room.getQ().bitLength() - 1)
+                    // randomRoundKey = new BigInteger(room.getQ().bitLength(), new Random());
+                // SecretSharing secretSharing = new SecretSharing(room.getRoomSize() - 1, randomRoundKey, nodeIndex, repliers, requestors, room);
+                KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
+                // BigInteger[] randomRoundKeyShares =
+                keyGeneration.generateParticipantNodeRoundKeys();
+                // BigInteger[] otherNodesRandomRoundKeyShares = sendRoundRandomKeyShares(randomRoundKeyShares, nodeIndex, repliers, requestors, room);
+                // BigInteger[] otherNodesRandomRoundKeyShares =
+                keyGeneration.getOtherParticipantNodesRoundKeys();
+                BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 
                 // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
@@ -136,11 +140,11 @@ class SessionManager {
                 // SET MESSAGE OF THIS ROUND
                 // We have two possibilities: or send a zero message or a different one
                 outputMessage.setParticipantMessage(participantMessage, room);
-                outputMessage.setRandomValue(randomValue);
+                outputMessage.setRandomValue(keyRoundValue);
                 String outputMessageJson = new Gson().toJson(outputMessage);
 
                 zeroMessage.setParticipantMessage("0", room);
-                zeroMessage.setRandomValue(randomValue);
+                zeroMessage.setRandomValue(keyRoundValue);
                 String zeroMessageJson = new Gson().toJson(zeroMessage);
 
                 // If my message was already sent in a round with no collisions, i set a zero message
@@ -326,7 +330,7 @@ class SessionManager {
         return result.subtract(roundRandomKey);
     }
 
-    private BigInteger[] sendRoundRandomKeyShares(BigInteger[] roundRandomKeyShares, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
+    /*private BigInteger[] sendRoundRandomKeyShares(BigInteger[] roundRandomKeyShares, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         int i = 0;
         BigInteger[] otherNodesRandomKeyShares = new BigInteger[room.getRoomSize()-1];
         // The "first" node doesn't have any replier sockets
@@ -348,7 +352,7 @@ class SessionManager {
                 i++;
             }
         return otherNodesRandomKeyShares;
-    }
+    }*/
 
     /**
      *
