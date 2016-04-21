@@ -134,6 +134,7 @@ public class SessionManager {
                 // COMMITMENTS ON KEYS PART
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
+                    System.out.println("Commitment " + i + " : " + roundKeys[i]);
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);
                 }
                 BigInteger[] otherNodesKeyCommitments = sendAndReceiveCommitmentsOnKeys(commitmentsOnKeys, nodeIndex, room);
