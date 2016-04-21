@@ -133,21 +133,27 @@ public class SessionManager {
                 KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
                 BigInteger[] roundKeys = keyGeneration.generateParticipantNodeRoundKeys();
 
+                keyGeneration.getOtherParticipantNodesRoundKeys();
+                BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
+
+                // Synchronize nodes to let know that we all finish the Key-Sharing part
+                synchronizeNodes(nodeIndex, repliers, requestors, room);
+
                 // COMMITMENTS ON KEYS PART
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);
                 }
-                sendAndReceiveCommitmentsOnKeys(commitmentsOnKeys, nodeIndex, room);
-                // TODO: Do something with key commitments of each participant node
+                BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
+
+                // Send commitment on key to the room
+                node.getSender().send(commitmentOnKey.toString());
+
+                // Wait response from Receiver thread
+                receiverThread.recvStr();
+                // TODO: Do something with the commitments
 
                 // Synchronize nodes to let know that we all finish the key commitments part
-                synchronizeNodes(nodeIndex, repliers, requestors, room);
-
-                keyGeneration.getOtherParticipantNodesRoundKeys();
-                BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
-
-                // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // SET MESSAGE OF THIS ROUND
@@ -331,6 +337,14 @@ public class SessionManager {
 
         executionTime = t2-t1;
 
+    }
+
+    private BigInteger generateCommitmentOnKey(BigInteger[] commitmentsOnKeys, Room room) {
+        BigInteger _a = BigInteger.ONE;
+        for (BigInteger commitmentsOnKey : commitmentsOnKeys) {
+            _a = _a.multiply(commitmentsOnKey);
+        }
+        return _a.mod(room.getP());
     }
 
     private BigInteger[] sendAndReceiveCommitmentsOnKeys(BigInteger[] commitments, int nodeIndex, Room room) {
