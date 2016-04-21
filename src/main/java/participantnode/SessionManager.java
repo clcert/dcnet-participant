@@ -3,6 +3,7 @@ package participantnode;
 import com.google.gson.Gson;
 import crypto.PedersenCommitment;
 import dcnet.Room;
+import keygeneration.DiffieHellman;
 import keygeneration.KeyGeneration;
 import keygeneration.SecretSharing;
 import org.zeromq.ZContext;
@@ -20,15 +21,15 @@ import java.util.*;
 public class SessionManager {
 
     private ZMQ.Socket[] repliers,
-                 requestors;
+                         requestors;
     private boolean messageTransmitted,
-            finished;
+                    finished;
     //        realRound;
     private int round,
-        realRoundsPlayed,
-        nextRoundAllowedToSend,
-        collisionSize,
-        messagesSentWithNoCollisions;
+                realRoundsPlayed,
+                nextRoundAllowedToSend,
+                collisionSize,
+                messagesSentWithNoCollisions;
     private Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     private LinkedList<Integer> nextRoundsToHappen;
     // private List<BigInteger> messagesReceived;
@@ -130,8 +131,9 @@ public class SessionManager {
                 // System.out.println("REAL ROUND");
 
                 // KEY SHARING PART
-                KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
-                BigInteger[] roundKeys = keyGeneration.generateParticipantNodeRoundKeys();
+                // KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
+                KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
+                keyGeneration.generateParticipantNodeRoundKeys();
 
                 keyGeneration.getOtherParticipantNodesRoundKeys();
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
@@ -140,6 +142,7 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // COMMITMENTS ON KEYS PART
+                BigInteger[] roundKeys = keyGeneration.getRoundKeys();
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);

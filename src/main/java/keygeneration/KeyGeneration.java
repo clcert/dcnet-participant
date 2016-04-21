@@ -6,6 +6,7 @@ public interface KeyGeneration {
 
     BigInteger[] generateParticipantNodeRoundKeys();
     BigInteger[] getOtherParticipantNodesRoundKeys();
+    BigInteger[] getRoundKeys();
     BigInteger getParticipantNodeRoundKeyValue();
 
 }

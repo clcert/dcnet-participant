@@ -78,6 +78,11 @@ public class SecretSharing implements KeyGeneration {
     }
 
     @Override
+    public BigInteger[] getRoundKeys() {
+        return this.roundRandomKeyShares;
+    }
+
+    @Override
     public BigInteger getParticipantNodeRoundKeyValue() {
         BigInteger result = BigInteger.ZERO;
 
