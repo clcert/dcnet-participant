@@ -91,6 +91,8 @@ public class SessionManager {
             e.printStackTrace();
         }
 
+        pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
+
         long t1 = System.nanoTime();
 
         // Each loop of this while is a different round
@@ -134,7 +136,6 @@ public class SessionManager {
                 // COMMITMENTS ON KEYS PART
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
-                    System.out.println("Commitment " + i + " : " + roundKeys[i]);
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);
                 }
                 BigInteger[] otherNodesKeyCommitments = sendAndReceiveCommitmentsOnKeys(commitmentsOnKeys, nodeIndex, room);
@@ -177,7 +178,6 @@ public class SessionManager {
 
                 // COMMITMENT ON MESSAGE PART
                 // Calculate commitment on message
-                pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
                 if (outputMessageRoundJson.equals(zeroMessageJson))
                     commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
                 else
