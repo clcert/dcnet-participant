@@ -39,7 +39,7 @@ public class SecretSharing implements KeyGeneration {
         int bitLength = secret.bitLength();
         BigInteger[] shares = new BigInteger[this.n];
         BigInteger randomnessAdded = BigInteger.ZERO;
-        for (int i = 0; i < shares.length - 1; i++) {
+        for (int i = 0; i < shares.length; i++) {
             BigInteger randomValue = new BigInteger(bitLength, new Random()).negate();
             while (randomValue.bitLength() != bitLength)
                 randomValue = new BigInteger(bitLength, new Random());
