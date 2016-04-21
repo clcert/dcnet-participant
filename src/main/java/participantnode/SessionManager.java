@@ -138,7 +138,7 @@ public class SessionManager {
                 for (int i = 0; i < roundKeys.length; i++) {
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);
                 }
-                BigInteger[] otherNodesKeyCommitments = sendAndReceiveCommitmentsOnKeys(commitmentsOnKeys, nodeIndex, room);
+                sendAndReceiveCommitmentsOnKeys(commitmentsOnKeys, nodeIndex, room);
                 // TODO: Do something with key commitments of each participant node
 
                 // Synchronize nodes to let know that we all finish the key commitments part
