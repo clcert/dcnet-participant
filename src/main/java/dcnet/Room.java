@@ -122,4 +122,7 @@ public class Room {
         return p;
     }
 
+    int getL() {
+        return l;
+    }
 }

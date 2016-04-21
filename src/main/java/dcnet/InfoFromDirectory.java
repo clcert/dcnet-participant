@@ -14,6 +14,7 @@ public class InfoFromDirectory {
     private BigInteger q, p;
     private int l;
     private boolean nonProbabilistic;
+    private int padLength;
 
     int getL() {
         return l;
@@ -22,8 +23,6 @@ public class InfoFromDirectory {
     int getPadLength() {
         return padLength;
     }
-
-    private int padLength;
 
     /**
      *
@@ -68,4 +67,5 @@ public class InfoFromDirectory {
     boolean getNonProbabilistic() {
         return nonProbabilistic;
     }
+
 }

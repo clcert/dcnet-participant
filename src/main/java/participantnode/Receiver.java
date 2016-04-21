@@ -55,7 +55,6 @@ public class Receiver implements ZThread.IAttachedRunnable {
             for (int i = 0; i < roomSize; i++) {
                 // Receive commitment from a node in the room
                 String inputCommitment = receiver.recvStr().trim();
-
                 // TODO: Do something with the commitment
             }
             pipe.send("");

@@ -41,8 +41,9 @@ public class DCNETProtocol {
         // Create a thread with the participantnode.Receiver in order to receive the messages from the rest of the room
         ZMQ.Socket receiverThread = ZThread.fork(context, new Receiver(), room);
 
-        // Set resending ProbabilisticMode to the room: true or false
-        // room.setNonProbabilisticMode(nonProbabilistic);
+        // Cut message if it's longer than the max length admitted by the room
+        if (message.length() > room.getL())
+            message = message.substring(0, room.getL());
 
         // Create sender socket
         participantNode.createSender(context);
@@ -64,6 +65,7 @@ public class DCNETProtocol {
         participantNode.closeSender();
         context.destroy();
         sessionManager.closeRepliersAndRequestorsSockets(nodeIndex, room.getRoomSize());
+
     }
 
 }

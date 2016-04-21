@@ -11,14 +11,9 @@ import java.util.Random;
  */
 class OutputMessage {
 
-    private String ip;
-
-    private String participantMessage;
-    private String participantMessageWithPadding;
+    // private String ip;
 
     private BigInteger protocolMessage;
-    private BigInteger roundKeyValue;
-
     private BigInteger participantMessageWithPaddingBigInteger;
 
     static private int RANDOM_PADDING_LENGTH;
@@ -48,9 +43,9 @@ class OutputMessage {
      *
      * @param ip ip address of the sender node
      */
-    void setSenderNodeIp(String ip) {
+    /*void setSenderNodeIp(String ip) {
         this.ip = ip;
-    }
+    }*/
 
     /**
      *
@@ -81,13 +76,12 @@ class OutputMessage {
     }
 
     void setParticipantMessage(String participantMessage, Room room) {
-        this.participantMessage = participantMessage;
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
 
         // this.participantMessageWithPadding = randomString.concat(participantMessage);
-        this.participantMessageWithPadding = participantMessage.concat(randomString);
-        this.participantMessageWithPaddingBigInteger = new BigInteger(this.participantMessageWithPadding.getBytes());
+        String participantMessageWithPadding = participantMessage.concat(randomString);
+        this.participantMessageWithPaddingBigInteger = new BigInteger(participantMessageWithPadding.getBytes());
 
         // Set to the participantnode.OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
@@ -102,11 +96,11 @@ class OutputMessage {
     }
 
     void setRoundKeyValue(BigInteger roundKeyValue) {
-        this.roundKeyValue = roundKeyValue;
-        this.protocolMessage = this.protocolMessage.add(this.roundKeyValue);
+        this.protocolMessage = this.protocolMessage.add(roundKeyValue);
     }
 
     void setPaddingLength(int paddingLength) {
         RANDOM_PADDING_LENGTH = paddingLength;
     }
+
 }

@@ -22,8 +22,8 @@ public class SessionManager {
     private ZMQ.Socket[] repliers,
                  requestors;
     private boolean messageTransmitted,
-            finished,
-            realRound;
+            finished;
+    //        realRound;
     private int round,
         realRoundsPlayed,
         nextRoundAllowedToSend,
@@ -31,7 +31,7 @@ public class SessionManager {
         messagesSentWithNoCollisions;
     private Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     private LinkedList<Integer> nextRoundsToHappen;
-    private List<BigInteger> messagesReceived;
+    // private List<BigInteger> messagesReceived;
     private PedersenCommitment pedersenCommitment;
     private BigInteger commitment;
 
@@ -41,7 +41,7 @@ public class SessionManager {
      *
      */
     public SessionManager() {
-        realRound = true;
+        // realRound = true;
         messageTransmitted = false;
         round = 1;
         realRoundsPlayed = 0;
@@ -52,7 +52,7 @@ public class SessionManager {
         finished = false;
         nextRoundsToHappen = new LinkedList<>();
         nextRoundsToHappen.addFirst(1);
-        messagesReceived = new LinkedList<>();
+        // messagesReceived = new LinkedList<>();
         executionTime = 0;
         pedersenCommitment = new PedersenCommitment();
         commitment = BigInteger.ZERO;
@@ -75,8 +75,8 @@ public class SessionManager {
         // Create an outputMessage and a zeroMessage participantnode.OutputMessage objects
         OutputMessage outputMessage = new OutputMessage();
         OutputMessage zeroMessage = new OutputMessage();
-        outputMessage.setSenderNodeIp(node.getNodeIp());
-        zeroMessage.setSenderNodeIp(node.getNodeIp());
+        // outputMessage.setSenderNodeIp(node.getNodeIp());
+        // zeroMessage.setSenderNodeIp(node.getNodeIp());
         outputMessage.setPaddingLength(room.getPadLength());
         // zeroMessage.setPaddingLength(room.getPadLength());
 
@@ -123,7 +123,7 @@ public class SessionManager {
             if (round == 1 || round%2 == 0) {
 
                 // Set variable that we are playing a real round and add one to the count
-                realRound = true;
+                // realRound = true;
                 realRoundsPlayed++;
                 // System.out.println("REAL ROUND");
 
@@ -132,6 +132,7 @@ public class SessionManager {
                 keyGeneration.generateParticipantNodeRoundKeys();
                 keyGeneration.getOtherParticipantNodesRoundKeys();
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
+                System.out.println("KeyRoundValue: " + keyRoundValue);
 
                 // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
@@ -205,7 +206,7 @@ public class SessionManager {
             // VIRTUAL ROUND (odd rounds)
             else {
                 // Set variable that we are playing a virtual round and print it
-                realRound = false;
+                // realRound = false;
                 // System.out.println("VIRTUAL ROUND");
 
                 // Recover messages sent in rounds 2k and k in order to construct the resulting message of this round (see Reference for more information)
@@ -245,7 +246,7 @@ public class SessionManager {
                 messagesSentWithNoCollisions++;
 
                 // Add message received in this round in order to calculate messages in subsequently virtual rounds
-                messagesReceived.add(sumOfM);
+                // messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
                 out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));

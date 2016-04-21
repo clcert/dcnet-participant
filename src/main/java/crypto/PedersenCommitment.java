@@ -8,7 +8,7 @@ import java.util.Random;
  */
 public class PedersenCommitment {
 
-    private int messageSize;
+    // private int messageSize;
     private BigInteger g, h;
     private BigInteger q, p;
 
