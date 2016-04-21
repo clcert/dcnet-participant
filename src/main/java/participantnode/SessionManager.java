@@ -132,7 +132,6 @@ public class SessionManager {
                 keyGeneration.generateParticipantNodeRoundKeys();
                 keyGeneration.getOtherParticipantNodesRoundKeys();
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
-                System.out.println("KeyRoundValue: " + keyRoundValue);
 
                 // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
