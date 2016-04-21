@@ -129,7 +129,19 @@ public class SessionManager {
 
                 // KEY SHARING PART
                 KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
-                keyGeneration.generateParticipantNodeRoundKeys();
+                BigInteger[] roundKeys = keyGeneration.generateParticipantNodeRoundKeys();
+
+                // COMMITMENTS ON KEYS PART
+                BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
+                for (int i = 0; i < roundKeys.length; i++) {
+                    commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);
+                }
+                BigInteger[] otherNodesKeyCommitments = sendAndReceiveCommitmentsOnKeys(commitmentsOnKeys, nodeIndex, room);
+                // TODO: Do something with key commitments of each participant node
+
+                // Synchronize nodes to let know that we all finish the key commitments part
+                synchronizeNodes(nodeIndex, repliers, requestors, room);
+
                 keyGeneration.getOtherParticipantNodesRoundKeys();
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 
@@ -318,6 +330,30 @@ public class SessionManager {
 
         executionTime = t2-t1;
 
+    }
+
+    private BigInteger[] sendAndReceiveCommitmentsOnKeys(BigInteger[] commitments, int nodeIndex, Room room) {
+        int i = 0;
+        BigInteger[] otherNodesKeyCommitments = new BigInteger[commitments.length];
+        // The "first" node doesn't have any replier sockets
+        if (nodeIndex != 1)
+            for (ZMQ.Socket replier : repliers) {
+                // The replier wait to receive a key share
+                otherNodesKeyCommitments[i] = new BigInteger(replier.recvStr());
+                // When the replier receives the message, replies with one of their key shares
+                replier.send(commitments[i].toString());
+                i++;
+            }
+        // The "last" node doesn't have any requestor sockets
+        if (nodeIndex != room.getRoomSize())
+            for (ZMQ.Socket requestor : requestors) {
+                // The requestor sends a key share
+                requestor.send(commitments[i].toString());
+                // The requestor waits to receive a reply with one of the key shares
+                otherNodesKeyCommitments[i] = new BigInteger(requestor.recvStr());
+                i++;
+            }
+        return otherNodesKeyCommitments;
     }
 
     /**
