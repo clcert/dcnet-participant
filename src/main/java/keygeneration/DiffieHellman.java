@@ -36,7 +36,7 @@ public class DiffieHellman implements KeyGeneration {
     }
 
     @Override
-    public BigInteger[] generateParticipantNodeRoundKeys() {
+    public BigInteger[] generateParticipantNodeValues() {
         for (int i = 0; i < this.participantNodeHalves.length; i++) {
             this.participantNodeHalves[i] = this.g.modPow(exponentValues[i], this.p);
         }
@@ -44,7 +44,7 @@ public class DiffieHellman implements KeyGeneration {
     }
 
     @Override
-    public BigInteger[] getOtherParticipantNodesRoundKeys() {
+    public BigInteger[] getOtherParticipantNodesValues() {
         int i = 0;
         BigInteger[] otherNodesKeyHalves = new BigInteger[room.getRoomSize()-1];
         // The "first" node doesn't have any replier sockets

@@ -131,10 +131,10 @@ public class SessionManager {
                 // System.out.println("REAL ROUND");
 
                 // KEY SHARING PART
-                // KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
-                KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
-                keyGeneration.generateParticipantNodeRoundKeys();
-                keyGeneration.getOtherParticipantNodesRoundKeys();
+                KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
+                // KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
+                keyGeneration.generateParticipantNodeValues();
+                keyGeneration.getOtherParticipantNodesValues();
 
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 

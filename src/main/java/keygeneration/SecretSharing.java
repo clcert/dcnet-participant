@@ -35,7 +35,7 @@ public class SecretSharing implements KeyGeneration {
     }
 
     @Override
-    public BigInteger[] generateParticipantNodeRoundKeys() {
+    public BigInteger[] generateParticipantNodeValues() {
         int bitLength = secret.bitLength();
         BigInteger[] shares = new BigInteger[this.n];
         BigInteger randomnessAdded = BigInteger.ZERO;
@@ -52,7 +52,7 @@ public class SecretSharing implements KeyGeneration {
     }
 
     @Override
-    public BigInteger[] getOtherParticipantNodesRoundKeys() {
+    public BigInteger[] getOtherParticipantNodesValues() {
         int i = 0;
         BigInteger[] otherNodesRandomKeyShares = new BigInteger[room.getRoomSize()-1];
         // The "first" node doesn't have any replier sockets
