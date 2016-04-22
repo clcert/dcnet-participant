@@ -145,7 +145,6 @@ public class SessionManager {
                 BigInteger[] roundKeys = keyGeneration.getRoundKeys();
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
-                    System.out.println("KEY " + i + ": " + roundKeys[i]);
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);
                 }
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
