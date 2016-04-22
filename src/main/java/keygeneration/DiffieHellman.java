@@ -22,16 +22,16 @@ public class DiffieHellman implements KeyGeneration {
     public DiffieHellman(int n, BigInteger g, BigInteger p, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         this.g = g;
         this.p = p;
-        this.exponentValues = new BigInteger[n-1];
+        this.exponentValues = new BigInteger[n];
         for (int i = 0; i < exponentValues.length; i++) {
             exponentValues[i] = new BigInteger(p.bitCount(), new Random());
         }
-        this.participantNodeHalfs = new BigInteger[n-1];
+        this.participantNodeHalfs = new BigInteger[n];
         this.nodeIndex = nodeIndex;
         this.repliers = repliers;
         this.requestors = requestors;
         this.room = room;
-        this.roundKeys = new BigInteger[n-1];
+        this.roundKeys = new BigInteger[n];
     }
 
     @Override
