@@ -11,14 +11,6 @@ public class DiffieHellman implements KeyGeneration {
     private final BigInteger g, p;
     private BigInteger[] exponentValues;
 
-    public BigInteger[] getParticipantNodeHalves() {
-        return participantNodeHalves;
-    }
-
-    public BigInteger[] getOtherParticipantNodeHalves() {
-        return otherParticipantNodeHalves;
-    }
-
     private BigInteger[] participantNodeHalves;
     private BigInteger[] otherParticipantNodeHalves;
     private BigInteger[] roundKeys;
@@ -82,9 +74,9 @@ public class DiffieHellman implements KeyGeneration {
         int _a = nodeIndex - 1;
         int i;
         for(i = 0; i < _a; i++)
-            roundKeys[i] = participantNodeHalves[i].modPow(otherParticipantNodeHalves[i], p).negate();
+            roundKeys[i] = otherParticipantNodeHalves[i].modPow(exponentValues[i], p).negate();
         for (int j = i; j < roundKeys.length; j++)
-            roundKeys[j] = participantNodeHalves[j].modPow(otherParticipantNodeHalves[j], p);
+            roundKeys[j] = otherParticipantNodeHalves[j].modPow(exponentValues[j], p);
         BigInteger roundKeyValue = BigInteger.ZERO;
         for (BigInteger roundKey : roundKeys) {
             roundKeyValue = roundKeyValue.add(roundKey);

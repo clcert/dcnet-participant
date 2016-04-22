@@ -133,13 +133,8 @@ public class SessionManager {
                 // KEY SHARING PART
                 // KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
                 KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
-                BigInteger[] pNHalves = keyGeneration.generateParticipantNodeRoundKeys();
-                BigInteger[] otherPNHalves = keyGeneration.getOtherParticipantNodesRoundKeys();
-
-                for (int i = 0; i < room.getRoomSize() - 1; i++) {
-                    System.out.println("NP Half " + i + ": " + pNHalves[i]);
-                    System.out.println("Other NP Half " + i + ": " + otherPNHalves[i]);
-                }
+                keyGeneration.generateParticipantNodeRoundKeys();
+                keyGeneration.getOtherParticipantNodesRoundKeys();
 
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 
