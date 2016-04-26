@@ -202,6 +202,25 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
+                // Add round key to the message
+                outputMessage.setRoundKeyValue(keyRoundValue);
+                outputMessageJson = new Gson().toJson(outputMessage);
+                zeroMessage.setRoundKeyValue(keyRoundValue);
+                zeroMessageJson = new Gson().toJson(zeroMessage);
+                // If my message was already sent in a round with no collisions, i set a zero message
+                if (messageTransmitted) {
+                    outputMessageRoundJson = zeroMessageJson;
+                }
+                // If not, check first if i'm allowed to send my message in this round
+                // If so i set my message as outputMessage set before
+                else if (nextRoundAllowedToSend == round) {
+                    outputMessageRoundJson = outputMessageJson;
+                }
+                // If not, i set a zero message
+                else {
+                    outputMessageRoundJson = zeroMessageJson;
+                }
+
                 // MESSAGE SENDING
                 // Send the message
                 node.getSender().send(outputMessageRoundJson);
