@@ -162,11 +162,11 @@ public class SessionManager {
                 // SET MESSAGE OF THIS ROUND
                 // We have two possibilities: or send a zero message or a different one
                 outputMessage.setParticipantMessage(participantMessage, room);
-                outputMessage.setRoundKeyValue(keyRoundValue);
+                // outputMessage.setRoundKeyValue(keyRoundValue);
                 String outputMessageJson = new Gson().toJson(outputMessage);
 
                 zeroMessage.setParticipantMessage("0", room);
-                zeroMessage.setRoundKeyValue(keyRoundValue);
+                // zeroMessage.setRoundKeyValue(keyRoundValue);
                 String zeroMessageJson = new Gson().toJson(zeroMessage);
 
                 // If my message was already sent in a round with no collisions, i set a zero message
