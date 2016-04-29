@@ -23,7 +23,8 @@ public class SessionManager {
     private ZMQ.Socket[] repliers,
                          requestors;
     private boolean messageTransmitted,
-                    finished;
+                    finished,
+                    messageInThisRound;
     //        realRound;
     private int round,
                 realRoundsPlayed,
@@ -44,6 +45,7 @@ public class SessionManager {
     public SessionManager() {
         // realRound = true;
         messageTransmitted = false;
+        messageInThisRound = true;
         round = 1;
         realRoundsPlayed = 0;
         nextRoundAllowedToSend = 1;
@@ -77,13 +79,11 @@ public class SessionManager {
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
         outputParticipantMessage.setParticipantMessage(participantMessage, room);
-        String outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+        String outputParticipantMessageJson;
 
         OutputMessage zeroMessage = new OutputMessage();
         zeroMessage.setParticipantMessage("0", room);
-        String zeroMessageJson = new Gson().toJson(zeroMessage);
-
-        boolean messageInThisRound;
+        String zeroMessageJson;
 
         // Print message to send in this session
         System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
@@ -179,9 +179,7 @@ public class SessionManager {
 
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                // outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
-                // zeroMessageJson = new Gson().toJson(zeroMessage);
 
                 // If my message was already sent in a round with no collisions, i set a zero message
                 String outputMessageRoundJson;
