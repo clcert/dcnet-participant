@@ -202,8 +202,8 @@ public class SessionManager {
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                 outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
-                //zeroMessage.setRoundKeyValue(keyRoundValue);
-                //zeroMessageJson = new Gson().toJson(zeroMessage);
+                zeroMessage.setRoundKeyValue(keyRoundValue);
+                zeroMessageJson = new Gson().toJson(zeroMessage);
 
                 // If my message was already sent in a round with no collisions, i set a zero message
                 String outputMessageRoundJson;
@@ -213,8 +213,8 @@ public class SessionManager {
                     outputMessageRoundJson = outputParticipantMessageJson;
                 }
                 else {
-                    zeroMessage.setRoundKeyValue(keyRoundValue);
-                    zeroMessageJson = new Gson().toJson(zeroMessage);
+                    //zeroMessage.setRoundKeyValue(keyRoundValue);
+                    //zeroMessageJson = new Gson().toJson(zeroMessage);
                     outputMessageRoundJson = zeroMessageJson;
                 }
 
