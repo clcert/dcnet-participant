@@ -25,7 +25,6 @@ public class SessionManager {
     private boolean messageTransmitted,
                     finished,
                     messageInThisRound;
-    //        realRound;
     private int round,
                 realRoundsPlayed,
                 nextRoundAllowedToSend,
@@ -33,17 +32,14 @@ public class SessionManager {
                 messagesSentWithNoCollisions;
     private Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     private LinkedList<Integer> nextRoundsToHappen;
-    // private List<BigInteger> messagesReceived;
     private PedersenCommitment pedersenCommitment;
     private BigInteger commitment;
-
     private long executionTime;
 
     /**
      *
      */
     public SessionManager() {
-        // realRound = true;
         messageTransmitted = false;
         messageInThisRound = true;
         round = 1;
@@ -55,7 +51,6 @@ public class SessionManager {
         finished = false;
         nextRoundsToHappen = new LinkedList<>();
         nextRoundsToHappen.addFirst(1);
-        // messagesReceived = new LinkedList<>();
         executionTime = 0;
         pedersenCommitment = new PedersenCommitment();
         commitment = BigInteger.ZERO;
@@ -72,10 +67,9 @@ public class SessionManager {
     public void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException {
 
         // Print info about the room
-        System.out.println("Number of nodes: " + room.getRoomSize());
-        System.out.println("My index is: " + nodeIndex);
+        System.out.println("PARTICIPANT NODE " + nodeIndex + " of " + room.getRoomSize());
 
-        // Create an outputMessage and a zeroMessage participantnode.OutputMessage objects
+        // Create an outputMessage and a zeroMessage OutputMessage objects
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
         outputParticipantMessage.setParticipantMessage(participantMessage, room);
@@ -96,8 +90,10 @@ public class SessionManager {
             e.printStackTrace();
         }
 
+        // Set values of subsequently commitments with the public info of the Room
         pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
 
+        // Set time to measure entire protocol
         long t1 = System.nanoTime();
 
         // Each loop of this while is a different round
@@ -123,36 +119,36 @@ public class SessionManager {
             BigInteger sumOfM, sumOfT, sumOfO = BigInteger.ZERO;
 
             // The protocol separates his operation if it's being played a real round or a virtual one (see Reference for more information)
-            // REAL ROUND (first and even rounds)
+            /** REAL ROUND (first and even rounds) **/
             if (round == 1 || round%2 == 0) {
 
+                // Check if in this round the participant will send a real message or a zero message
                 messageInThisRound = !messageTransmitted && nextRoundAllowedToSend == round;
-
                 // Set variable that we are playing a real round and add one to the count
                 realRoundsPlayed++;
 
-                // KEY SHARING PART
+                /** KEY SHARING PART **/
+                // Initialize KeyGeneration
                 KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
-                // KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
+                /* KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room); */
+                // Generate Participant Node values
                 keyGeneration.generateParticipantNodeValues();
+                // Get other participants values (to produce cancellation keys)
                 keyGeneration.getOtherParticipantNodesValues();
-
+                // Generation of the main key round value (operation over the shared key values)
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 
                 // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                // COMMITMENTS ON KEYS PART
+                /** COMMITMENTS ON KEYS PART **/
                 BigInteger[] roundKeys = keyGeneration.getRoundKeys();
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
-                for (int i = 0; i < roundKeys.length; i++) {
+                for (int i = 0; i < roundKeys.length; i++)
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);
-                }
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
-
                 // Send commitment on key to the room
                 node.getSender().send(commitmentOnKey.toString());
-
                 // Wait response from Receiver thread
                 receiverThread.recvStr();
                 // TODO: Do something with the commitments
@@ -160,23 +156,22 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                // COMMITMENT ON MESSAGE PART
+                /** COMMITMENT ON MESSAGE PART **/
                 // Calculate commitment on message
                 if (!messageInThisRound)
                     commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
                 else
                     commitment = pedersenCommitment.calculateCommitment(outputParticipantMessage.getProtocolMessage());
-
                 // Send commitment to the room
                 node.getSender().send(commitment.toString());
-
-                // Wait response from participantnode.Receiver thread
+                // Wait response from Receiver thread
                 receiverThread.recvStr();
                 // TODO: Do something with the commitments
 
                 // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
+                /** MESSAGE SENDING **/
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
@@ -191,11 +186,10 @@ public class SessionManager {
                     zeroMessageJson = new Gson().toJson(zeroMessage);
                     outputMessageRoundJson = zeroMessageJson;
                 }
-
-                // MESSAGE SENDING
+                // Send the message
                 node.getSender().send(outputMessageRoundJson);
 
-                // RECEIVE MESSAGES FROM OTHER NODES
+                /** RECEIVE MESSAGES FROM OTHER NODES **/
                 // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
                 // Count how many messages were receive from the receiver thread
                 int messagesReceivedInThisRound = 0;
@@ -210,26 +204,23 @@ public class SessionManager {
                     // Increase the number of messages received
                     messagesReceivedInThisRound++;
                 }
-
             }
 
-            // VIRTUAL ROUND (odd rounds)
+            /** VIRTUAL ROUND (odd rounds) **/
             else {
                 // Recover messages sent in rounds 2k and k in order to construct the resulting message of this round (see Reference for more information)
                 BigInteger sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
                 BigInteger sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
-
                 // Construct the resulting message of this round
                 sumOfO = sumOfOSentInRoundK.subtract(sumOfOSentInRound2K);
             }
 
+            /** EXTRACT ROUND MESSAGES VALUES **/
             // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
             messagesSentInPreviousRounds.put(round, sumOfO);
-
             // Divide sumOfO in sumOfM and sumOfT (see Reference for more information)
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
-
             // If we are playing the first round, assign the size of the collision
             if (round == 1) {
                 collisionSize = Integer.parseInt(sumOfT.toString());
@@ -241,7 +232,7 @@ public class SessionManager {
                 }
             }
 
-            // Depending on the resulting message, we have to analyze either there was a collision or not in this round
+            /** COLLISION OR NOT CHECKING **/
             // <sumOfT> = 1 => No Collision Round => a message went through clearly, received by the rest of the nodes
             if (sumOfT.equals(BigInteger.ONE)) {
                 // Increase the number of messages that went through the protocol
@@ -260,7 +251,6 @@ public class SessionManager {
                 if (messagesSentWithNoCollisions == collisionSize)
                     finished = true;
             }
-
             // <sumOfT> != 1 => Collision produced or no messages sent in this round (last can only occur in probabilistic mode)
             else {
                 // In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
@@ -310,10 +300,10 @@ public class SessionManager {
             }
         }
 
+        // Finish time measurement
         long t2 = System.nanoTime();
-
+        // Save execution time
         executionTime = t2-t1;
-
     }
 
     private BigInteger generateCommitmentOnKey(BigInteger[] commitmentsOnKeys, Room room) {
@@ -322,30 +312,6 @@ public class SessionManager {
             _a = _a.multiply(commitmentsOnKey);
         }
         return _a.mod(room.getP());
-    }
-
-    private BigInteger[] sendAndReceiveCommitmentsOnKeys(BigInteger[] commitments, int nodeIndex, Room room) {
-        int i = 0;
-        BigInteger[] otherNodesKeyCommitments = new BigInteger[commitments.length];
-        // The "first" node doesn't have any replier sockets
-        if (nodeIndex != 1)
-            for (ZMQ.Socket replier : repliers) {
-                // The replier wait to receive a key share
-                otherNodesKeyCommitments[i] = new BigInteger(replier.recvStr());
-                // When the replier receives the message, replies with one of their key shares
-                replier.send(commitments[i].toString());
-                i++;
-            }
-        // The "last" node doesn't have any requestor sockets
-        if (nodeIndex != room.getRoomSize())
-            for (ZMQ.Socket requestor : requestors) {
-                // The requestor sends a key share
-                requestor.send(commitments[i].toString());
-                // The requestor waits to receive a reply with one of the key shares
-                otherNodesKeyCommitments[i] = new BigInteger(requestor.recvStr());
-                i++;
-            }
-        return otherNodesKeyCommitments;
     }
 
     /**
