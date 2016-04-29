@@ -74,16 +74,16 @@ public class SessionManager {
         System.out.println("My index is: " + nodeIndex);
 
         // Create an outputMessage and a zeroMessage participantnode.OutputMessage objects
-        // OutputMessage roundOutputMessage = null;
-
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
         outputParticipantMessage.setParticipantMessage(participantMessage, room);
-        String outputMessageJson = new Gson().toJson(outputParticipantMessage);
+        String outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
 
         OutputMessage zeroMessage = new OutputMessage();
         zeroMessage.setParticipantMessage("0", room);
         String zeroMessageJson = new Gson().toJson(zeroMessage);
+
+        boolean messageInThisRound;
 
         // Print message to send in this session
         System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
@@ -126,10 +126,10 @@ public class SessionManager {
             // REAL ROUND (first and even rounds)
             if (round == 1 || round%2 == 0) {
 
+                messageInThisRound = !messageTransmitted && nextRoundAllowedToSend == round;
+
                 // Set variable that we are playing a real round and add one to the count
-                // realRound = true;
                 realRoundsPlayed++;
-                // System.out.println("REAL ROUND");
 
                 // KEY SHARING PART
                 KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
@@ -162,33 +162,32 @@ public class SessionManager {
 
                 // SET MESSAGE OF THIS ROUND
                 // We have two possibilities: or send a zero message or a different one
-
                 // If my message was already sent in a round with no collisions, i set a zero message
-                String outputMessageRoundJson;
-                if (messageTransmitted) {
-                    outputMessageRoundJson = zeroMessageJson;
-                    // roundOutputMessage = zeroMessage;
-                }
+                /*String outputMessageRoundJson;
+                if (messageInThisRound)
+                    outputMessageRoundJson = outputParticipantMessageJson;
+                else
+                    outputMessageRoundJson = zeroMessageJson;*/
 
+                /*if (messageTransmitted) {
+                    outputMessageRoundJson = zeroMessageJson;
+                }
                 // If not, check first if i'm allowed to send my message in this round
                 // If so i set my message as outputMessage set before
                 else if (nextRoundAllowedToSend == round) {
-                    outputMessageRoundJson = outputMessageJson;
-                    // roundOutputMessage = outputParticipantMessage;
+                    outputMessageRoundJson = outputParticipantMessageJson;
                 }
                 // If not, i set a zero message
                 else {
                     outputMessageRoundJson = zeroMessageJson;
-                    // roundOutputMessage = zeroMessage;
-                }
+                }*/
 
                 // COMMITMENT ON MESSAGE PART
                 // Calculate commitment on message
-                if (outputMessageRoundJson.equals(zeroMessageJson))
+                if (!messageInThisRound)
                     commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
                 else
                     commitment = pedersenCommitment.calculateCommitment(outputParticipantMessage.getProtocolMessage());
-                // commitment = pedersenCommitment.calculateCommitment(roundOutputMessage.getProtocolMessage());
 
                 // Send commitment to the room
                 node.getSender().send(commitment.toString());
@@ -202,29 +201,33 @@ public class SessionManager {
 
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                outputMessageJson = new Gson().toJson(outputParticipantMessage);
+                outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
                 zeroMessageJson = new Gson().toJson(zeroMessage);
+
                 // If my message was already sent in a round with no collisions, i set a zero message
-                if (messageTransmitted) {
+                String outputMessageRoundJson;
+                if (messageInThisRound)
+                    outputMessageRoundJson = outputParticipantMessageJson;
+                else
+                    outputMessageRoundJson = zeroMessageJson;
+
+                /*if (messageTransmitted) {
                     outputMessageRoundJson = zeroMessageJson;
                 }
                 // If not, check first if i'm allowed to send my message in this round
                 // If so i set my message as outputMessage set before
                 else if (nextRoundAllowedToSend == round) {
-                    outputMessageRoundJson = outputMessageJson;
+                    outputMessageRoundJson = outputParticipantMessageJson;
                 }
                 // If not, i set a zero message
                 else {
                     outputMessageRoundJson = zeroMessageJson;
-                }
-                //roundOutputMessage.setRoundKeyValue(keyRoundValue);
-                //String roundOutputMessageJson = new Gson().toJson(roundOutputMessage);
+                }*/
 
                 // MESSAGE SENDING
                 // Send the message
                 node.getSender().send(outputMessageRoundJson);
-                //node.getSender().send(roundOutputMessageJson);
 
                 // RECEIVE MESSAGES FROM OTHER NODES
                 // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
@@ -246,10 +249,6 @@ public class SessionManager {
 
             // VIRTUAL ROUND (odd rounds)
             else {
-                // Set variable that we are playing a virtual round and print it
-                // realRound = false;
-                // System.out.println("VIRTUAL ROUND");
-
                 // Recover messages sent in rounds 2k and k in order to construct the resulting message of this round (see Reference for more information)
                 BigInteger sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
                 BigInteger sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
@@ -265,12 +264,8 @@ public class SessionManager {
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
 
-            // Print resulting message of this round
-            // System.out.println("C_" + round +  " = (" + sumOfM + "," + sumOfT + ")");
-
             // If we are playing the first round, assign the size of the collision
             if (round == 1) {
-                // collisionSize = sumOfT;
                 collisionSize = Integer.parseInt(sumOfT.toString());
                 // If the size is 0, it means that no messages were sent during this session, so we finish the protocol
                 if (collisionSize == 0) {
@@ -285,9 +280,6 @@ public class SessionManager {
             if (sumOfT.equals(BigInteger.ONE)) {
                 // Increase the number of messages that went through the protocol
                 messagesSentWithNoCollisions++;
-
-                // Add message received in this round in order to calculate messages in subsequently virtual rounds
-                // messagesReceived.add(sumOfM);
 
                 // Print message that went through the protocol
                 out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
@@ -350,10 +342,6 @@ public class SessionManager {
                     addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
                 }
             }
-
-            // Print a blank line
-            // System.out.println();
-
         }
 
         long t2 = System.nanoTime();
