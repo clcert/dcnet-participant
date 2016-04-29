@@ -70,18 +70,22 @@ class OutputMessage {
      * @param messageWithRandomness message that went through the protocol which has a random string appended
      * @return message without the randomness
      */
-    static String getMessageWithoutRandomness(BigInteger messageWithRandomness) throws UnsupportedEncodingException {
-        String _a = new String(messageWithRandomness.toByteArray(), "UTF-8");
-        return _a.substring(0, _a.length() - RANDOM_PADDING_LENGTH);
+    static String getMessageWithoutRandomness(BigInteger messageWithRandomness, Room room) throws UnsupportedEncodingException {
+        int a = room.getRoomSize()+1;
+        BigInteger _a = messageWithRandomness.divide(BigInteger.valueOf(a));
+        return new String(_a.toByteArray(), "UTF-8");
     }
 
     void setParticipantMessage(String participantMessage, Room room) {
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
+        BigInteger randomStringBigInteger = new BigInteger(randomString.getBytes());
 
-        // this.participantMessageWithPadding = randomString.concat(participantMessage);
-        String participantMessageWithPadding = participantMessage.concat(randomString);
-        this.participantMessageWithPaddingBigInteger = new BigInteger(participantMessageWithPadding.getBytes());
+        BigInteger participantMessageBigInteger = new BigInteger(participantMessage.getBytes());
+
+        int a = room.getRoomSize()+1;
+
+        this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(BigInteger.valueOf(a)).add(randomStringBigInteger);
 
         // Set to the participantnode.OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
@@ -90,7 +94,6 @@ class OutputMessage {
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
-            int a = room.getRoomSize()+1;
             this.protocolMessage = participantMessageWithPaddingBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
         }
     }

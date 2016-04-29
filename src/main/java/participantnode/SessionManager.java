@@ -239,7 +239,7 @@ public class SessionManager {
                 messagesSentWithNoCollisions++;
 
                 // Print message that went through the protocol
-                out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM));
+                out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
