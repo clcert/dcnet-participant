@@ -72,7 +72,7 @@ class OutputMessage {
      */
     static String getMessageWithoutRandomness(BigInteger messageWithRandomness, Room room) throws UnsupportedEncodingException {
         int a = room.getRoomSize()+1;
-        BigInteger _a = messageWithRandomness.divide(BigInteger.valueOf(a).add(BigInteger.valueOf(room.getPadLength()*8)));
+        BigInteger _a = messageWithRandomness.divide(BigInteger.valueOf(a).add(BigInteger.valueOf(RANDOM_PADDING_LENGTH*8)));
         return new String(_a.toByteArray(), "UTF-8");
     }
 
@@ -85,7 +85,7 @@ class OutputMessage {
 
         int a = room.getRoomSize()+1;
 
-        this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(BigInteger.valueOf(a)).add(randomStringBigInteger);
+        this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(BigInteger.valueOf(a+RANDOM_PADDING_LENGTH*8)).add(randomStringBigInteger);
 
         // Set to the participantnode.OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
