@@ -72,7 +72,7 @@ class OutputMessage {
      */
     static String getMessageWithoutRandomness(BigInteger messageWithRandomness, Room room) throws UnsupportedEncodingException {
         int a = room.getRoomSize()+1;
-        BigInteger _a = messageWithRandomness.divide(BigInteger.valueOf(a).add(BigInteger.valueOf(room.getPadLength()).multiply(BigInteger.valueOf(8))));
+        BigInteger _a = messageWithRandomness.divide(BigInteger.valueOf(a).add(BigInteger.valueOf(room.getPadLength()*8)));
         return new String(_a.toByteArray(), "UTF-8");
     }
 
