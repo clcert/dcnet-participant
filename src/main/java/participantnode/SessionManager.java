@@ -74,7 +74,7 @@ public class SessionManager {
         System.out.println("My index is: " + nodeIndex);
 
         // Create an outputMessage and a zeroMessage participantnode.OutputMessage objects
-        OutputMessage roundOutputMessage;
+        OutputMessage roundOutputMessage = new OutputMessage();
 
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
@@ -164,7 +164,7 @@ public class SessionManager {
                 // We have two possibilities: or send a zero message or a different one
 
                 // If my message was already sent in a round with no collisions, i set a zero message
-                String outputMessageRoundJson;
+                // String outputMessageRoundJson;
                 if (messageTransmitted) {
                     // outputMessageRoundJson = zeroMessageJson;
                     roundOutputMessage = zeroMessage;
@@ -294,7 +294,7 @@ public class SessionManager {
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
-                if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
+                if (roundOutputMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
                     messageTransmitted = true;
 
                 // If the number of messages that went through equals the collision size, the collision was completely resolved
@@ -328,7 +328,7 @@ public class SessionManager {
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
+                            if (roundOutputMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
                                 nextRoundAllowedToSend = 2 * round;
                             // If not, i re-send my message in the round (2*round + 1)
                             else {
