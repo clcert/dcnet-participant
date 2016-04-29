@@ -200,16 +200,16 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // Add round key to the message
-                //outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                //outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                outputParticipantMessage.setRoundKeyValue(keyRoundValue);
+                outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                 //zeroMessage.setRoundKeyValue(keyRoundValue);
                 //zeroMessageJson = new Gson().toJson(zeroMessage);
 
                 // If my message was already sent in a round with no collisions, i set a zero message
                 String outputMessageRoundJson;
                 if (messageInThisRound) {
-                    outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                    outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                    //outputParticipantMessage.setRoundKeyValue(keyRoundValue);
+                    //outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                     outputMessageRoundJson = outputParticipantMessageJson;
                 }
                 else {
