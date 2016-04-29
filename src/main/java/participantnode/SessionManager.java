@@ -129,7 +129,7 @@ public class SessionManager {
 
                 /** KEY SHARING PART **/
                 // Initialize KeyGeneration
-                KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize() - 1, nodeIndex, repliers, requestors, room);
+                KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);
                 /* KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room); */
                 // Generate Participant Node values
                 keyGeneration.generateParticipantNodeValues();

@@ -21,6 +21,8 @@ public class SecretSharing implements KeyGeneration {
     private ZMQ.Socket[] repliers, requestors;
     private Room room;
 
+    private BigInteger secretShare;
+
     private BigInteger[] roundRandomKeyShares;
 
     public SecretSharing(int n, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
@@ -37,16 +39,16 @@ public class SecretSharing implements KeyGeneration {
     @Override
     public BigInteger[] generateParticipantNodeValues() {
         int bitLength = secret.bitLength();
-        BigInteger[] shares = new BigInteger[this.n];
+        BigInteger[] shares = new BigInteger[this.n-1];
         BigInteger randomnessAdded = BigInteger.ZERO;
-        for (int i = 0; i < shares.length - 1; i++) {
+        for (int i = 0; i < shares.length; i++) {
             BigInteger randomValue = new BigInteger(bitLength, new Random()).negate();
             while (randomValue.bitLength() != bitLength)
                 randomValue = new BigInteger(bitLength, new Random());
             shares[i] = randomValue;
             randomnessAdded = randomnessAdded.add(randomValue);
         }
-        shares[this.n - 1] = secret.subtract(randomnessAdded);
+        secretShare = secret.subtract(randomnessAdded);
         this.roundRandomKeyShares = shares;
         return shares;
     }
@@ -89,6 +91,6 @@ public class SecretSharing implements KeyGeneration {
         for (BigInteger otherNodeRandomKeyShare : otherNodesRandomKeyShares)
             result = result.add(otherNodeRandomKeyShare);
 
-        return result.subtract(this.secret);
+        return result.subtract(this.secret).add(secretShare);
     }
 }
