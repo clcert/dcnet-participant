@@ -72,20 +72,20 @@ class OutputMessage {
      */
     static String getMessageWithoutRandomness(BigInteger messageWithRandomness, Room room) throws UnsupportedEncodingException {
         int a = room.getRoomSize()+1;
-        BigInteger _a = messageWithRandomness.divide(BigInteger.valueOf(a).add(BigInteger.valueOf((long) Math.pow(2,RANDOM_PADDING_LENGTH*8))));
+        BigInteger _a = messageWithRandomness.divide(BigInteger.valueOf((long) Math.pow(2, RANDOM_PADDING_LENGTH*8 + Math.log(a)/Math.log(2))));
         return new String(_a.toByteArray(), "UTF-8");
     }
 
     void setParticipantMessage(String participantMessage, Room room) throws UnsupportedEncodingException {
+        int a = room.getRoomSize()+1;
+
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
         BigInteger randomStringBigInteger = new BigInteger(randomString.getBytes("UTF-8"));
 
         BigInteger participantMessageBigInteger = new BigInteger(participantMessage.getBytes("UTF-8"));
 
-        int a = room.getRoomSize()+1;
-
-        this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(BigInteger.valueOf(a+ (long) Math.pow(2, RANDOM_PADDING_LENGTH*8))).add(randomStringBigInteger);
+        this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(BigInteger.valueOf((long) Math.pow(2, RANDOM_PADDING_LENGTH*8 + Math.log(a)/Math.log(2)))).add(randomStringBigInteger);
 
         // Set to the participantnode.OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
