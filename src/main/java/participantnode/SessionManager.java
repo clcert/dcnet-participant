@@ -160,28 +160,6 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                // SET MESSAGE OF THIS ROUND
-                // We have two possibilities: or send a zero message or a different one
-                // If my message was already sent in a round with no collisions, i set a zero message
-                /*String outputMessageRoundJson;
-                if (messageInThisRound)
-                    outputMessageRoundJson = outputParticipantMessageJson;
-                else
-                    outputMessageRoundJson = zeroMessageJson;*/
-
-                /*if (messageTransmitted) {
-                    outputMessageRoundJson = zeroMessageJson;
-                }
-                // If not, check first if i'm allowed to send my message in this round
-                // If so i set my message as outputMessage set before
-                else if (nextRoundAllowedToSend == round) {
-                    outputMessageRoundJson = outputParticipantMessageJson;
-                }
-                // If not, i set a zero message
-                else {
-                    outputMessageRoundJson = zeroMessageJson;
-                }*/
-
                 // COMMITMENT ON MESSAGE PART
                 // Calculate commitment on message
                 if (!messageInThisRound)
@@ -201,25 +179,22 @@ public class SessionManager {
 
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                // outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
-                zeroMessageJson = new Gson().toJson(zeroMessage);
+                // zeroMessageJson = new Gson().toJson(zeroMessage);
 
                 // If my message was already sent in a round with no collisions, i set a zero message
                 String outputMessageRoundJson;
                 if (messageInThisRound) {
-                    //outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                    //outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                    outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                     outputMessageRoundJson = outputParticipantMessageJson;
                 }
                 else {
-                    //zeroMessage.setRoundKeyValue(keyRoundValue);
-                    //zeroMessageJson = new Gson().toJson(zeroMessage);
+                    zeroMessageJson = new Gson().toJson(zeroMessage);
                     outputMessageRoundJson = zeroMessageJson;
                 }
 
                 // MESSAGE SENDING
-                // Send the message
                 node.getSender().send(outputMessageRoundJson);
 
                 // RECEIVE MESSAGES FROM OTHER NODES
