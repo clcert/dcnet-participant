@@ -74,7 +74,7 @@ public class SessionManager {
         System.out.println("My index is: " + nodeIndex);
 
         // Create an outputMessage and a zeroMessage participantnode.OutputMessage objects
-        OutputMessage roundOutputMessage = new OutputMessage();
+        OutputMessage roundOutputMessage = null;
 
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
@@ -294,6 +294,8 @@ public class SessionManager {
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
+                // if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
+                    // messageTransmitted = true;
                 if (roundOutputMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
                     messageTransmitted = true;
 
@@ -328,6 +330,7 @@ public class SessionManager {
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
+                            // if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
                             if (roundOutputMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
                                 nextRoundAllowedToSend = 2 * round;
                             // If not, i re-send my message in the round (2*round + 1)
