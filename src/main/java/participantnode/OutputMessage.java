@@ -71,30 +71,35 @@ class OutputMessage {
      * @return message without the randomness
      */
     static String getMessageWithoutRandomness(BigInteger messageWithRandomness, Room room) throws UnsupportedEncodingException {
-        int a = room.getRoomSize()+1;
-        BigInteger _a = messageWithRandomness.divide(BigInteger.valueOf(a * (long) Math.pow(2, RANDOM_PADDING_LENGTH*8)));
+        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
+        BigInteger two = BigInteger.valueOf(2);
+
+        BigInteger _a = messageWithRandomness.divide(two.pow(RANDOM_PADDING_LENGTH*8).multiply(nPlusOne));
         return new String(messageWithRandomness.toByteArray(), "UTF-8") + " " + new String(_a.toByteArray(), "UTF-8");
     }
 
     void setParticipantMessage(String participantMessage, Room room) throws UnsupportedEncodingException {
-        int a = room.getRoomSize()+1;
+        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
+        BigInteger two = BigInteger.valueOf(2);
 
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
         BigInteger randomStringBigInteger = new BigInteger(randomString.getBytes("UTF-8"));
 
+        // Transform participant message to Big Integer
         BigInteger participantMessageBigInteger = new BigInteger(participantMessage.getBytes("UTF-8"));
 
-        this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(BigInteger.valueOf(a * (long) Math.pow(2, RANDOM_PADDING_LENGTH*8))).add(randomStringBigInteger);
+        // Calculate concatenation of participant message and random characters, leaving a gap of log(n+1) bits between them
+        this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(two.pow(RANDOM_PADDING_LENGTH*8).multiply(nPlusOne)).add(randomStringBigInteger);
 
-        // Set to the participantnode.OutputMessage object the actual message that the node wants to communicate (<m>)
+        // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
         if (participantMessage.equals("0")) {
             this.protocolMessage = BigInteger.ZERO;
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
-            this.protocolMessage = participantMessageWithPaddingBigInteger.multiply(BigInteger.valueOf(a)).add(BigInteger.ONE);
+            this.protocolMessage = participantMessageWithPaddingBigInteger.multiply(nPlusOne).add(BigInteger.ONE);
         }
     }
 
