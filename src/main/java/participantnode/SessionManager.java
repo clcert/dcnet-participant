@@ -200,30 +200,23 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // Add round key to the message
-                outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
-                zeroMessage.setRoundKeyValue(keyRoundValue);
-                zeroMessageJson = new Gson().toJson(zeroMessage);
+                //outputParticipantMessage.setRoundKeyValue(keyRoundValue);
+                //outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                //zeroMessage.setRoundKeyValue(keyRoundValue);
+                //zeroMessageJson = new Gson().toJson(zeroMessage);
 
                 // If my message was already sent in a round with no collisions, i set a zero message
                 String outputMessageRoundJson;
-                if (messageInThisRound)
-                    outputMessageRoundJson = outputParticipantMessageJson;
-                else
-                    outputMessageRoundJson = zeroMessageJson;
-
-                /*if (messageTransmitted) {
-                    outputMessageRoundJson = zeroMessageJson;
-                }
-                // If not, check first if i'm allowed to send my message in this round
-                // If so i set my message as outputMessage set before
-                else if (nextRoundAllowedToSend == round) {
+                if (messageInThisRound) {
+                    outputParticipantMessage.setRoundKeyValue(keyRoundValue);
+                    outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                     outputMessageRoundJson = outputParticipantMessageJson;
                 }
-                // If not, i set a zero message
                 else {
+                    zeroMessage.setRoundKeyValue(keyRoundValue);
+                    zeroMessageJson = new Gson().toJson(zeroMessage);
                     outputMessageRoundJson = zeroMessageJson;
-                }*/
+                }
 
                 // MESSAGE SENDING
                 // Send the message
