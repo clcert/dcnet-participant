@@ -75,7 +75,7 @@ class OutputMessage {
         BigInteger two = BigInteger.valueOf(2);
 
         BigInteger _a = messageWithRandomness.divide(two.pow(RANDOM_PADDING_LENGTH*8).multiply(nPlusOne));
-        return new String(messageWithRandomness.toByteArray(), "UTF-8") + " " + new String(_a.toByteArray(), "UTF-8");
+        return new String(_a.toByteArray(), "UTF-8");
     }
 
     void setParticipantMessage(String participantMessage, Room room) throws UnsupportedEncodingException {
