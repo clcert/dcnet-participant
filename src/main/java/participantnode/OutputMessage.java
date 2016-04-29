@@ -76,12 +76,12 @@ class OutputMessage {
         return new String(messageWithRandomness.toByteArray(), "UTF-8") + " " + new String(_a.toByteArray(), "UTF-8");
     }
 
-    void setParticipantMessage(String participantMessage, Room room) {
+    void setParticipantMessage(String participantMessage, Room room) throws UnsupportedEncodingException {
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
-        BigInteger randomStringBigInteger = new BigInteger(randomString.getBytes());
+        BigInteger randomStringBigInteger = new BigInteger(randomString.getBytes("UTF-8"));
 
-        BigInteger participantMessageBigInteger = new BigInteger(participantMessage.getBytes());
+        BigInteger participantMessageBigInteger = new BigInteger(participantMessage.getBytes("UTF-8"));
 
         int a = room.getRoomSize()+1;
 
