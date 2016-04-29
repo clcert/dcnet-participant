@@ -74,16 +74,16 @@ public class SessionManager {
         System.out.println("My index is: " + nodeIndex);
 
         // Create an outputMessage and a zeroMessage participantnode.OutputMessage objects
-        OutputMessage roundOutputMessage = null;
+        // OutputMessage roundOutputMessage = null;
 
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
         outputParticipantMessage.setParticipantMessage(participantMessage, room);
-        // String outputMessageJson = new Gson().toJson(outputParticipantMessage);
+        String outputMessageJson = new Gson().toJson(outputParticipantMessage);
 
         OutputMessage zeroMessage = new OutputMessage();
         zeroMessage.setParticipantMessage("0", room);
-        // String zeroMessageJson = new Gson().toJson(zeroMessage);
+        String zeroMessageJson = new Gson().toJson(zeroMessage);
 
         // Print message to send in this session
         System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
@@ -164,31 +164,31 @@ public class SessionManager {
                 // We have two possibilities: or send a zero message or a different one
 
                 // If my message was already sent in a round with no collisions, i set a zero message
-                // String outputMessageRoundJson;
+                String outputMessageRoundJson;
                 if (messageTransmitted) {
-                    // outputMessageRoundJson = zeroMessageJson;
-                    roundOutputMessage = zeroMessage;
+                    outputMessageRoundJson = zeroMessageJson;
+                    // roundOutputMessage = zeroMessage;
                 }
 
                 // If not, check first if i'm allowed to send my message in this round
                 // If so i set my message as outputMessage set before
                 else if (nextRoundAllowedToSend == round) {
-                    // outputMessageRoundJson = outputMessageJson;
-                    roundOutputMessage = outputParticipantMessage;
+                    outputMessageRoundJson = outputMessageJson;
+                    // roundOutputMessage = outputParticipantMessage;
                 }
                 // If not, i set a zero message
                 else {
-                    // outputMessageRoundJson = zeroMessageJson;
-                    roundOutputMessage = zeroMessage;
+                    outputMessageRoundJson = zeroMessageJson;
+                    // roundOutputMessage = zeroMessage;
                 }
 
                 // COMMITMENT ON MESSAGE PART
                 // Calculate commitment on message
-                //if (outputMessageRoundJson.equals(zeroMessageJson))
-                //    commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
-                //else
-                //    commitment = pedersenCommitment.calculateCommitment(outputParticipantMessage.getProtocolMessage());
-                commitment = pedersenCommitment.calculateCommitment(roundOutputMessage.getProtocolMessage());
+                if (outputMessageRoundJson.equals(zeroMessageJson))
+                    commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
+                else
+                    commitment = pedersenCommitment.calculateCommitment(outputParticipantMessage.getProtocolMessage());
+                // commitment = pedersenCommitment.calculateCommitment(roundOutputMessage.getProtocolMessage());
 
                 // Send commitment to the room
                 node.getSender().send(commitment.toString());
@@ -201,30 +201,30 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 // Add round key to the message
-                //outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                //outputMessageJson = new Gson().toJson(outputParticipantMessage);
-                //zeroMessage.setRoundKeyValue(keyRoundValue);
-                //zeroMessageJson = new Gson().toJson(zeroMessage);
+                outputParticipantMessage.setRoundKeyValue(keyRoundValue);
+                outputMessageJson = new Gson().toJson(outputParticipantMessage);
+                zeroMessage.setRoundKeyValue(keyRoundValue);
+                zeroMessageJson = new Gson().toJson(zeroMessage);
                 // If my message was already sent in a round with no collisions, i set a zero message
-                //if (messageTransmitted) {
-                //    outputMessageRoundJson = zeroMessageJson;
-                //}
+                if (messageTransmitted) {
+                    outputMessageRoundJson = zeroMessageJson;
+                }
                 // If not, check first if i'm allowed to send my message in this round
                 // If so i set my message as outputMessage set before
-                //else if (nextRoundAllowedToSend == round) {
-                //    outputMessageRoundJson = outputMessageJson;
-                //}
+                else if (nextRoundAllowedToSend == round) {
+                    outputMessageRoundJson = outputMessageJson;
+                }
                 // If not, i set a zero message
-                //else {
-                //    outputMessageRoundJson = zeroMessageJson;
-                //}
-                roundOutputMessage.setRoundKeyValue(keyRoundValue);
-                String roundOutputMessageJson = new Gson().toJson(roundOutputMessage);
+                else {
+                    outputMessageRoundJson = zeroMessageJson;
+                }
+                //roundOutputMessage.setRoundKeyValue(keyRoundValue);
+                //String roundOutputMessageJson = new Gson().toJson(roundOutputMessage);
 
                 // MESSAGE SENDING
                 // Send the message
-                //node.getSender().send(outputMessageRoundJson);
-                node.getSender().send(roundOutputMessageJson);
+                node.getSender().send(outputMessageRoundJson);
+                //node.getSender().send(roundOutputMessageJson);
 
                 // RECEIVE MESSAGES FROM OTHER NODES
                 // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
@@ -294,9 +294,7 @@ public class SessionManager {
 
                 // If the message that went through is mine, my message was transmitted
                 // We have to set the variable in order to start sending zero messages in subsequently rounds
-                // if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
-                    // messageTransmitted = true;
-                if (roundOutputMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
+                if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
                     messageTransmitted = true;
 
                 // If the number of messages that went through equals the collision size, the collision was completely resolved
@@ -330,8 +328,7 @@ public class SessionManager {
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            // if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
-                            if (roundOutputMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
+                            if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
                                 nextRoundAllowedToSend = 2 * round;
                             // If not, i re-send my message in the round (2*round + 1)
                             else {
