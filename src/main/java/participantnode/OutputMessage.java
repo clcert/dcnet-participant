@@ -84,7 +84,9 @@ class OutputMessage {
 
         // Generate random characters to prevent infinite protocol when equal messages collide
         String randomString = generateRandomString(RANDOM_PADDING_LENGTH);
-        BigInteger randomStringBigInteger = new BigInteger(randomString.getBytes("UTF-8"));
+        BigInteger randomStringBigInteger = BigInteger.ZERO;
+        if (randomString.length() != 0)
+            randomStringBigInteger = new BigInteger(randomString.getBytes("UTF-8"));
 
         // Transform participant message to Big Integer
         BigInteger participantMessageBigInteger = new BigInteger(participantMessage.getBytes("UTF-8"));
