@@ -225,7 +225,7 @@ public class SessionManager {
                     // Transform incoming message to a BigInteger
                     BigInteger incomingOutputMessage = new BigInteger(messageReceivedFromReceiverThread);
                     // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
-                    sumOfO = sumOfO.add(incomingOutputMessage);
+                    sumOfO = sumOfO.add(incomingOutputMessage).mod(room.getP()); //
                     // Increase the number of messages received
                     messagesReceivedInThisRound++;
                 }
