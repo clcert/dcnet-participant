@@ -154,7 +154,6 @@ public class SessionManager {
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
-                System.out.println("commitment: " + commitmentOnKey);
                 // Send commitment on key to the room
                 node.getSender().send(commitmentOnKey.toString());
 
