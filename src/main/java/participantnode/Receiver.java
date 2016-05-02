@@ -50,16 +50,19 @@ public class Receiver implements ZThread.IAttachedRunnable {
                 continue;
             }
 
-            // We are in a real round, so we iterate in order to receive all the messages from the other nodes
+            /** COMMITMENTS ON KEYS PART **/
             // First iterates to receive all commitments on keys
             for (int i = 0; i < roomSize; i++) {
                 // Receive commitment on key from a node in the room
                 String inputKeyCommitment = receiver.recvStr().trim();
-                // TODO: Do something with the commitment
+                // Transform String to byte[]
+                byte[] inputKeyCommitmentByteArray = inputKeyCommitment.getBytes();
+                // Send byte[] to sender thread
+                pipe.send(inputKeyCommitmentByteArray);
             }
             pipe.send("");
 
-            // Second iterates to receive all commitments messages
+            /** COMMITMENTS ON MESSAGES **/
             for (int i = 0; i < roomSize; i++) {
                 // Receive commitment from a node in the room
                 String inputCommitment = receiver.recvStr().trim();
@@ -67,7 +70,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
             }
             pipe.send("");
 
-            // Then iterates to receive all output messages
+            /** MESSAGE SENDING **/
             for (int i = 0; i < roomSize; i++) {
                 // Receive message from a node in the room
                 String inputMessage = receiver.recvStr().trim();
