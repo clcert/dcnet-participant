@@ -151,7 +151,6 @@ public class SessionManager {
                 // Calculate and save commitments on each round key
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
-                    System.out.println("shared random value: " + sharedRandomValues[i]);
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
                 }
                 // Generate general commitment value for the resulting round key (operation over round keys)
@@ -172,10 +171,10 @@ public class SessionManager {
                 // Confirm that received all commitments on keys
                 receiverThread.recvStr();
                 // Check that multiplication result is 1
-                if (multiplicationOnCommitments.equals(BigInteger.ONE))
+                if (multiplicationOnCommitments.mod(room.getP()).equals(BigInteger.ONE))
                     System.out.println("Round " + round + " commitments on keys are OK");
                 else
-                    System.out.println("Round " + round + " commitments on keys are WRONG: " + multiplicationOnCommitments.mod(room.getP()));
+                    System.out.println("Round " + round + " commitments on keys are WRONG");
 
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
