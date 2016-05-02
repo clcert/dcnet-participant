@@ -151,6 +151,7 @@ public class SessionManager {
                 // Calculate and save commitments on each round key
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
+                    System.out.println("shared key value: " + roundKeys[i]);
                     System.out.println("shared random value: " + sharedRandomValues[i]);
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
                 }
