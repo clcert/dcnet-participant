@@ -133,7 +133,7 @@ public class DiffieHellman implements KeyGeneration {
         int _a = nodeIndex - 1;
         int i;
         for(i = 0; i < _a; i++) {
-            roundKeys[i] = otherParticipantNodeHalves[i].modPow(exponentValuesForKeys[i], p).negate();
+            roundKeys[i] = otherParticipantNodeHalves[i].modPow(exponentValuesForKeys[i], p).negate().mod(p); //
             sharedRandomValues[i] = otherParticipantNodeSharedRandomValueHalves[i].modPow(exponentValuesForRandomShares[i], p).negate().mod(p); //
         }
         for (int j = i; j < roundKeys.length; j++) {
