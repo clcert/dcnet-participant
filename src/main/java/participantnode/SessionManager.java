@@ -171,7 +171,7 @@ public class SessionManager {
                 if (multiplicationOnCommitments.equals(BigInteger.ONE))
                     System.out.println("Round " + round + " commitments on keys are OK");
                 else
-                    System.out.println("Round " + round + " commitments on keys are WRONG");
+                    System.out.println("Round " + round + " commitments on keys are WRONG: " + multiplicationOnCommitments);
 
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
