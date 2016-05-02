@@ -93,4 +93,5 @@ public class SecretSharing implements KeyGeneration {
 
         return result.subtract(this.secret).add(secretShare);
     }
+
 }

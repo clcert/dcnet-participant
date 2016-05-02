@@ -11,8 +11,6 @@ import java.util.Random;
  */
 class OutputMessage {
 
-    // private String ip;
-
     private BigInteger protocolMessage;
     private BigInteger participantMessageWithPaddingBigInteger;
 
@@ -38,14 +36,6 @@ class OutputMessage {
     BigInteger getProtocolMessage() {
         return protocolMessage;
     }
-
-    /**
-     *
-     * @param ip ip address of the sender node
-     */
-    /*void setSenderNodeIp(String ip) {
-        this.ip = ip;
-    }*/
 
     /**
      *

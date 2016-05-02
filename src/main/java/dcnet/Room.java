@@ -18,25 +18,12 @@ public class Room {
     private boolean nonProbabilisticMode;
     private BigInteger g, h, q, p;
     private int l;
-
-    public int getPadLength() {
-        return padLength;
-    }
-
     private int padLength;
 
     /**
      *
      */
     Room() {}
-
-    /**
-     *
-     * @return maximum number of nodes in the room
-     */
-    public int getRoomSize() {
-        return this.roomSize;
-    }
 
     /**
      * Rescue index (key) of the given node
@@ -53,14 +40,6 @@ public class Room {
                 return indexKey;
         }
         return 0;
-    }
-
-    /**
-     *
-     * @return true if the room is in non probabilistic mode or false if not
-     */
-    public boolean getNonProbabilisticMode() {
-        return this.nonProbabilisticMode;
     }
 
     /**
@@ -122,7 +101,35 @@ public class Room {
         return p;
     }
 
+    /**
+     *
+     * @return max characters length of a message
+     */
     int getL() {
         return l;
+    }
+
+    /**
+     *
+     * @return random padding characters length added to all messages to prevent equal messages
+     */
+    public int getPadLength() {
+        return padLength;
+    }
+
+    /**
+     *
+     * @return true if the room is in non probabilistic mode or false if not
+     */
+    public boolean getNonProbabilisticMode() {
+        return this.nonProbabilisticMode;
+    }
+
+    /**
+     *
+     * @return maximum number of nodes in the room
+     */
+    public int getRoomSize() {
+        return this.roomSize;
     }
 }

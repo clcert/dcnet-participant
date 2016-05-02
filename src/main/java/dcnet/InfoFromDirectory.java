@@ -64,6 +64,10 @@ public class InfoFromDirectory {
         return p;
     }
 
+    /**
+     *
+     * @return resending mode of the room: true if it's non probabilistic, false if not
+     */
     boolean getNonProbabilistic() {
         return nonProbabilistic;
     }

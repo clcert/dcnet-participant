@@ -37,7 +37,7 @@ public class SessionManager {
     private long executionTime;
 
     /**
-     *
+     * Initialize all parameters of SessionManager with default values
      */
     public SessionManager() {
         messageTransmitted = false;
@@ -57,7 +57,7 @@ public class SessionManager {
     }
 
     /**
-     *
+     * Method that runs a single session for a single participant node within an specific room
      * @param nodeIndex index of the participant node
      * @param participantMessage string with the message that participant node wants to communicate
      * @param room room where the message is going to be send
@@ -69,12 +69,13 @@ public class SessionManager {
         // Print info about the room
         System.out.println("PARTICIPANT NODE " + nodeIndex + " of " + room.getRoomSize());
 
-        // Create an outputMessage and a zeroMessage OutputMessage objects
+        // Create an outputMessage
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
         outputParticipantMessage.setParticipantMessage(participantMessage, room);
         String outputParticipantMessageJson;
 
+        // Create a zeroMessage
         OutputMessage zeroMessage = new OutputMessage();
         zeroMessage.setParticipantMessage("0", room);
         String zeroMessageJson;
@@ -96,20 +97,21 @@ public class SessionManager {
         // Set time to measure entire protocol
         long t1 = System.nanoTime();
 
+        /** ROUNDS **/
         // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
 
             // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-            // Check if the protocol was finished in the last round played
-            // If it so, let know to the receiver thread, wait for his response and break the loop
+            /* Check if the protocol was finished in the last round played.
+             * If it so, let know to the receiver thread, wait for his response and break the loop */
             if (finished) {
                 receiverThread.send("FINISHED");
                 receiverThread.recvStr();
                 break;
             }
-            // If not is finished yet, get which round we need to play and send this round to the receiver thread
+            // If it is not finished yet, obtain which round we need to play and send this round to the receiver thread
             else {
                 round = nextRoundsToHappen.removeFirst();
                 receiverThread.send("" + round);
@@ -118,12 +120,12 @@ public class SessionManager {
             // Variables to store the resulting message of the round
             BigInteger sumOfM, sumOfT, sumOfO = BigInteger.ZERO;
 
-            // The protocol separates his operation if it's being played a real round or a virtual one (see Reference for more information)
             /** REAL ROUND (first and even rounds) **/
             if (round == 1 || round%2 == 0) {
 
                 // Check if in this round the participant will send a real message or a zero message
                 messageInThisRound = !messageTransmitted && nextRoundAllowedToSend == round;
+
                 // Set variable that we are playing a real round and add one to the count
                 realRoundsPlayed++;
 
@@ -142,10 +144,13 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 /** COMMITMENTS ON KEYS PART **/
+                // Get round keys (shared keys) of the current participant node
                 BigInteger[] roundKeys = keyGeneration.getRoundKeys();
+                // Calculate and save commitments on each round key
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++)
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i]);
+                // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
                 // Send commitment on key to the room
                 node.getSender().send(commitmentOnKey.toString());
@@ -157,7 +162,7 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 /** COMMITMENT ON MESSAGE PART **/
-                // Calculate commitment on message
+                // Calculate commitment on the message corresponding to this round
                 if (!messageInThisRound)
                     commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
                 else
@@ -176,7 +181,7 @@ public class SessionManager {
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
 
-                // If my message was already sent in a round with no collisions, i set a zero message
+                // Set the message to send corresponding to this round
                 String outputMessageRoundJson;
                 if (messageInThisRound) {
                     outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
@@ -191,13 +196,14 @@ public class SessionManager {
 
                 /** RECEIVE MESSAGES FROM OTHER NODES **/
                 // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
-                // Count how many messages were receive from the receiver thread
+
+                // Variable to count how many messages were receive from the receiver thread
                 int messagesReceivedInThisRound = 0;
-                // When this number equals <dcNetSize> i've received all the messages in this round
+                // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
                 while (messagesReceivedInThisRound < room.getRoomSize()) {
                     // Receive a message
                     byte[] messageReceivedFromReceiverThread = receiverThread.recv();
-                    // Transform incoming message to an int
+                    // Transform incoming message to a BigInteger
                     BigInteger incomingOutputMessage = new BigInteger(messageReceivedFromReceiverThread);
                     // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
                     sumOfO = sumOfO.add(incomingOutputMessage);
@@ -232,7 +238,7 @@ public class SessionManager {
                 }
             }
 
-            /** COLLISION OR NOT CHECKING **/
+            /** COLLISION IN ROUND CHECKING **/
             // <sumOfT> = 1 => No Collision Round => a message went through clearly, received by the rest of the nodes
             if (sumOfT.equals(BigInteger.ONE)) {
                 // Increase the number of messages that went through the protocol
@@ -241,24 +247,24 @@ public class SessionManager {
                 // Print message that went through the protocol
                 out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
 
-                // If the message that went through is mine, my message was transmitted
-                // We have to set the variable in order to start sending zero messages in subsequently rounds
+                /* If the message that went through is mine, my message was transmitted.
+                 * We have to set the variable in order to start sending zero messages in subsequently rounds */
                 if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().equals(sumOfM))
                     messageTransmitted = true;
 
-                // If the number of messages that went through equals the collision size, the collision was completely resolved
-                // Set variable to finalize the protocol in the next round
+                /* If the number of messages that went through equals the collision size, the first collision was completely resolved.
+                 * Set variable to finalize the protocol in the next round */
                 if (messagesSentWithNoCollisions == collisionSize)
                     finished = true;
             }
+
             // <sumOfT> != 1 => Collision produced or no messages sent in this round (last can only occur in probabilistic mode)
             else {
-                // In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
-                // 1) No messages were sent in a real round (<sumOfT> = 0)
-                // 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced
-                // if (round != 1 && (sumOfT == 0 || sumOfO == messagesSentInPreviousRounds.get(round/2))) {
+                /* In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
+                 * 1) No messages were sent in a real round (<sumOfT> = 0)
+                 * 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced */
                 if (round != 1 && (sumOfT.equals(BigInteger.ZERO) || sumOfO.equals(messagesSentInPreviousRounds.get(round/2)))) {
-                    // We have to re-do the "father" round in order to expect that no all nodes involved in the collision re-send their message in the same round
+                    // We have to re-do the "father" round in order to expect that not all the participant nodes involved in the collision re-send their message in the same round
                     // Add the "father" round to happen after this one
                     addRoundToHappenFirst(nextRoundsToHappen, round/2);
                     // Remove the virtual round related to this problematic round
@@ -267,8 +273,8 @@ public class SessionManager {
                     if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
                         nextRoundAllowedToSend = round/2;
                 }
-                // In either re-sending modes, a "normal" collision can be produced
                 // <sumOfT> > 1 => A Collision was produced
+                // In either re-sending modes, a "normal" collision can be produced
                 else {
                     // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
                     if (nextRoundAllowedToSend == round) {
