@@ -142,7 +142,7 @@ public class DiffieHellman implements KeyGeneration {
         }
         BigInteger roundKeyValue = BigInteger.ZERO;
         for (BigInteger roundKey : roundKeys) {
-            roundKeyValue = roundKeyValue.add(roundKey);
+            roundKeyValue = roundKeyValue.add(roundKey).mod(p);
         }
         return roundKeyValue;
     }
