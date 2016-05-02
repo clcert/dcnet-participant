@@ -122,4 +122,9 @@ public class SecretSharing implements KeyGeneration {
         return result.subtract(this.secret).add(secretShare);
     }
 
+    @Override
+    public BigInteger[] getSharedRandomValues() {
+        return new BigInteger[0];
+    }
+
 }
