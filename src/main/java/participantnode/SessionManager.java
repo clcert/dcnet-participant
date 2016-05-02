@@ -167,7 +167,7 @@ public class SessionManager {
                     // Transform byte[] to BigInteger
                     BigInteger commitmentValueBigInteger = new BigInteger(commitmentValueByteArray);
                     // Calculate multiplication of incoming commitments
-                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
+                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger);
                 }
                 // Confirm that received all commitments on keys
                 receiverThread.recvStr();
