@@ -8,5 +8,6 @@ public interface KeyGeneration {
     BigInteger[] getOtherParticipantNodesValues();
     BigInteger[] getRoundKeys();
     BigInteger getParticipantNodeRoundKeyValue();
+    BigInteger[] getSharedRandomValues();
 
 }
