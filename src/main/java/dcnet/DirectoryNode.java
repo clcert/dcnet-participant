@@ -1,8 +1,7 @@
 package dcnet;
 
 /**
- * dcnet.DirectoryNode is the class that has the ip address of the directory node that is being connected to.
- * @author Camilo J. Gomez
+ *
  */
 public class DirectoryNode {
 

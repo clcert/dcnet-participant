@@ -6,6 +6,9 @@ import org.zeromq.ZMQ;
 import java.math.BigInteger;
 import java.util.Random;
 
+/**
+ *
+ */
 public class DiffieHellman implements KeyGeneration {
 
     private final BigInteger g, p;
@@ -20,6 +23,16 @@ public class DiffieHellman implements KeyGeneration {
     private ZMQ.Socket[] repliers, requestors;
     private Room room;
 
+    /**
+     *
+     * @param n number of participant nodes that need to share a key
+     * @param g generator g
+     * @param p large prime p
+     * @param nodeIndex index of current participant node
+     * @param repliers sockets repliers of current participant node
+     * @param requestors sockets requestors of current participant node
+     * @param room room where the current participant node is sending messages
+     */
     public DiffieHellman(int n, BigInteger g, BigInteger p, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         this.g = g;
         this.p = p;
@@ -35,6 +48,10 @@ public class DiffieHellman implements KeyGeneration {
         this.roundKeys = new BigInteger[n];
     }
 
+    /**
+     *
+     * @return current participant node "halves" of the shared key (g^a)
+     */
     @Override
     public BigInteger[] generateParticipantNodeValues() {
         for (int i = 0; i < this.participantNodeHalves.length; i++) {
@@ -43,6 +60,10 @@ public class DiffieHellman implements KeyGeneration {
         return this.participantNodeHalves;
     }
 
+    /**
+     *
+     * @return other participant nodes "halves" of the shared key (g^b)
+     */
     @Override
     public BigInteger[] getOtherParticipantNodesValues() {
         int i = 0;
@@ -69,6 +90,10 @@ public class DiffieHellman implements KeyGeneration {
         return otherNodesKeyHalves;
     }
 
+    /**
+     *
+     * @return sum of all the shared keys of current participant node (where each shared key is g^(ab))
+     */
     @Override
     public BigInteger getParticipantNodeRoundKeyValue() {
         int _a = nodeIndex - 1;
@@ -84,6 +109,10 @@ public class DiffieHellman implements KeyGeneration {
         return roundKeyValue;
     }
 
+    /**
+     *
+     * @return each shared key of current node (g^ab) with all the participant nodes in the room
+     */
     @Override
     public BigInteger[] getRoundKeys() {
         return roundKeys;

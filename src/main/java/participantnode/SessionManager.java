@@ -214,7 +214,7 @@ public class SessionManager {
 
             /** VIRTUAL ROUND (odd rounds) **/
             else {
-                // Recover messages sent in rounds 2k and k in order to construct the resulting message of this round (see Reference for more information)
+                // Recover messages sent in rounds (2*round) and round in order to construct the resulting message of this round (see Reference for more information)
                 BigInteger sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
                 BigInteger sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
                 // Construct the resulting message of this round
@@ -263,8 +263,9 @@ public class SessionManager {
                 /* In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
                  * 1) No messages were sent in a real round (<sumOfT> = 0)
                  * 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced */
+
+                // We have to re-do the "father" round in order to expect that not all the participant nodes involved in the collision re-send their message in the same round
                 if (round != 1 && (sumOfT.equals(BigInteger.ZERO) || sumOfO.equals(messagesSentInPreviousRounds.get(round/2)))) {
-                    // We have to re-do the "father" round in order to expect that not all the participant nodes involved in the collision re-send their message in the same round
                     // Add the "father" round to happen after this one
                     addRoundToHappenFirst(nextRoundsToHappen, round/2);
                     // Remove the virtual round related to this problematic round
@@ -273,31 +274,28 @@ public class SessionManager {
                     if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
                         nextRoundAllowedToSend = round/2;
                 }
+
                 // <sumOfT> > 1 => A Collision was produced
-                // In either re-sending modes, a "normal" collision can be produced
                 else {
                     // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
                     if (nextRoundAllowedToSend == round) {
-                        // Check in which mode of re-sending my message we are
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
                             if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
                                 nextRoundAllowedToSend = 2 * round;
                             // If not, i re-send my message in the round (2*round + 1)
-                            else {
+                            else
                                 nextRoundAllowedToSend = 2 * round + 1;
-                            }
                         }
                         // Probabilistic mode (see Reference for more information)
                         else {
                             // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
                             boolean coin = new SecureRandom().nextBoolean();
-                            if (coin) {
+                            if (coin)
                                 nextRoundAllowedToSend = 2 * round;
-                            } else {
+                            else
                                 nextRoundAllowedToSend = 2 * round + 1;
-                            }
                         }
                     }
                     // Add (2*round) and (2*round + 1) rounds to future plays
@@ -312,6 +310,12 @@ public class SessionManager {
         executionTime = t2-t1;
     }
 
+    /**
+     *
+     * @param commitmentsOnKeys commitments in each individual round key (shared with another participant node)
+     * @param room Room where the participant node is playing
+     * @return multiplication of each individual commitment: c = c_1*c_2*...*c_n (mod p)
+     */
     private BigInteger generateCommitmentOnKey(BigInteger[] commitmentsOnKeys, Room room) {
         BigInteger _a = BigInteger.ONE;
         for (BigInteger commitmentsOnKey : commitmentsOnKeys) {

@@ -6,6 +6,9 @@ import org.zeromq.ZMQ;
 import java.math.BigInteger;
 import java.util.Random;
 
+/**
+ *
+ */
 public class SecretSharing implements KeyGeneration {
 
     // Number of shares to split the secret
@@ -25,6 +28,14 @@ public class SecretSharing implements KeyGeneration {
 
     private BigInteger[] roundRandomKeyShares;
 
+    /**
+     *
+     * @param n number of shares to split the secret
+     * @param nodeIndex index of current participant node
+     * @param repliers sockets repliers of current participant node
+     * @param requestors sockets requestors of current participant node
+     * @param room room where the current participant node is sending messages
+     */
     public SecretSharing(int n, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         this.n = n;
         this.secret = new BigInteger(room.getQ().bitLength() - 1, new Random());
@@ -36,6 +47,10 @@ public class SecretSharing implements KeyGeneration {
         this.room = room;
     }
 
+    /**
+     *
+     * @return n-1 shares of the secret of current participant node
+     */
     @Override
     public BigInteger[] generateParticipantNodeValues() {
         int bitLength = secret.bitLength();
@@ -53,6 +68,10 @@ public class SecretSharing implements KeyGeneration {
         return shares;
     }
 
+    /**
+     *
+     * @return 1 share of each n-1 other participant nodes secrets
+     */
     @Override
     public BigInteger[] getOtherParticipantNodesValues() {
         int i = 0;
@@ -79,11 +98,20 @@ public class SecretSharing implements KeyGeneration {
         return otherNodesRandomKeyShares;
     }
 
+    /**
+     *
+     * @return n-1 shares of the secret of current participant node
+     */
     @Override
     public BigInteger[] getRoundKeys() {
         return this.roundRandomKeyShares;
     }
 
+    /**
+     *
+     * @return sum of all other participant nodes shared with current participant node
+     * plus share of current participant node secret didn't share with the room, minus current participant node secret
+     */
     @Override
     public BigInteger getParticipantNodeRoundKeyValue() {
         BigInteger result = BigInteger.ZERO;

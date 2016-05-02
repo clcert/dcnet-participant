@@ -68,6 +68,12 @@ class OutputMessage {
         return new String(_a.toByteArray(), "UTF-8");
     }
 
+    /**
+     *
+     * @param participantMessage plain text message that participant node wants to communicate
+     * @param room room where the current participant node is sending messages
+     * @throws UnsupportedEncodingException
+     */
     void setParticipantMessage(String participantMessage, Room room) throws UnsupportedEncodingException {
         BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
         BigInteger two = BigInteger.valueOf(2);
@@ -95,10 +101,18 @@ class OutputMessage {
         }
     }
 
+    /**
+     *
+     * @param roundKeyValue round key that needs to be added to protocol message to "hide" the plain text message that wants to be comunicated in the room
+     */
     void setRoundKeyValue(BigInteger roundKeyValue) {
         this.protocolMessage = this.protocolMessage.add(roundKeyValue);
     }
 
+    /**
+     *
+     * @param paddingLength characters length of random padding added to messages to prevent equal messages in the protocol
+     */
     void setPaddingLength(int paddingLength) {
         RANDOM_PADDING_LENGTH = paddingLength;
     }

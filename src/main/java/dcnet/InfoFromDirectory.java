@@ -16,14 +16,6 @@ public class InfoFromDirectory {
     private boolean nonProbabilistic;
     private int padLength;
 
-    int getL() {
-        return l;
-    }
-
-    int getPadLength() {
-        return padLength;
-    }
-
     /**
      *
      * @return array with info of nodes connected in the room
@@ -70,6 +62,22 @@ public class InfoFromDirectory {
      */
     boolean getNonProbabilistic() {
         return nonProbabilistic;
+    }
+
+    /**
+     *
+     * @return max characters length of a message
+     */
+    int getL() {
+        return l;
+    }
+
+    /**
+     *
+     * @return random padding characters length added to all messages to prevent equal messages
+     */
+    int getPadLength() {
+        return padLength;
     }
 
 }
