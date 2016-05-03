@@ -42,7 +42,7 @@ public class PedersenCommitment {
     /**
      *
      * @param secret message that will be hidden in the commitment
-     * @return commitment value as c = g^s h^r (mod p)
+     * @return commitment value as c = g^s * h^r (mod p) = (g^s (mod p) * h^r (mod p)) (mod p)
      */
     public BigInteger calculateCommitment(BigInteger secret) {
         return (this.g.modPow(secret, this.p).multiply(this.h.modPow(generateRandom(), this.p))).mod(this.p);
@@ -52,7 +52,7 @@ public class PedersenCommitment {
      *
      * @param secret message that will be hidden in the commitment
      * @param random random value used to create commitment
-     * @return commitment value as c = g^s h^r (mod p)
+     * @return commitment value as c = g^s * h^r (mod p) = (g^s (mod p) * h^r (mod p)) (mod p)
      */
     public BigInteger calculateCommitment(BigInteger secret, BigInteger random) {
         return (this.g.modPow(secret, this.p).multiply(this.h.modPow(random, this.p))).mod(this.p);
