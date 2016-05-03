@@ -131,8 +131,8 @@ public class SessionManager {
 
                 /** KEY SHARING PART **/
                 // Initialize KeyGeneration
-                /*KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);*/
-                KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
+                KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);
+                /*KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);*/
                 // Generate Participant Node values
                 keyGeneration.generateParticipantNodeValues();
                 // Get other participants values (to produce cancellation keys)
@@ -155,7 +155,6 @@ public class SessionManager {
                 }
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
-                System.out.println("commitment sent: " + commitmentOnKey);
                 // Send commitment on key to the room
                 node.getSender().send(commitmentOnKey.toByteArray());
 
@@ -166,7 +165,6 @@ public class SessionManager {
                     byte[] commitmentValueByteArray = receiverThread.recv();
                     // Transform byte[] to BigInteger
                     BigInteger commitmentValueBigInteger = new BigInteger(commitmentValueByteArray);
-                    System.out.println("commitment received: " + commitmentValueBigInteger);
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
                 }
