@@ -165,10 +165,10 @@ public class SessionManager {
                     // Transform byte[] to BigInteger
                     BigInteger commitmentValueBigInteger = new BigInteger(commitmentValueByteArray);
                     // Calculate multiplication of incoming commitments
-                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger);
+                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
                 }
                 // Check that multiplication result is 1
-                if (multiplicationOnCommitments.mod(room.getP()).equals(BigInteger.ONE))
+                if (multiplicationOnCommitments.equals(BigInteger.ONE))
                     System.out.println("Round " + round + " commitments on keys are OK");
                 else
                     System.out.println("Round " + round + " commitments on keys are WRONG");
