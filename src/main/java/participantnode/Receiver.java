@@ -54,11 +54,11 @@ public class Receiver implements ZThread.IAttachedRunnable {
             // First iterates to receive all commitments on keys
             for (int i = 0; i < roomSize; i++) {
                 // Receive commitment on key from a node in the room
-                String inputKeyCommitment = receiver.recvStr().trim();
+                byte[] inputKeyCommitment = receiver.recv();
                 // Transform String to byte[]
-                byte[] inputKeyCommitmentByteArray = inputKeyCommitment.getBytes();
+                //byte[] inputKeyCommitmentByteArray = inputKeyCommitment.getBytes();
                 // Send byte[] to sender thread
-                pipe.send(inputKeyCommitmentByteArray);
+                pipe.send(inputKeyCommitment);
             }
 
             /** COMMITMENTS ON MESSAGES **/

@@ -157,7 +157,7 @@ public class SessionManager {
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
                 System.out.println("commitment sent: " + commitmentOnKey);
                 // Send commitment on key to the room
-                node.getSender().send(commitmentOnKey.toString());
+                node.getSender().send(commitmentOnKey.toByteArray());
 
                 // Receive commitments of other participant nodes where it needs to check that the multiplication of all is 1
                 BigInteger multiplicationOnCommitments = BigInteger.ONE;
