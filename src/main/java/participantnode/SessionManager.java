@@ -132,7 +132,7 @@ public class SessionManager {
                 /** KEY SHARING PART **/
                 // Initialize KeyGeneration
                 /*KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);*/
-                 KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
+                KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
                 // Generate Participant Node values
                 keyGeneration.generateParticipantNodeValues();
                 // Get other participants values (to produce cancellation keys)
@@ -169,7 +169,7 @@ public class SessionManager {
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger);
                 }
                 // Confirm that received all commitments on keys
-                receiverThread.recvStr();
+                // receiverThread.recvStr();
                 // Check that multiplication result is 1
                 if (multiplicationOnCommitments.mod(room.getP()).equals(BigInteger.ONE))
                     System.out.println("Round " + round + " commitments on keys are OK");

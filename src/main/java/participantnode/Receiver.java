@@ -60,7 +60,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
                 // Send byte[] to sender thread
                 pipe.send(inputKeyCommitmentByteArray);
             }
-            pipe.send("");
+            //pipe.send("");
 
             /** COMMITMENTS ON MESSAGES **/
             for (int i = 0; i < roomSize; i++) {
