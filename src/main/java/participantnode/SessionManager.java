@@ -151,14 +151,10 @@ public class SessionManager {
                 // Calculate and save commitments on each round key
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
-                    System.out.println("key value " + i + ": " + roundKeys[i]);
-                    System.out.println("random value " + i + ": " + sharedRandomValues[i]);
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
-                    System.out.println("commitment " + i + ": " + commitmentsOnKeys[i]);
                 }
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
-                System.out.println("commitment on key in round " + round + ": " + commitmentOnKey);
                 // Send commitment on key to the room
                 node.getSender().send(commitmentOnKey.toString());
 
@@ -170,13 +166,13 @@ public class SessionManager {
                     // Transform byte[] to BigInteger
                     BigInteger commitmentValueBigInteger = new BigInteger(commitmentValueByteArray);
                     // Calculate multiplication of incoming commitments
-                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
+                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger);
                 }
                 // Check that multiplication result is 1
-                if (multiplicationOnCommitments.equals(BigInteger.ONE))
+                if (multiplicationOnCommitments.mod(room.getP()).equals(BigInteger.ONE))
                     System.out.println("Round " + round + " commitments on keys are OK");
                 else
-                    System.out.println("Round " + round + " commitments on keys are WRONG");
+                    System.out.println("Round " + round + " commitments on keys are WRONG: " + multiplicationOnCommitments.mod(room.getP()));
 
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
@@ -339,9 +335,9 @@ public class SessionManager {
     private BigInteger generateCommitmentOnKey(BigInteger[] commitmentsOnKeys, Room room) {
         BigInteger _a = BigInteger.ONE;
         for (BigInteger commitmentsOnKey : commitmentsOnKeys) {
-            _a = _a.multiply(commitmentsOnKey).mod(room.getP());
+            _a = _a.multiply(commitmentsOnKey);
         }
-        return _a;
+        return _a.mod(room.getP());
     }
 
     /**
