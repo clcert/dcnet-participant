@@ -151,12 +151,11 @@ public class SessionManager {
                 // Calculate and save commitments on each round key
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++) {
-                    System.out.println("key shared " + i + " value: " + roundKeys[i]);
-                    System.out.println("random shared " + i + " value: " + sharedRandomValues[i]);
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
                 }
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
+                System.out.println("commitment sent: " + commitmentOnKey);
                 // Send commitment on key to the room
                 node.getSender().send(commitmentOnKey.toString());
 
@@ -167,6 +166,7 @@ public class SessionManager {
                     byte[] commitmentValueByteArray = receiverThread.recv();
                     // Transform byte[] to BigInteger
                     BigInteger commitmentValueBigInteger = new BigInteger(commitmentValueByteArray);
+                    System.out.println("commitment received: " + commitmentValueBigInteger);
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger);
                 }
