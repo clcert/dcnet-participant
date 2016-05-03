@@ -131,8 +131,8 @@ public class SessionManager {
 
                 /** KEY SHARING PART **/
                 // Initialize KeyGeneration
-                /*KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);*/
-                KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
+                KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);
+                /*KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);*/
                 // Generate Participant Node values
                 keyGeneration.generateParticipantNodeValues();
                 // Get other participants values (to produce cancellation keys)
@@ -150,9 +150,8 @@ public class SessionManager {
                 BigInteger[] sharedRandomValues = keyGeneration.getSharedRandomValues();
                 // Calculate and save commitments on each round key
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
-                for (int i = 0; i < roundKeys.length; i++) {
+                for (int i = 0; i < roundKeys.length; i++)
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
-                }
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
                 // Send commitment on key to the room
@@ -168,8 +167,6 @@ public class SessionManager {
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger);
                 }
-                // Confirm that received all commitments on keys
-                // receiverThread.recvStr();
                 // Check that multiplication result is 1
                 if (multiplicationOnCommitments.mod(room.getP()).equals(BigInteger.ONE))
                     System.out.println("Round " + round + " commitments on keys are OK");

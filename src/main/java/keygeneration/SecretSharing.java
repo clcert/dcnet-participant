@@ -16,17 +16,26 @@ public class SecretSharing implements KeyGeneration {
 
     // Secret (Random Key to split)
     private BigInteger secret;
+    private BigInteger random; //
+
 
     // Other participant nodes round keys (Shares of other participant nodes secret)
     private BigInteger[] otherNodesRandomKeyShares;
+
+    private BigInteger[] otherNodesRandomShares; //
 
     private int nodeIndex;
     private ZMQ.Socket[] repliers, requestors;
     private Room room;
 
     private BigInteger secretShare;
+    private BigInteger secretRandomShare; //
 
     private BigInteger[] roundRandomKeyShares;
+
+    private BigInteger[] randomShares; //
+    private BigInteger roundRandomShare;
+    private BigInteger roundKey;
 
     /**
      *
@@ -39,8 +48,11 @@ public class SecretSharing implements KeyGeneration {
     public SecretSharing(int n, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         this.n = n;
         this.secret = new BigInteger(room.getQ().bitLength() - 1, new Random());
+        this.random = new BigInteger(room.getQ().bitLength() - 1, new Random());
         while (this.secret.bitLength() != room.getQ().bitLength() - 1)
             this.secret = new BigInteger(room.getQ().bitLength(), new Random());
+        while (this.random.bitLength() != room.getQ().bitLength() - 1) //
+            this.random = new BigInteger(room.getQ().bitLength(), new Random()); //
         this.nodeIndex = nodeIndex;
         this.repliers = repliers;
         this.requestors = requestors;
@@ -54,17 +66,26 @@ public class SecretSharing implements KeyGeneration {
     @Override
     public BigInteger[] generateParticipantNodeValues() {
         int bitLength = secret.bitLength();
-        BigInteger[] shares = new BigInteger[this.n-1];
+        BigInteger[] shares = new BigInteger[this.n - 1];
+        BigInteger[] randomShares = new BigInteger[this.n - 1]; //
         BigInteger randomnessAdded = BigInteger.ZERO;
+        BigInteger randomnessAddedForRandom = BigInteger.ZERO; //
         for (int i = 0; i < shares.length; i++) {
             BigInteger randomValue = new BigInteger(bitLength, new Random()).negate();
+            BigInteger randomValueForRandom = new BigInteger(bitLength, new Random()).negate(); //
             while (randomValue.bitLength() != bitLength)
                 randomValue = new BigInteger(bitLength, new Random());
+            while (randomValueForRandom.bitLength() != bitLength)
+                randomValueForRandom = new BigInteger(bitLength, new Random());
             shares[i] = randomValue;
+            randomShares[i] = randomValueForRandom; //
             randomnessAdded = randomnessAdded.add(randomValue);
+            randomnessAddedForRandom = randomValueForRandom.add(randomValueForRandom); //
         }
         secretShare = secret.subtract(randomnessAdded);
+        secretRandomShare = random.subtract(randomnessAddedForRandom); //
         this.roundRandomKeyShares = shares;
+        this.randomShares = randomShares; //
         return shares;
     }
 
@@ -95,7 +116,30 @@ public class SecretSharing implements KeyGeneration {
                 i++;
             }
         this.otherNodesRandomKeyShares = otherNodesRandomKeyShares;
-        return otherNodesRandomKeyShares;
+
+        i = 0;
+        BigInteger[] otherNodesRandomShares = new BigInteger[room.getRoomSize()-1]; //
+        // The "first" node doesn't have any replier sockets
+        if (nodeIndex != 1)
+            for (ZMQ.Socket replier : repliers) {
+                // The replier wait to receive a key share
+                otherNodesRandomShares[i] = new BigInteger(replier.recvStr()); //
+                // When the replier receives the message, replies with one of their key shares
+                replier.send(randomShares[i].toString()); //
+                i++;
+            }
+        // The "last" node doesn't have any requestor sockets
+        if (nodeIndex != room.getRoomSize())
+            for (ZMQ.Socket requestor : requestors) {
+                // The requestor sends a key share
+                requestor.send(randomShares[i].toString()); //
+                // The requestor waits to receive a reply with one of the key shares
+                otherNodesRandomShares[i] = new BigInteger(requestor.recvStr()); //
+                i++;
+            }
+        this.otherNodesRandomShares = otherNodesRandomShares; //
+
+        return otherNodesRandomShares;
     }
 
     /**
@@ -104,7 +148,9 @@ public class SecretSharing implements KeyGeneration {
      */
     @Override
     public BigInteger[] getRoundKeys() {
-        return this.roundRandomKeyShares;
+        // Divide roundKey into n-1 shares
+        //return this.roundRandomKeyShares;
+        return splitSecret(this.roundKey, this.n-1);
     }
 
     /**
@@ -115,16 +161,48 @@ public class SecretSharing implements KeyGeneration {
     @Override
     public BigInteger getParticipantNodeRoundKeyValue() {
         BigInteger result = BigInteger.ZERO;
-
         for (BigInteger otherNodeRandomKeyShare : otherNodesRandomKeyShares)
             result = result.add(otherNodeRandomKeyShare);
+        this.roundKey = result.subtract(this.secret).add(secretShare);
 
-        return result.subtract(this.secret).add(secretShare);
+        BigInteger _a = BigInteger.ZERO; //
+        for (BigInteger otherNodeShares : otherNodesRandomShares) //
+            _a = _a.add(otherNodeShares); //
+        this.roundRandomShare = _a.subtract(this.random).add(secretRandomShare); //
+
+        return this.roundKey;
     }
 
+    /**
+     *
+     * @return shared random values
+     */
     @Override
     public BigInteger[] getSharedRandomValues() {
-        return new BigInteger[0];
+        // Divide roundRandomShare into n-1 shares
+        //return randomShares; //
+        return splitSecret(this.roundRandomShare, this.n-1);
+    }
+
+    /**
+     *
+     * @param secret
+     * @param n
+     * @return
+     */
+    BigInteger[] splitSecret(BigInteger secret, int n) {
+        int bitLength = secret.bitLength();
+        BigInteger[] shares = new BigInteger[n];
+        BigInteger randomnessAdded = BigInteger.ZERO;
+        for (int i = 0; i < shares.length - 1; i++) {
+            BigInteger randomValue = new BigInteger(bitLength, new Random()).negate();
+            while (randomValue.bitLength() != bitLength)
+                randomValue = new BigInteger(bitLength, new Random());
+            shares[i] = randomValue;
+            randomnessAdded = randomnessAdded.add(randomValue);
+        }
+        shares[n - 1] = secret.subtract(randomnessAdded);
+        return shares;
     }
 
 }
