@@ -46,7 +46,7 @@ public class PedersenCommitment {
      */
     public BigInteger calculateCommitment(BigInteger secret) {
         //return this.g.modPow(secret, this.p).multiply(this.h.modPow(generateRandom(), this.p)).mod(this.p);
-        return myPow(g, secret).multiply(myPow(h, generateRandom())).mod(this.p);
+        return myPow(g, secret.mod(this.q)).multiply(myPow(h, generateRandom().mod(this.q))).mod(this.p);
     }
 
     /**
@@ -57,7 +57,7 @@ public class PedersenCommitment {
      */
     public BigInteger calculateCommitment(BigInteger secret, BigInteger random) {
         //return this.g.modPow(secret, this.p).multiply(this.h.modPow(random, this.p)).mod(this.p);
-        return myPow(g, secret).multiply(myPow(h, random)).mod(this.p);
+        return myPow(g, secret.mod(this.q)).multiply(myPow(h, random.mod(this.q))).mod(this.p);
     }
 
     /**
