@@ -186,11 +186,11 @@ public class SecretSharing implements KeyGeneration {
 
     /**
      *
-     * @param secret
-     * @param n
-     * @return
+     * @param secret value that wants to be shared
+     * @param n nu,ber of shares that secret will be separated
+     * @return array with all the n shares
      */
-    BigInteger[] splitSecret(BigInteger secret, int n) {
+    private BigInteger[] splitSecret(BigInteger secret, int n) {
         int bitLength = secret.bitLength();
         BigInteger[] shares = new BigInteger[n];
         BigInteger randomnessAdded = BigInteger.ZERO;
