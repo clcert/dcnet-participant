@@ -168,7 +168,7 @@ public class SessionManager {
                     BigInteger commitmentValueBigInteger = new BigInteger(commitmentValueByteArray);
                     System.out.println("commitment received: " + commitmentValueBigInteger);
                     // Calculate multiplication of incoming commitments
-                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger);
+                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
                 }
                 // Check that multiplication result is 1
                 if (multiplicationOnCommitments.equals(BigInteger.ONE))
