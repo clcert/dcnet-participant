@@ -171,7 +171,7 @@ public class SessionManager {
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger);
                 }
                 // Check that multiplication result is 1
-                if (multiplicationOnCommitments.mod(room.getP()).equals(BigInteger.ONE))
+                if (multiplicationOnCommitments.equals(BigInteger.ONE))
                     System.out.println("Round " + round + " commitments on keys are OK");
                 else
                     System.out.println("Round " + round + " commitments on keys are WRONG: " + multiplicationOnCommitments.mod(room.getP()));
