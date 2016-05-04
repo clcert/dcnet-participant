@@ -80,7 +80,7 @@ public class SecretSharing implements KeyGeneration {
             shares[i] = randomValue;
             randomShares[i] = randomValueForRandom; //
             randomnessAdded = randomnessAdded.add(randomValue);
-            randomnessAddedForRandom = randomValueForRandom.add(randomValueForRandom); //
+            randomnessAddedForRandom = randomnessAddedForRandom.add(randomValueForRandom); //
         }
         secretShare = secret.subtract(randomnessAdded);
         secretRandomShare = random.subtract(randomnessAddedForRandom); //
