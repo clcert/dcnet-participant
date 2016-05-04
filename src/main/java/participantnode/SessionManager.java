@@ -189,7 +189,7 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                /** MESSAGE SENDING **/
+                /** OUTPUT MESSAGE SENDING **/
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
