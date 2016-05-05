@@ -72,7 +72,8 @@ public class SessionManager {
             participantMessage = "0";
             System.out.println("\nm_" + nodeIndex + " doesn't want to communicate any message\n");
         }
-        System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
+        else
+            System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
 
         // Create an outputMessage
         OutputMessage outputParticipantMessage = new OutputMessage();
