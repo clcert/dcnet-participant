@@ -68,6 +68,10 @@ public class SessionManager {
 
         // Print info about the room
         System.out.println("PARTICIPANT NODE " + nodeIndex + " of " + room.getRoomSize());
+        System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
+
+        if (participantMessage.equals(""))
+            participantMessage = "0";
 
         // Create an outputMessage
         OutputMessage outputParticipantMessage = new OutputMessage();
@@ -79,9 +83,6 @@ public class SessionManager {
         OutputMessage zeroMessage = new OutputMessage();
         zeroMessage.setParticipantMessage("0", room);
         String zeroMessageJson;
-
-        // Print message to send in this session
-        System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
