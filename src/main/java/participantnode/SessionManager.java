@@ -183,6 +183,7 @@ public class SessionManager {
                     commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
                 else
                     commitment = pedersenCommitment.calculateCommitment(outputParticipantMessage.getProtocolMessage());
+                // TODO: Generate proof of knowledge
                 // Send commitment to the room
                 node.getSender().send(commitment.toString());
                 // Wait response from Receiver thread

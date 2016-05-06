@@ -34,7 +34,7 @@ public class PedersenCommitment {
      *
      * @return random value in group Z_q
      */
-    private BigInteger generateRandom() {
+    public BigInteger generateRandom() {
         BigInteger random = new BigInteger(this.q.bitCount(), new Random());
         return random.mod(this.q);
     }
