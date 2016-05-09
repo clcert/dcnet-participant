@@ -2,7 +2,9 @@ package participantnode;
 
 import com.google.gson.Gson;
 import crypto.PedersenCommitment;
+import crypto.ZeroKnowledgeProof;
 import dcnet.Room;
+import json.ProofOfKnowledge;
 import keygeneration.DiffieHellman;
 import keygeneration.KeyGeneration;
 import keygeneration.SecretSharing;
@@ -178,17 +180,33 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 /** COMMITMENT ON MESSAGE PART **/
-                // Calculate commitment on the message corresponding to this round
+                // Set protocol message to make a commitment to
+                BigInteger protocolMessage;
                 if (!messageInThisRound)
-                    commitment = pedersenCommitment.calculateCommitment(BigInteger.ZERO);
+                    protocolMessage = BigInteger.ZERO;
                 else
-                    commitment = pedersenCommitment.calculateCommitment(outputParticipantMessage.getProtocolMessage());
-                // TODO: Generate proof of knowledge
-                // Send commitment to the room
-                node.getSender().send(commitment.toString());
-                // Wait response from Receiver thread
-                receiverThread.recvStr();
-                // TODO: Do something with the commitments
+                    protocolMessage = outputParticipantMessage.getProtocolMessage();
+                // Generate random value for commitment
+                BigInteger randomForCommitment = pedersenCommitment.generateRandom();
+                // Calculate commitment
+                commitment = pedersenCommitment.calculateCommitment(protocolMessage, randomForCommitment);
+                // Initialize ZeroKnowledgeProof with values of the room
+                ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP());
+                // Generate ProofOfKnowledge associated with the protocol message inside the commitment
+                String pok = zkp.generateProofOfKnowledge(protocolMessage, randomForCommitment);
+                // Send ProofOfKnowledge to the room (which contains the commitment)
+                node.getSender().send(pok);
+
+                // Receive proofs of other participant nodes where we need to check each of them
+                for (int i = 0; i < room.getRoomSize(); i++) {
+                    // Wait response from Receiver thread as a String (json)
+                    String proofOfKnowledgeJson = receiverThread.recvStr();
+                    // Transform String (json) to object ProofOfKnowledge
+                    ProofOfKnowledge proofOfKnowledge = new Gson().fromJson(proofOfKnowledgeJson, ProofOfKnowledge.class);
+                    // Verify proof of knowledge
+                    if (!zkp.verifyProofOfKnowledge(proofOfKnowledge))
+                        System.out.println("WRONG Proof of Knowledge on Protocol Message");
+                }
 
                 // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);

@@ -4,14 +4,14 @@ import java.math.BigInteger;
 
 public class ProofOfKnowledge {
 
-    BigInteger c, d, e, u, v;
+    private BigInteger c, d, e, u, v;
 
     public ProofOfKnowledge(BigInteger c, BigInteger d, BigInteger e, BigInteger u, BigInteger v) {
         this.c = c;
-        this.d = c;
-        this.e = c;
-        this.u = c;
-        this.v = c;
+        this.d = d;
+        this.e = e;
+        this.u = u;
+        this.v = v;
     }
 
     public BigInteger getC() {

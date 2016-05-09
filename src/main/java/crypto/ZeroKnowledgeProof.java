@@ -8,7 +8,7 @@ import java.math.BigInteger;
 public class ZeroKnowledgeProof {
 
     private PedersenCommitment pedersenCommitment;
-    BigInteger p;
+    private BigInteger p;
 
     public ZeroKnowledgeProof(BigInteger g, BigInteger h, BigInteger q, BigInteger p) {
         this.pedersenCommitment = new PedersenCommitment(g, h, q, p);
@@ -28,9 +28,8 @@ public class ZeroKnowledgeProof {
         BigInteger v = e.multiply(r).add(s);
 
         ProofOfKnowledge proof = new ProofOfKnowledge(c, d, e, u, v);
-        String proofJson = new Gson().toJson(proof, ProofOfKnowledge.class);
 
-        return proofJson;
+        return new Gson().toJson(proof, ProofOfKnowledge.class);
     }
 
     public boolean verifyProofOfKnowledge(ProofOfKnowledge proof) {
