@@ -7,12 +7,14 @@ import java.math.BigInteger;
 
 public class ZeroKnowledgeProof {
 
+    private final int nodeIndex;
     private PedersenCommitment pedersenCommitment;
     private BigInteger p;
 
-    public ZeroKnowledgeProof(BigInteger g, BigInteger h, BigInteger q, BigInteger p) {
+    public ZeroKnowledgeProof(BigInteger g, BigInteger h, BigInteger q, BigInteger p, int nodeIndex) {
         this.pedersenCommitment = new PedersenCommitment(g, h, q, p);
         this.p = p;
+        this.nodeIndex = nodeIndex;
     }
 
     public String generateProofOfKnowledge(BigInteger x, BigInteger r) {
@@ -27,7 +29,7 @@ public class ZeroKnowledgeProof {
         BigInteger u = e.multiply(x).add(y);
         BigInteger v = e.multiply(r).add(s);
 
-        ProofOfKnowledge proof = new ProofOfKnowledge(c, d, e, u, v);
+        ProofOfKnowledge proof = new ProofOfKnowledge(c, d, e, u, v, nodeIndex);
 
         return new Gson().toJson(proof, ProofOfKnowledge.class);
     }

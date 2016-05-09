@@ -191,7 +191,7 @@ public class SessionManager {
                 // Calculate commitment
                 commitment = pedersenCommitment.calculateCommitment(protocolMessage, randomForCommitment);
                 // Initialize ZeroKnowledgeProof with values of the room
-                ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP());
+                ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP(), nodeIndex);
                 // Generate ProofOfKnowledge associated with the protocol message inside the commitment
                 String pok = zkp.generateProofOfKnowledge(protocolMessage, randomForCommitment);
                 // Send ProofOfKnowledge to the room (which contains the commitment)
@@ -205,7 +205,7 @@ public class SessionManager {
                     ProofOfKnowledge proofOfKnowledge = new Gson().fromJson(proofOfKnowledgeJson, ProofOfKnowledge.class);
                     // Verify proof of knowledge
                     if (!zkp.verifyProofOfKnowledge(proofOfKnowledge))
-                        System.out.println("WRONG Proof of Knowledge on Protocol Message");
+                        System.out.println("WRONG PoK. Round: " + round + ", Node: " + proofOfKnowledge.getNodeIndex());
                 }
 
                 // Synchronize nodes to let know that we all finish the commitments on messages part
