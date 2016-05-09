@@ -23,8 +23,8 @@ public class ZeroKnowledgeProof {
         BigInteger y = this.pedersenCommitment.generateRandom(); // y random
         BigInteger s = this.pedersenCommitment.generateRandom(); // s random
 
-        BigInteger d = this.pedersenCommitment.calculateCommitment(y, s);
-        BigInteger e = this.pedersenCommitment.generateRandom(); // e random must be calculated as H(...)
+        BigInteger d = this.pedersenCommitment.calculateCommitment(y, s); // d = g^y h^s (mod p)
+        BigInteger e = this.pedersenCommitment.generateRandom(); // TODO: e random must be calculated as H(...)
 
         BigInteger u = e.multiply(x).add(y);
         BigInteger v = e.multiply(r).add(s);
@@ -35,8 +35,8 @@ public class ZeroKnowledgeProof {
     }
 
     public boolean verifyProofOfKnowledge(ProofOfKnowledge proof) {
-        BigInteger _a = this.pedersenCommitment.calculateCommitment(proof.getU(), proof.getV());
-        BigInteger _b = proof.getD().mod(this.p).multiply(proof.getC().modPow(proof.getE(), this.p).mod(this.p));
+        BigInteger _a = this.pedersenCommitment.calculateCommitment(proof.getU(), proof.getV()); // _a = g^u h^v (mod p)
+        BigInteger _b = proof.getD().mod(this.p).multiply(proof.getC().modPow(proof.getE(), this.p)).mod(this.p); // _b = (d (mod p) * (c^e (mod p)) (mod p) = d * c^e (mod p)
         return _a.equals(_b);
     }
 
