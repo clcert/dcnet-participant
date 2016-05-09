@@ -35,7 +35,6 @@ public class SessionManager {
     private Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     private LinkedList<Integer> nextRoundsToHappen;
     private PedersenCommitment pedersenCommitment;
-    private BigInteger commitment;
     private long executionTime;
 
     /**
@@ -55,7 +54,6 @@ public class SessionManager {
         nextRoundsToHappen.addFirst(1);
         executionTime = 0;
         pedersenCommitment = new PedersenCommitment();
-        commitment = BigInteger.ZERO;
     }
 
     /**
@@ -188,11 +186,9 @@ public class SessionManager {
                     protocolMessage = outputParticipantMessage.getProtocolMessage();
                 // Generate random value for commitment
                 BigInteger randomForCommitment = pedersenCommitment.generateRandom();
-                // Calculate commitment
-                commitment = pedersenCommitment.calculateCommitment(protocolMessage, randomForCommitment);
                 // Initialize ZeroKnowledgeProof with values of the room
                 ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP(), nodeIndex);
-                // Generate ProofOfKnowledge associated with the protocol message inside the commitment
+                // Generate ProofOfKnowledge associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
                 String pok = zkp.generateProofOfKnowledge(protocolMessage, randomForCommitment);
                 // Send ProofOfKnowledge to the room (which contains the commitment)
                 node.getSender().send(pok);
