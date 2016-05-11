@@ -156,6 +156,8 @@ public class SessionManager {
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++)
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
+                // Retrieve random for commitment on key
+                BigInteger randomForCommitmentOnKey = calculateRandomForCommitmentOnKey(sharedRandomValues);
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
                 // Send commitment on key to the room
@@ -186,13 +188,13 @@ public class SessionManager {
                 else
                     protocolMessage = outputParticipantMessage.getProtocolMessage();
                 // Generate random value for commitment
-                BigInteger randomForCommitment = pedersenCommitment.generateRandom();
+                BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
                 // Initialize ZeroKnowledgeProof with values of the room
                 ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP(), nodeIndex);
                 // Generate ProofOfKnowledge associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
-                String pok = zkp.generateProofOfKnowledge(protocolMessage, randomForCommitment);
+                String proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledge(protocolMessage, randomForCommitmentOnMessage);
                 // Send ProofOfKnowledge to the room (which contains the commitment)
-                node.getSender().send(pok);
+                node.getSender().send(proofOfKnowledgeOnMessage);
 
                 // Receive proofs of other participant nodes where we need to check each of them
                 for (int i = 0; i < room.getRoomSize(); i++) {
@@ -208,10 +210,15 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                /** OUTPUT MESSAGE SENDING **/
+                /** OUTPUT MESSAGE AND PROOF OF KNOWLEDGE SENDING **/
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
+                // Set Proof of Knowledge that is needed for this round
+                if (round == 1) {
+                    BigInteger randomForCommitmentOnOutputMessage = randomForCommitmentOnKey.add(randomForCommitmentOnMessage);
+                    String proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(outputParticipantMessage.getProtocolMessage(), randomForCommitmentOnOutputMessage);
+                }
                 // Create Json objects with each possible message to send
                 outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                 zeroMessageJson = new Gson().toJson(zeroMessage);
@@ -336,6 +343,14 @@ public class SessionManager {
         long t2 = System.nanoTime();
         // Save execution time
         executionTime = t2-t1;
+    }
+
+    private BigInteger calculateRandomForCommitmentOnKey(BigInteger[] sharedRandomValues) {
+        BigInteger result = BigInteger.ZERO;
+        for (BigInteger sharedRandomValue : sharedRandomValues) {
+            result = result.add(sharedRandomValue);
+        }
+        return result;
     }
 
     /**
