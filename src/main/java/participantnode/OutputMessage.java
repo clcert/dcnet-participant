@@ -103,7 +103,7 @@ class OutputMessage {
 
     /**
      *
-     * @param roundKeyValue round key that needs to be added to protocol message to "hide" the plain text message that wants to be comunicated in the room
+     * @param roundKeyValue round key that needs to be added to protocol message to "hide" the plain text message that wants to be communicated in the room
      */
     void setRoundKeyValue(BigInteger roundKeyValue) {
         this.protocolMessage = this.protocolMessage.add(roundKeyValue);

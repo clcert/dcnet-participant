@@ -5,7 +5,6 @@ import crypto.PedersenCommitment;
 import crypto.ZeroKnowledgeProof;
 import dcnet.Room;
 import json.ProofOfKnowledge;
-import keygeneration.DiffieHellman;
 import keygeneration.KeyGeneration;
 import keygeneration.SecretSharing;
 import org.zeromq.ZContext;
@@ -15,7 +14,9 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.LinkedList;
 
 /**
  *
@@ -211,24 +212,20 @@ public class SessionManager {
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
-
-                // Set the message to send corresponding to this round
+                // Create Json objects with each possible message to send
+                outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                zeroMessageJson = new Gson().toJson(zeroMessage);
+                // Set the corresponding message to send in this round
                 String outputMessageRoundJson;
-                if (messageInThisRound) {
-                    outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                if (messageInThisRound)
                     outputMessageRoundJson = outputParticipantMessageJson;
-                }
-                else {
-                    zeroMessageJson = new Gson().toJson(zeroMessage);
+                else
                     outputMessageRoundJson = zeroMessageJson;
-                }
                 // Send the message
                 node.getSender().send(outputMessageRoundJson);
 
                 /** RECEIVE MESSAGES FROM OTHER NODES **/
-                // After sending my message, receive information from the receiver thread (all the messages sent in this round by all the nodes in the room)
-
-                // Variable to count how many messages were receive from the receiver thread
+                // Variable to count how many messages were received from the receiver thread
                 int messagesReceivedInThisRound = 0;
                 // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
                 while (messagesReceivedInThisRound < room.getRoomSize()) {
