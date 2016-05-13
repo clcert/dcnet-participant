@@ -8,7 +8,9 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 
 /**
  *
@@ -30,8 +32,8 @@ public class ParticipantNode {
      * Get the LAN IP address of the node
      * @return local network ip address of the participant node
      */
-    static public String getLocalNetworkIp() {
-        String networkIp = "";
+    static public String getLocalNetworkIp() throws SocketException {
+        /*String networkIp = "";
         InetAddress ip;
         try {
             ip = InetAddress.getLocalHost();
@@ -39,7 +41,22 @@ public class ParticipantNode {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        return networkIp;
+        return networkIp;*/
+        String ip = "";
+        Enumeration e = NetworkInterface.getNetworkInterfaces();
+        while(e.hasMoreElements()) {
+            NetworkInterface n = (NetworkInterface) e.nextElement();
+            if (!n.getDisplayName().contains("docker")) {
+                Enumeration ee = n.getInetAddresses();
+                while (ee.hasMoreElements()) {
+                    InetAddress i = (InetAddress) ee.nextElement();
+                    if (!i.isLinkLocalAddress() && !i.isLoopbackAddress()) {
+                        ip =  i.getHostAddress();
+                    }
+                }
+            }
+        }
+        return ip;
     }
 
     /**
