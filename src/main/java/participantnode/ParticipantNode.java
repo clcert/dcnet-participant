@@ -33,15 +33,6 @@ public class ParticipantNode {
      * @return local network ip address of the participant node
      */
     static public String getLocalNetworkIp() throws SocketException {
-        /*String networkIp = "";
-        InetAddress ip;
-        try {
-            ip = InetAddress.getLocalHost();
-            networkIp = ip.getHostAddress();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-        return networkIp;*/
         String ip = "";
         Enumeration e = NetworkInterface.getNetworkInterfaces();
         while(e.hasMoreElements()) {
