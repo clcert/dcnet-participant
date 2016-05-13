@@ -9,6 +9,7 @@ import participantnode.SessionManager;
 
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  *
@@ -63,6 +64,8 @@ public class DCNETProtocol {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             System.exit(0);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
 
         // Print total time of execution and how many rounds the session played

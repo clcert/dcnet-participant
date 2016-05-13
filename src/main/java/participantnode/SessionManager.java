@@ -13,6 +13,7 @@ import org.zeromq.ZMQ;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -65,7 +66,7 @@ public class SessionManager {
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    public void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException {
+    public void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
         // Print info about the room
         System.out.println("PARTICIPANT NODE " + nodeIndex + " of " + room.getRoomSize());
