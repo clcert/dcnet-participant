@@ -9,6 +9,7 @@ import participantnode.SessionManager;
 
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketException;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -22,7 +23,7 @@ public class DCNETProtocol {
      * @param directoryIp ip address of the directory node
      * @param out PrintStream where to write the messages that go through the protocol
      */
-    static public void runProtocol(String message, String directoryIp, PrintStream out) {
+    static public void runProtocol(String message, String directoryIp, PrintStream out) throws SocketException {
         // Create DirectoryNode object with the IP from arguments
         DirectoryNode directoryNode = new DirectoryNode(directoryIp);
 
