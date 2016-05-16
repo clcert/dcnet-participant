@@ -185,7 +185,7 @@ public class SessionManager {
                     // Get commitmentOnKey
                     BigInteger commitmentValueBigInteger = commitmentAndIndex.getCommitment();
                     // Store commitment for future checking
-                    commitmentsOnKey[commitmentAndIndex.getNodeIndex()] = commitmentValueBigInteger;
+                    commitmentsOnKey[commitmentAndIndex.getNodeIndex()-1] = commitmentValueBigInteger;
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
                 }
@@ -224,7 +224,7 @@ public class SessionManager {
                     // Transform String (json) to object ProofOfKnowledge
                     CommitmentAndProofOfKnowledge proofOfKnowledge = new Gson().fromJson(commitmentAndProofOfKnowledgeJson, CommitmentAndProofOfKnowledge.class);
                     // Store commitment for future checking
-                    commitmentsOnMessage[proofOfKnowledge.getProofOfKnowledge().getNodeIndex()] = proofOfKnowledge.getCommitment();
+                    commitmentsOnMessage[proofOfKnowledge.getProofOfKnowledge().getNodeIndex()-1] = proofOfKnowledge.getCommitment();
                     // Verify proof of knowledge
                     if (!zkp.verifyProofOfKnowledge(proofOfKnowledge.getProofOfKnowledge(), proofOfKnowledge.getCommitment()))
                         System.out.println("WRONG PoK. Round: " + round + ", Node: " + proofOfKnowledge.getProofOfKnowledge().getNodeIndex());
@@ -276,7 +276,7 @@ public class SessionManager {
                         // Get index of participant node that is sending his proofOfKnowledge
                         int participantNodeIndex = outputMessageAndProofOfKnowledge.getProofOfKnowledge().getNodeIndex();
                         // Construct commitment on outputMessage as the multiplication of commitmentOnKey and commitmentOnMessage
-                        BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex].multiply(commitmentsOnMessage[participantNodeIndex]);
+                        BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex-1].multiply(commitmentsOnMessage[participantNodeIndex-1]);
                         // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
                         if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), commitmentOnOutputMessage))
                             System.out.println("Commitment on OutputMessage WRONG, round " + round + ", node: " + participantNodeIndex);
