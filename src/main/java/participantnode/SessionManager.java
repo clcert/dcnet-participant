@@ -103,6 +103,9 @@ public class SessionManager {
         // Set values of subsequently commitments with the public info of the Room
         pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
 
+        // Initialize ZeroKnowledgeProof with values of the room
+        ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP(), nodeIndex);
+
         // Set time to measure entire protocol
         long t1 = System.nanoTime();
 
@@ -185,7 +188,7 @@ public class SessionManager {
                     // Get commitmentOnKey
                     BigInteger commitmentValueBigInteger = commitmentAndIndex.getCommitment();
                     // Store commitment for future checking
-                    commitmentsOnKey[commitmentAndIndex.getNodeIndex()-1] = commitmentValueBigInteger;
+                    commitmentsOnKey[commitmentAndIndex.getNodeIndex() - 1] = commitmentValueBigInteger;
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
                 }
@@ -205,8 +208,6 @@ public class SessionManager {
                     protocolMessage = outputParticipantMessage.getProtocolMessage();
                 // Generate random value for commitment
                 BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
-                // Initialize ZeroKnowledgeProof with values of the room
-                ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP(), nodeIndex);
                 // Generate Commitment on Message
                 BigInteger commitmentOnMessage = pedersenCommitment.calculateCommitment(protocolMessage, randomForCommitmentOnMessage);
                 // Generate ProofOfKnowledge associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
@@ -224,7 +225,7 @@ public class SessionManager {
                     // Transform String (json) to object ProofOfKnowledge
                     CommitmentAndProofOfKnowledge proofOfKnowledge = new Gson().fromJson(commitmentAndProofOfKnowledgeJson, CommitmentAndProofOfKnowledge.class);
                     // Store commitment for future checking
-                    commitmentsOnMessage[proofOfKnowledge.getProofOfKnowledge().getNodeIndex()-1] = proofOfKnowledge.getCommitment();
+                    commitmentsOnMessage[proofOfKnowledge.getProofOfKnowledge().getNodeIndex() - 1] = proofOfKnowledge.getCommitment();
                     // Verify proof of knowledge
                     if (!zkp.verifyProofOfKnowledge(proofOfKnowledge.getProofOfKnowledge(), proofOfKnowledge.getCommitment()))
                         System.out.println("WRONG PoK. Round: " + round + ", Node: " + proofOfKnowledge.getProofOfKnowledge().getNodeIndex());
@@ -276,7 +277,7 @@ public class SessionManager {
                         // Get index of participant node that is sending his proofOfKnowledge
                         int participantNodeIndex = outputMessageAndProofOfKnowledge.getProofOfKnowledge().getNodeIndex();
                         // Construct commitment on outputMessage as the multiplication of commitmentOnKey and commitmentOnMessage
-                        BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex-1].multiply(commitmentsOnMessage[participantNodeIndex-1]).mod(room.getP());
+                        BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex - 1].multiply(commitmentsOnMessage[participantNodeIndex - 1]).mod(room.getP());
                         // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
                         if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), commitmentOnOutputMessage))
                             System.out.println("Commitment on OutputMessage WRONG, round " + round + ", node: " + participantNodeIndex);
@@ -307,7 +308,7 @@ public class SessionManager {
             else {
                 // Recover messages sent in rounds (2*round) and round in order to construct the resulting message of this round (see Reference for more information)
                 BigInteger sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
-                BigInteger sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round-1)/2);
+                BigInteger sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round - 1) / 2);
                 // Construct the resulting message of this round
                 sumOfO = sumOfOSentInRoundK.subtract(sumOfOSentInRound2K);
             }

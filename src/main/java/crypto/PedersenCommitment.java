@@ -49,11 +49,11 @@ public class PedersenCommitment {
         return (this.g.modPow(secret, this.p).multiply(this.h.modPow(random, this.p))).mod(this.p);
     }
 
-    public BigInteger getG() {
+    BigInteger getG() {
         return g;
     }
 
-    public BigInteger getH() {
+    BigInteger getH() {
         return h;
     }
 }
