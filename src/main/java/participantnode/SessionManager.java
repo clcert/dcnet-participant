@@ -276,7 +276,7 @@ public class SessionManager {
                         // Get index of participant node that is sending his proofOfKnowledge
                         int participantNodeIndex = outputMessageAndProofOfKnowledge.getProofOfKnowledge().getNodeIndex();
                         // Construct commitment on outputMessage as the multiplication of commitmentOnKey and commitmentOnMessage
-                        BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex-1].multiply(commitmentsOnMessage[participantNodeIndex-1]);
+                        BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex-1].multiply(commitmentsOnMessage[participantNodeIndex-1]).mod(room.getP());
                         // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
                         if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), commitmentOnOutputMessage))
                             System.out.println("Commitment on OutputMessage WRONG, round " + round + ", node: " + participantNodeIndex);
