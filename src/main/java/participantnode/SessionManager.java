@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import crypto.PedersenCommitment;
 import crypto.ZeroKnowledgeProof;
 import dcnet.Room;
+import json.CommitmentAndProofOfKnowledge;
+import json.OutputMessageAndProofOfKnowledge;
 import json.ProofOfKnowledge;
 import keygeneration.KeyGeneration;
 import keygeneration.SecretSharing;
@@ -192,20 +194,25 @@ public class SessionManager {
                 BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
                 // Initialize ZeroKnowledgeProof with values of the room
                 ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP(), nodeIndex);
+                // Generate Commitment on Message
+                BigInteger commitmentOnMessage = pedersenCommitment.calculateCommitment(protocolMessage, randomForCommitmentOnMessage);
                 // Generate ProofOfKnowledge associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
-                String proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledge(protocolMessage, randomForCommitmentOnMessage);
-                // Send ProofOfKnowledge to the room (which contains the commitment)
-                node.getSender().send(proofOfKnowledgeOnMessage);
+                ProofOfKnowledge proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledge(protocolMessage, randomForCommitmentOnMessage);
+                // Generate JSON string of an Object containing both commitment and proofOfKnowledge
+                CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnMessage = new CommitmentAndProofOfKnowledge(commitmentOnMessage, proofOfKnowledgeOnMessage);
+                String commitmentAndProofOfKnowledgeOnMessageJson = new Gson().toJson(commitmentAndProofOfKnowledgeOnMessage, CommitmentAndProofOfKnowledge.class);
+                // Send Json to the room (which contains the commitment and the proofOfKnowledge)
+                node.getSender().send(commitmentAndProofOfKnowledgeOnMessageJson);
 
                 // Receive proofs of other participant nodes where we need to check each of them
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a String (json)
-                    String proofOfKnowledgeJson = receiverThread.recvStr();
+                    String commitmentAndProofOfKnowledgeJson = receiverThread.recvStr();
                     // Transform String (json) to object ProofOfKnowledge
-                    ProofOfKnowledge proofOfKnowledge = new Gson().fromJson(proofOfKnowledgeJson, ProofOfKnowledge.class);
+                    CommitmentAndProofOfKnowledge proofOfKnowledge = new Gson().fromJson(commitmentAndProofOfKnowledgeJson, CommitmentAndProofOfKnowledge.class);
                     // Verify proof of knowledge
-                    if (!zkp.verifyProofOfKnowledge(proofOfKnowledge))
-                        System.out.println("WRONG PoK. Round: " + round + ", Node: " + proofOfKnowledge.getNodeIndex());
+                    if (!zkp.verifyProofOfKnowledge(proofOfKnowledge.getProofOfKnowledge(), proofOfKnowledge.getCommitment()))
+                        System.out.println("WRONG PoK. Round: " + round + ", Node: " + proofOfKnowledge.getProofOfKnowledge().getNodeIndex());
                 }
 
                 // Synchronize nodes to let know that we all finish the commitments on messages part
@@ -215,36 +222,63 @@ public class SessionManager {
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
-                // Set Proof of Knowledge that is needed for this round
+                // Set Proof of Knowledge that is needed for round 1
                 if (round == 1) {
+                    // Calculate random for commitment as the sum of both random used before (commitment on key and commitment on message)
                     BigInteger randomForCommitmentOnOutputMessage = randomForCommitmentOnKey.add(randomForCommitmentOnMessage);
-                    String proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(outputParticipantMessage.getProtocolMessage(), randomForCommitmentOnOutputMessage);
+                    // Generate proofOfKnowledge on OutputMessage
+                    ProofOfKnowledge proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(outputParticipantMessage.getProtocolMessage(), randomForCommitmentOnOutputMessage);
+                    // Generate Json string with Object containing both outputMessage and proofOfKnowledge
+                    OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new OutputMessageAndProofOfKnowledge(outputParticipantMessage, proofOfKnowledgeOnOutputMessage);
+                    String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledge, OutputMessageAndProofOfKnowledge.class);
+                    // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
+                    node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 }
-                // Create Json objects with each possible message to send
-                outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
-                zeroMessageJson = new Gson().toJson(zeroMessage);
-                // Set the corresponding message to send in this round
-                String outputMessageRoundJson;
-                if (messageInThisRound)
-                    outputMessageRoundJson = outputParticipantMessageJson;
-                else
-                    outputMessageRoundJson = zeroMessageJson;
-                // Send the message
-                node.getSender().send(outputMessageRoundJson);
+                else {
+                    // Create Json objects with each possible message to send
+                    outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                    zeroMessageJson = new Gson().toJson(zeroMessage);
+                    // Set the corresponding message to send in this round
+                    String outputMessageRoundJson;
+                    if (messageInThisRound)
+                        outputMessageRoundJson = outputParticipantMessageJson;
+                    else
+                        outputMessageRoundJson = zeroMessageJson;
+                    // Send the message
+                    node.getSender().send(outputMessageRoundJson);
+                }
 
                 /** RECEIVE MESSAGES FROM OTHER NODES **/
-                // Variable to count how many messages were received from the receiver thread
-                int messagesReceivedInThisRound = 0;
-                // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
-                while (messagesReceivedInThisRound < room.getRoomSize()) {
-                    // Receive a message
-                    byte[] messageReceivedFromReceiverThread = receiverThread.recv();
-                    // Transform incoming message to a BigInteger
-                    BigInteger incomingOutputMessage = new BigInteger(messageReceivedFromReceiverThread);
-                    // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
-                    sumOfO = sumOfO.add(incomingOutputMessage).mod(room.getP()); //
-                    // Increase the number of messages received
-                    messagesReceivedInThisRound++;
+                if (round == 1) {
+                    // Variable to count how many messages were received from the receiver thread
+                    int messagesReceivedInThisRound = 0;
+                    // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
+                    while (messagesReceivedInThisRound < room.getRoomSize()) {
+                        // Receive a message (json)
+                        String messageReceivedFromReceiverThread = receiverThread.recvStr();
+                        // Transform incoming message (json) to a OutputMessageAndProofOfKnowledge object
+                        OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new Gson().fromJson(messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledge.class);
+                        // TODO: Verify the proofOfKnowledge
+                        // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
+                        sumOfO = sumOfO.add(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage()).mod(room.getP());
+                        // Increase the number of messages received
+                        messagesReceivedInThisRound++;
+                    }
+                }
+                else {
+                    // Variable to count how many messages were received from the receiver thread
+                    int messagesReceivedInThisRound = 0;
+                    // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
+                    while (messagesReceivedInThisRound < room.getRoomSize()) {
+                        // Receive a message
+                        byte[] messageReceivedFromReceiverThread = receiverThread.recv();
+                        // Transform incoming message to a BigInteger
+                        BigInteger incomingOutputMessage = new BigInteger(messageReceivedFromReceiverThread);
+                        // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
+                        sumOfO = sumOfO.add(incomingOutputMessage).mod(room.getP());
+                        // Increase the number of messages received
+                        messagesReceivedInThisRound++;
+                    }
                 }
             }
 

@@ -67,17 +67,28 @@ public class Receiver implements ZThread.IAttachedRunnable {
             }
 
             /** MESSAGE SENDING **/
-            for (int i = 0; i < roomSize; i++) {
-                // Receive message from a node in the room
-                String inputMessage = receiver.recvStr().trim();
+            if (round == 1) {
+                for (int i = 0; i < roomSize; i++) {
+                    // Receive message from a node in the room
+                    String inputMessage = receiver.recvStr().trim();
 
-                // Format the message that is incoming to "extract" the actual message
-                OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);
-                byte[] byteArrayInputMessage = incomingOutputMessage.getProtocolMessage().toByteArray();
+                    // Send String (json) to the sender thread
+                    pipe.send(inputMessage);
+                }
+            }
+            else {
+                for (int i = 0; i < roomSize; i++) {
+                    // Receive message from a node in the room
+                    String inputMessage = receiver.recvStr().trim();
 
-                // Send to the sender thread the message received
-                pipe.send(byteArrayInputMessage);
+                    // Format the message that is incoming to "extract" the actual message
+                    OutputMessage incomingOutputMessage = new Gson().fromJson(inputMessage, OutputMessage.class);
+                    byte[] byteArrayInputMessage = incomingOutputMessage.getProtocolMessage().toByteArray();
 
+                    // Send to the sender thread the message received
+                    pipe.send(byteArrayInputMessage);
+
+                }
             }
 
         }

@@ -9,7 +9,7 @@ import java.util.Random;
 /**
  *
  */
-class OutputMessage {
+public class OutputMessage {
 
     private BigInteger protocolMessage;
     private BigInteger participantMessageWithPaddingBigInteger;

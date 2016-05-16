@@ -1,6 +1,5 @@
 package crypto;
 
-import com.google.gson.Gson;
 import json.ProofOfKnowledge;
 
 import java.io.UnsupportedEncodingException;
@@ -37,7 +36,7 @@ public class ZeroKnowledgeProof {
      * @param r random value needed for commitment
      * @return proof of knowledge that participant node knows x in c = g^x h^r
      */
-    public String generateProofOfKnowledge(BigInteger x, BigInteger r) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    public ProofOfKnowledge generateProofOfKnowledge(BigInteger x, BigInteger r) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         BigInteger c = this.pedersenCommitment.calculateCommitment(x, r); // c = g^x h^r (mod p)
 
         BigInteger y = this.pedersenCommitment.generateRandom(); // y random
@@ -58,9 +57,8 @@ public class ZeroKnowledgeProof {
         BigInteger u = e.multiply(x).add(y); // u = e*x + y
         BigInteger v = e.multiply(r).add(s); // v = e*r + s
 
-        ProofOfKnowledge proof = new ProofOfKnowledge(c, d, u, v, nodeIndex);
+        return new ProofOfKnowledge(d, u, v, nodeIndex);
 
-        return new Gson().toJson(proof, ProofOfKnowledge.class);
     }
 
     /**
@@ -68,19 +66,19 @@ public class ZeroKnowledgeProof {
      * @param proof proof of knowledge that participant node knows x in commitment inside
      * @return true if the verifying process is succeed, false otherwise
      */
-    public boolean verifyProofOfKnowledge(ProofOfKnowledge proof) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    public boolean verifyProofOfKnowledge(ProofOfKnowledge proof, BigInteger commitment) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         BigInteger _a = this.pedersenCommitment.calculateCommitment(proof.getU(), proof.getV()); // _a = g^u h^v (mod p)
 
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         String publicValueOnHash = proof.getD().toString().concat(
                                    this.pedersenCommitment.getG().toString()).concat(
                                    this.pedersenCommitment.getH().toString()).concat(
-                                   proof.getC().toString()).concat(
+                                   commitment.toString()).concat(
                                    "" + proof.getNodeIndex());
         md.update(publicValueOnHash.getBytes("UTF-8"));
         BigInteger e = new BigInteger(md.digest());
 
-        BigInteger _b = proof.getD().mod(this.p).multiply(proof.getC().modPow(e , this.p)).mod(this.p); // _b = (d (mod p) * (c^e (mod p)) (mod p) = d * c^e (mod p)
+        BigInteger _b = proof.getD().mod(this.p).multiply(commitment.modPow(e , this.p)).mod(this.p); // _b = (d (mod p) * (c^e (mod p)) (mod p) = d * c^e (mod p)
         return _a.equals(_b);
     }
 
