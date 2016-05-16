@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import crypto.PedersenCommitment;
 import crypto.ZeroKnowledgeProof;
 import dcnet.Room;
+import json.CommitmentAndIndex;
 import json.CommitmentAndProofOfKnowledge;
 import json.OutputMessageAndProofOfKnowledge;
 import json.ProofOfKnowledge;
@@ -40,6 +41,7 @@ public class SessionManager {
     private LinkedList<Integer> nextRoundsToHappen;
     private PedersenCommitment pedersenCommitment;
     private long executionTime;
+
 
     /**
      * Initialize all parameters of SessionManager with default values
@@ -127,6 +129,10 @@ public class SessionManager {
             // Variables to store the resulting message of the round
             BigInteger sumOfM, sumOfT, sumOfO = BigInteger.ZERO;
 
+            // Store commitments on keys and on message for future checking
+            BigInteger[] commitmentsOnKey = new BigInteger[room.getRoomSize()];
+            BigInteger[] commitmentsOnMessage = new BigInteger[room.getRoomSize()];
+
             /** REAL ROUND (first and even rounds) **/
             if (round == 1 || round%2 == 0) {
 
@@ -163,16 +169,23 @@ public class SessionManager {
                 BigInteger randomForCommitmentOnKey = calculateRandomForCommitmentOnKey(sharedRandomValues);
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
-                // Send commitment on key to the room
-                node.getSender().send(commitmentOnKey.toByteArray());
+                // Generate Json string containing commitmentOnKey and nodeIndex
+                CommitmentAndIndex commitmentOnKeyAndIndex = new CommitmentAndIndex(commitmentOnKey, nodeIndex);
+                String commitmentOnKeyAndIndexJson = new Gson().toJson(commitmentOnKeyAndIndex, CommitmentAndIndex.class);
+                // Send commitment on key and index to the room
+                node.getSender().send(commitmentOnKeyAndIndexJson);
 
                 // Receive commitments of other participant nodes where it needs to check that the multiplication of all is 1
                 BigInteger multiplicationOnCommitments = BigInteger.ONE;
                 for (int i = 0; i < room.getRoomSize(); i++) {
-                    // Wait response from Receiver thread as a byte[]
-                    byte[] commitmentValueByteArray = receiverThread.recv();
-                    // Transform byte[] to BigInteger
-                    BigInteger commitmentValueBigInteger = new BigInteger(commitmentValueByteArray);
+                    // Wait response from Receiver thread as a string
+                    String commitmentAndIndexValue = receiverThread.recvStr();
+                    // Transform string (json) to CommitmentAndIndex object
+                    CommitmentAndIndex commitmentAndIndex = new Gson().fromJson(commitmentAndIndexValue, CommitmentAndIndex.class);
+                    // Get commitmentOnKey
+                    BigInteger commitmentValueBigInteger = commitmentAndIndex.getCommitment();
+                    // Store commitment for future checking
+                    commitmentsOnKey[commitmentAndIndex.getNodeIndex()] = commitmentValueBigInteger;
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
                 }
@@ -210,6 +223,8 @@ public class SessionManager {
                     String commitmentAndProofOfKnowledgeJson = receiverThread.recvStr();
                     // Transform String (json) to object ProofOfKnowledge
                     CommitmentAndProofOfKnowledge proofOfKnowledge = new Gson().fromJson(commitmentAndProofOfKnowledgeJson, CommitmentAndProofOfKnowledge.class);
+                    // Store commitment for future checking
+                    commitmentsOnKey[proofOfKnowledge.getProofOfKnowledge().getNodeIndex()] = proofOfKnowledge.getCommitment();
                     // Verify proof of knowledge
                     if (!zkp.verifyProofOfKnowledge(proofOfKnowledge.getProofOfKnowledge(), proofOfKnowledge.getCommitment()))
                         System.out.println("WRONG PoK. Round: " + round + ", Node: " + proofOfKnowledge.getProofOfKnowledge().getNodeIndex());
@@ -258,7 +273,13 @@ public class SessionManager {
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
                         // Transform incoming message (json) to a OutputMessageAndProofOfKnowledge object
                         OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new Gson().fromJson(messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledge.class);
-                        // TODO: Verify the proofOfKnowledge
+                        // Get index of participant node that is sending his proofOfKnowledge
+                        int participantNodeIndex = outputMessageAndProofOfKnowledge.getProofOfKnowledge().getNodeIndex();
+                        // Construct commitment on outputMessage as the multiplication of commitmentOnKey and commitmentOnMessage
+                        BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex].multiply(commitmentsOnMessage[participantNodeIndex]);
+                        // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
+                        if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), commitmentOnOutputMessage))
+                            System.out.println("Commitment on OutputMessage WRONG, round " + round + ", node: " + participantNodeIndex);
                         // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
                         sumOfO = sumOfO.add(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage()).mod(room.getP());
                         // Increase the number of messages received

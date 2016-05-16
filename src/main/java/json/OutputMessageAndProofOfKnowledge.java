@@ -4,8 +4,8 @@ import participantnode.OutputMessage;
 
 public class OutputMessageAndProofOfKnowledge {
 
-    OutputMessage outputMessage;
-    ProofOfKnowledge proofOfKnowledge;
+    private OutputMessage outputMessage;
+    private ProofOfKnowledge proofOfKnowledge;
 
     public OutputMessageAndProofOfKnowledge(OutputMessage outputMessage, ProofOfKnowledge proofOfKnowledge) {
         this.outputMessage = outputMessage;
