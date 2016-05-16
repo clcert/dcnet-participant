@@ -24,19 +24,36 @@ public class ProofOfKnowledge {
         this.nodeIndex = nodeIndex;
     }
 
+    /**
+     *
+     * @return commitment d
+     */
     public BigInteger getD() {
         return d;
     }
 
+    /**
+     *
+     * @return value u
+     */
     public BigInteger getU() {
         return u;
     }
 
+    /**
+     *
+     * @return value v
+     */
     public BigInteger getV() {
         return v;
     }
 
+    /**
+     *
+     * @return index of participant node sending this proof of knowledge
+     */
     public int getNodeIndex() {
         return nodeIndex;
     }
+
 }

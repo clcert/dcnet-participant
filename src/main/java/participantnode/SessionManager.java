@@ -402,6 +402,11 @@ public class SessionManager {
         executionTime = t2-t1;
     }
 
+    /**
+     *
+     * @param sharedRandomValues array with all the shared random values used for commitments on key
+     * @return sum of all values on sharedRandomValues
+     */
     private BigInteger calculateRandomForCommitmentOnKey(BigInteger[] sharedRandomValues) {
         BigInteger result = BigInteger.ZERO;
         for (BigInteger sharedRandomValue : sharedRandomValues) {
