@@ -224,7 +224,7 @@ public class SessionManager {
                     // Transform String (json) to object ProofOfKnowledge
                     CommitmentAndProofOfKnowledge proofOfKnowledge = new Gson().fromJson(commitmentAndProofOfKnowledgeJson, CommitmentAndProofOfKnowledge.class);
                     // Store commitment for future checking
-                    commitmentsOnKey[proofOfKnowledge.getProofOfKnowledge().getNodeIndex()] = proofOfKnowledge.getCommitment();
+                    commitmentsOnMessage[proofOfKnowledge.getProofOfKnowledge().getNodeIndex()] = proofOfKnowledge.getCommitment();
                     // Verify proof of knowledge
                     if (!zkp.verifyProofOfKnowledge(proofOfKnowledge.getProofOfKnowledge(), proofOfKnowledge.getCommitment()))
                         System.out.println("WRONG PoK. Round: " + round + ", Node: " + proofOfKnowledge.getProofOfKnowledge().getNodeIndex());
