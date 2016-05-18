@@ -352,9 +352,13 @@ public class SessionManager {
 
             // <sumOfT> != 1 => Collision produced or no messages sent in this round (last can only occur in probabilistic mode)
             else {
-                /* In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
+
+/*
+                */
+/* In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
                  * 1) No messages were sent in a real round (<sumOfT> = 0)
-                 * 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced */
+                 * 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced *//*
+
 
                 // We have to re-do the "father" round in order to expect that not all the participant nodes involved in the collision re-send their message in the same round
                 if (round != 1 && (sumOfT.equals(BigInteger.ZERO) || sumOfO.equals(messagesSentInPreviousRounds.get(round/2)))) {
@@ -366,9 +370,11 @@ public class SessionManager {
                     if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
                         nextRoundAllowedToSend = round/2;
                 }
+*/
+
 
                 // <sumOfT> > 1 => A Collision was produced
-                else {
+     //           else {
                     // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
                     if (nextRoundAllowedToSend == round) {
                         // Non probabilistic mode (see Reference for more information)
@@ -392,7 +398,7 @@ public class SessionManager {
                     }
                     // Add (2*round) and (2*round + 1) rounds to future plays
                     addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
-                }
+   //             }
             }
         }
 
