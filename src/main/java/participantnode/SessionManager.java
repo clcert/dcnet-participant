@@ -171,11 +171,10 @@ public class SessionManager {
                 BigInteger randomForCommitmentOnKey = calculateRandomForCommitmentOnKey(sharedRandomValues);
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
-                // Generate Json string containing commitmentOnKey and nodeIndex
+                // Generate proof of knowledge on key stored in commitment
                 ProofOfKnowledge proofOfKnowledgeOnKey = zkp.generateProofOfKnowledge(keyRoundValue, randomForCommitmentOnKey);
+                // Generate Json string containing commitmentOnKey and proofOfKnowledge
                 CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnKey = new CommitmentAndProofOfKnowledge(commitmentOnKey, proofOfKnowledgeOnKey);
-                //CommitmentAndIndex commitmentOnKeyAndIndex = new CommitmentAndIndex(commitmentOnKey, nodeIndex);
-                //String commitmentOnKeyAndIndexJson = new Gson().toJson(commitmentOnKeyAndIndex, CommitmentAndIndex.class);
                 String commitmentAndProofOfKnowledgeOnKeyJson = new Gson().toJson(commitmentAndProofOfKnowledgeOnKey, CommitmentAndProofOfKnowledge.class);
                 // Send commitment on key and index to the room
                 node.getSender().send(commitmentAndProofOfKnowledgeOnKeyJson);
@@ -185,11 +184,9 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
-                    // Transform string (json) to CommitmentAndIndex object
-                    //CommitmentAndIndex commitmentAndIndex = new Gson().fromJson(receivedCommitmentAndProofOfKnowledgeOnKey, CommitmentAndIndex.class);
+                    // Transform string (json) to CommitmentAndProofOfKnowledge object
                     CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnKey = new Gson().fromJson(receivedCommitmentAndProofOfKnowledgeOnKeyJson, CommitmentAndProofOfKnowledge.class);
                     // Get commitmentOnKey
-                    //BigInteger commitmentValueBigInteger = commitmentAndIndex.getCommitment();
                     BigInteger receivedCommitmentOnKey = receivedCommitmentAndProofOfKnowledgeOnKey.getCommitment();
                     // Store commitment for future checking
                     commitmentsOnKey[receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentOnKey;
@@ -225,14 +222,14 @@ public class SessionManager {
                 // Receive proofs of other participant nodes where we need to check each of them
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a String (json)
-                    String commitmentAndProofOfKnowledgeJson = receiverThread.recvStr();
+                    String receivedCommitmentAndProofOfKnowledgeOnMessageJson = receiverThread.recvStr();
                     // Transform String (json) to object ProofOfKnowledge
-                    CommitmentAndProofOfKnowledge proofOfKnowledge = new Gson().fromJson(commitmentAndProofOfKnowledgeJson, CommitmentAndProofOfKnowledge.class);
+                    CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnMessage = new Gson().fromJson(receivedCommitmentAndProofOfKnowledgeOnMessageJson, CommitmentAndProofOfKnowledge.class);
                     // Store commitment for future checking
-                    commitmentsOnMessage[proofOfKnowledge.getProofOfKnowledge().getNodeIndex() - 1] = proofOfKnowledge.getCommitment();
+                    commitmentsOnMessage[receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentAndProofOfKnowledgeOnMessage.getCommitment();
                     // Verify proof of knowledge
-                    if (!zkp.verifyProofOfKnowledge(proofOfKnowledge.getProofOfKnowledge(), proofOfKnowledge.getCommitment()))
-                        System.out.println("WRONG PoK. Round: " + round + ", Node: " + proofOfKnowledge.getProofOfKnowledge().getNodeIndex());
+                    if (!zkp.verifyProofOfKnowledge(receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge(), receivedCommitmentAndProofOfKnowledgeOnMessage.getCommitment()))
+                        System.out.println("WRONG PoK. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex());
                 }
 
                 // Synchronize nodes to let know that we all finish the commitments on messages part
