@@ -1,6 +1,6 @@
 package crypto;
 
-import json.ProofOfKnowledge;
+import json.ProofOfKnowledgePedersen;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -36,7 +36,7 @@ public class ZeroKnowledgeProof {
      * @param r random value needed for commitment
      * @return proof of knowledge that participant node knows x in c = g^x h^r
      */
-    public ProofOfKnowledge generateProofOfKnowledge(BigInteger x, BigInteger r) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    public ProofOfKnowledgePedersen generateProofOfKnowledgePedersen(BigInteger x, BigInteger r) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         BigInteger c = this.pedersenCommitment.calculateCommitment(x, r); // c = g^x h^r (mod p)
 
         BigInteger y = this.pedersenCommitment.generateRandom(); // y random
@@ -57,7 +57,7 @@ public class ZeroKnowledgeProof {
         BigInteger u = e.multiply(x).add(y); // u = e*x + y
         BigInteger v = e.multiply(r).add(s); // v = e*r + s
 
-        return new ProofOfKnowledge(d, u, v, nodeIndex);
+        return new ProofOfKnowledgePedersen(d, u, v, nodeIndex);
 
     }
 
@@ -66,7 +66,7 @@ public class ZeroKnowledgeProof {
      * @param proof proof of knowledge that participant node knows x in commitment inside
      * @return true if the verifying process is succeed, false otherwise
      */
-    public boolean verifyProofOfKnowledge(ProofOfKnowledge proof, BigInteger commitment) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    public boolean verifyProofOfKnowledgePedersen(ProofOfKnowledgePedersen proof, BigInteger commitment) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         BigInteger _a = this.pedersenCommitment.calculateCommitment(proof.getU(), proof.getV()); // _a = g^u h^v (mod p)
 
         MessageDigest md = MessageDigest.getInstance("SHA-512");

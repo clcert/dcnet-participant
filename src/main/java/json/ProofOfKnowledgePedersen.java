@@ -5,7 +5,7 @@ import java.math.BigInteger;
 /**
  *
  */
-public class ProofOfKnowledge {
+public class ProofOfKnowledgePedersen {
 
     private BigInteger d, u, v;
     private int nodeIndex;
@@ -17,7 +17,7 @@ public class ProofOfKnowledge {
      * @param v v = s + er
      * @param nodeIndex index of participant node that sends the proof
      */
-    public ProofOfKnowledge(BigInteger d, BigInteger u, BigInteger v, int nodeIndex) {
+    public ProofOfKnowledgePedersen(BigInteger d, BigInteger u, BigInteger v, int nodeIndex) {
         this.d = d;
         this.u = u;
         this.v = v;

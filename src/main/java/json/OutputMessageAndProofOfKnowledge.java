@@ -8,14 +8,14 @@ import participantnode.OutputMessage;
 public class OutputMessageAndProofOfKnowledge {
 
     private OutputMessage outputMessage;
-    private ProofOfKnowledge proofOfKnowledge;
+    private ProofOfKnowledgePedersen proofOfKnowledge;
 
     /**
      *
      * @param outputMessage output message
      * @param proofOfKnowledge proof of knowledge
      */
-    public OutputMessageAndProofOfKnowledge(OutputMessage outputMessage, ProofOfKnowledge proofOfKnowledge) {
+    public OutputMessageAndProofOfKnowledge(OutputMessage outputMessage, ProofOfKnowledgePedersen proofOfKnowledge) {
         this.outputMessage = outputMessage;
         this.proofOfKnowledge = proofOfKnowledge;
     }
@@ -32,7 +32,7 @@ public class OutputMessageAndProofOfKnowledge {
      *
      * @return proof of knowledge
      */
-    public ProofOfKnowledge getProofOfKnowledge() {
+    public ProofOfKnowledgePedersen getProofOfKnowledge() {
         return proofOfKnowledge;
     }
 }

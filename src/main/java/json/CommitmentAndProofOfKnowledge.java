@@ -8,14 +8,14 @@ import java.math.BigInteger;
 public class CommitmentAndProofOfKnowledge {
 
     private BigInteger commitment;
-    private ProofOfKnowledge proofOfKnowledge;
+    private ProofOfKnowledgePedersen proofOfKnowledge;
 
     /**
      *
      * @param commitment commitment
      * @param proofOfKnowledge proof of knowledge on values hidden in commitment
      */
-    public CommitmentAndProofOfKnowledge(BigInteger commitment, ProofOfKnowledge proofOfKnowledge) {
+    public CommitmentAndProofOfKnowledge(BigInteger commitment, ProofOfKnowledgePedersen proofOfKnowledge) {
         this.commitment = commitment;
         this.proofOfKnowledge = proofOfKnowledge;
     }
@@ -32,7 +32,7 @@ public class CommitmentAndProofOfKnowledge {
      *
      * @return proof of knowledge
      */
-    public ProofOfKnowledge getProofOfKnowledge() {
+    public ProofOfKnowledgePedersen getProofOfKnowledge() {
         return proofOfKnowledge;
     }
 
