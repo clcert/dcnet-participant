@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import crypto.PedersenCommitment;
 import crypto.ZeroKnowledgeProof;
 import dcnet.Room;
-import json.CommitmentAndIndex;
 import json.CommitmentAndProofOfKnowledge;
 import json.OutputMessageAndProofOfKnowledge;
 import json.ProofOfKnowledge;
@@ -173,24 +172,29 @@ public class SessionManager {
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
                 // Generate Json string containing commitmentOnKey and nodeIndex
-                CommitmentAndIndex commitmentOnKeyAndIndex = new CommitmentAndIndex(commitmentOnKey, nodeIndex);
-                String commitmentOnKeyAndIndexJson = new Gson().toJson(commitmentOnKeyAndIndex, CommitmentAndIndex.class);
+                ProofOfKnowledge proofOfKnowledgeOnKey = zkp.generateProofOfKnowledge(keyRoundValue, randomForCommitmentOnKey);
+                CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnKey = new CommitmentAndProofOfKnowledge(commitmentOnKey, proofOfKnowledgeOnKey);
+                //CommitmentAndIndex commitmentOnKeyAndIndex = new CommitmentAndIndex(commitmentOnKey, nodeIndex);
+                //String commitmentOnKeyAndIndexJson = new Gson().toJson(commitmentOnKeyAndIndex, CommitmentAndIndex.class);
+                String commitmentAndProofOfKnowledgeOnKeyJson = new Gson().toJson(commitmentAndProofOfKnowledgeOnKey, CommitmentAndProofOfKnowledge.class);
                 // Send commitment on key and index to the room
-                node.getSender().send(commitmentOnKeyAndIndexJson);
+                node.getSender().send(commitmentAndProofOfKnowledgeOnKeyJson);
 
                 // Receive commitments of other participant nodes where it needs to check that the multiplication of all is 1
                 BigInteger multiplicationOnCommitments = BigInteger.ONE;
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
-                    String commitmentAndIndexValue = receiverThread.recvStr();
+                    String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
                     // Transform string (json) to CommitmentAndIndex object
-                    CommitmentAndIndex commitmentAndIndex = new Gson().fromJson(commitmentAndIndexValue, CommitmentAndIndex.class);
+                    //CommitmentAndIndex commitmentAndIndex = new Gson().fromJson(receivedCommitmentAndProofOfKnowledgeOnKey, CommitmentAndIndex.class);
+                    CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnKey = new Gson().fromJson(receivedCommitmentAndProofOfKnowledgeOnKeyJson, CommitmentAndProofOfKnowledge.class);
                     // Get commitmentOnKey
-                    BigInteger commitmentValueBigInteger = commitmentAndIndex.getCommitment();
+                    //BigInteger commitmentValueBigInteger = commitmentAndIndex.getCommitment();
+                    BigInteger receivedCommitmentOnKey = receivedCommitmentAndProofOfKnowledgeOnKey.getCommitment();
                     // Store commitment for future checking
-                    commitmentsOnKey[commitmentAndIndex.getNodeIndex() - 1] = commitmentValueBigInteger;
+                    commitmentsOnKey[receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex()] = receivedCommitmentOnKey;
                     // Calculate multiplication of incoming commitments
-                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(commitmentValueBigInteger).mod(room.getP());
+                    multiplicationOnCommitments = multiplicationOnCommitments.multiply(receivedCommitmentOnKey).mod(room.getP());
                 }
                 // Check that multiplication result is 1
                 if (!multiplicationOnCommitments.equals(BigInteger.ONE))
