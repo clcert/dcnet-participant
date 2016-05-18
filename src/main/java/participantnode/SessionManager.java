@@ -353,52 +353,49 @@ public class SessionManager {
             // <sumOfT> != 1 => Collision produced or no messages sent in this round (last can only occur in probabilistic mode)
             else {
 
-/*
-                */
-/* In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
+                /* In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
                  * 1) No messages were sent in a real round (<sumOfT> = 0)
-                 * 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced *//*
-
+                 * 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced */
 
                 // We have to re-do the "father" round in order to expect that not all the participant nodes involved in the collision re-send their message in the same round
-                if (round != 1 && (sumOfT.equals(BigInteger.ZERO) || sumOfO.equals(messagesSentInPreviousRounds.get(round/2)))) {
+                //if (round != 1 && (sumOfT.equals(BigInteger.ZERO) || sumOfO.equals(messagesSentInPreviousRounds.get(round/2)))) {
                     // Add the "father" round to happen after this one
-                    addRoundToHappenFirst(nextRoundsToHappen, round/2);
+                    //addRoundToHappenFirst(nextRoundsToHappen, round/2);
                     // Remove the virtual round related to this problematic round
-                    removeRoundToHappen(nextRoundsToHappen, round+1);
+                    //removeRoundToHappen(nextRoundsToHappen, round+1);
                     // As we removed the next round from happening, we have to reassign the sending round to the "father" round once more
-                    if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
-                        nextRoundAllowedToSend = round/2;
-                }
-*/
+                    //if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
+                    //    nextRoundAllowedToSend = round/2;
+
+                //}
 
 
                 // <sumOfT> > 1 => A Collision was produced
-     //           else {
-                    // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
-                    if (nextRoundAllowedToSend == round) {
-                        // Non probabilistic mode (see Reference for more information)
-                        if (room.getNonProbabilisticMode()) {
-                            // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
-                                nextRoundAllowedToSend = 2 * round;
-                            // If not, i re-send my message in the round (2*round + 1)
-                            else
-                                nextRoundAllowedToSend = 2 * round + 1;
-                        }
-                        // Probabilistic mode (see Reference for more information)
-                        else {
-                            // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
-                            boolean coin = new SecureRandom().nextBoolean();
-                            if (coin)
-                                nextRoundAllowedToSend = 2 * round;
-                            else
-                                nextRoundAllowedToSend = 2 * round + 1;
-                        }
+
+                // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
+                if (nextRoundAllowedToSend == round) {
+                    // Non probabilistic mode (see Reference for more information)
+                    if (room.getNonProbabilisticMode()) {
+                        // Calculate average message, if my message is below that value i re-send in the round (2*round)
+                        if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
+                            nextRoundAllowedToSend = 2 * round;
+                        // If not, i re-send my message in the round (2*round + 1)
+                        else
+                            nextRoundAllowedToSend = 2 * round + 1;
                     }
-                    // Add (2*round) and (2*round + 1) rounds to future plays
-                    addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
-   //             }
+                    // Probabilistic mode (see Reference for more information)
+                    else {
+                        // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
+                        boolean coin = new SecureRandom().nextBoolean();
+                        if (coin)
+                            nextRoundAllowedToSend = 2 * round;
+                        else
+                            nextRoundAllowedToSend = 2 * round + 1;
+                    }
+                }
+                // Add (2*round) and (2*round + 1) rounds to future plays
+                addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
+
             }
         }
 
