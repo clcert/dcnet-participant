@@ -190,6 +190,9 @@ public class SessionManager {
                     BigInteger receivedCommitmentOnKey = receivedCommitmentAndProofOfKnowledgeOnKey.getCommitment();
                     // Store commitment for future checking
                     commitmentsOnKey[receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentOnKey;
+                    // Verify proofOfKnowledge
+                    if (!zkp.verifyProofOfKnowledge(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge(), receivedCommitmentOnKey))
+                        System.out.println("WRONG PoK on Key. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex());
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(receivedCommitmentOnKey).mod(room.getP());
                 }
@@ -265,7 +268,7 @@ public class SessionManager {
                     node.getSender().send(outputMessageRoundJson);
                 }
 
-                /** RECEIVE MESSAGES FROM OTHER NODES **/
+                /** RECEIVE OUTPUT MESSAGES FROM OTHER NODES **/
                 if (round == 1) {
                     // Variable to count how many messages were received from the receiver thread
                     int messagesReceivedInThisRound = 0;
@@ -281,7 +284,7 @@ public class SessionManager {
                         BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex - 1].multiply(commitmentsOnMessage[participantNodeIndex - 1]).mod(room.getP());
                         // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
                         if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), commitmentOnOutputMessage))
-                            System.out.println("Commitment on OutputMessage WRONG, round " + round + ", node: " + participantNodeIndex);
+                            System.out.println("WRONG PoK on OutputMessage. Round: " + round + ", Node: " + participantNodeIndex);
                         // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
                         sumOfO = sumOfO.add(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage()).mod(room.getP());
                         // Increase the number of messages received
