@@ -8,8 +8,8 @@ import json.CommitmentAndProofOfKnowledge;
 import json.OutputMessageAndProofOfKnowledge;
 import json.ProofOfKnowledge;
 import json.ProofOfKnowledgePedersen;
+import keygeneration.DiffieHellman;
 import keygeneration.KeyGeneration;
-import keygeneration.SecretSharing;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
@@ -147,8 +147,8 @@ public class SessionManager {
 
                 /** KEY SHARING PART **/
                 // Initialize KeyGeneration
-                KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);
-                /*KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);*/
+                /*KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);*/
+                KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
                 // Generate Participant Node values
                 keyGeneration.generateParticipantNodeValues();
                 // Get other participants values (to produce cancellation keys)
@@ -169,11 +169,11 @@ public class SessionManager {
                 for (int i = 0; i < roundKeys.length; i++)
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
                 // Retrieve random for commitment on key
-                BigInteger randomForCommitmentOnKey = calculateRandomForCommitmentOnKey(sharedRandomValues);
+                BigInteger randomRoundValue = calculateRandomForCommitmentOnKey(sharedRandomValues);
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
                 // Generate proof of knowledge on key stored in commitment
-                ProofOfKnowledgePedersen proofOfKnowledgeOnKey = zkp.generateProofOfKnowledgePedersen(keyRoundValue, randomForCommitmentOnKey);
+                ProofOfKnowledgePedersen proofOfKnowledgeOnKey = zkp.generateProofOfKnowledgePedersen(keyRoundValue, randomRoundValue);
                 // Generate Json string containing commitmentOnKey and proofOfKnowledge
                 CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnKey = new CommitmentAndProofOfKnowledge(commitmentOnKey, proofOfKnowledgeOnKey);
                 String commitmentAndProofOfKnowledgeOnKeyJson = new Gson().toJson(commitmentAndProofOfKnowledgeOnKey, CommitmentAndProofOfKnowledge.class);
@@ -246,7 +246,7 @@ public class SessionManager {
                 // Set Proof of Knowledge that is needed for round 1
                 if (round == 1) {
                     // Calculate random for commitment as the sum of both random used before (commitment on key and commitment on message)
-                    BigInteger randomForCommitmentOnOutputMessage = randomForCommitmentOnKey.add(randomForCommitmentOnMessage);
+                    BigInteger randomForCommitmentOnOutputMessage = randomRoundValue.add(randomForCommitmentOnMessage);
                     // Generate proofOfKnowledge for OutputMessage, as a commitment for the sum of both randomness used (for commitments on key and message)
                     ProofOfKnowledge proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(randomForCommitmentOnOutputMessage);
                     // Generate Json string with Object containing both outputMessage and proofOfKnowledge

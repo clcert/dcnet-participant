@@ -101,23 +101,23 @@ public class DiffieHellman implements KeyGeneration {
         this.otherParticipantNodeHalves = otherNodesKeyHalves;
 
         i = 0;
-        this.otherParticipantNodeSharedRandomValueHalves = new BigInteger[room.getRoomSize() - 1]; //
+        this.otherParticipantNodeSharedRandomValueHalves = new BigInteger[room.getRoomSize() - 1];
         // The "first" node doesn't have any replier sockets
         if (nodeIndex != 1)
             for (ZMQ.Socket replier : repliers) {
                 // The replier wait to receive a key share
-                this.otherParticipantNodeSharedRandomValueHalves[i] = new BigInteger(replier.recvStr()); //
+                this.otherParticipantNodeSharedRandomValueHalves[i] = new BigInteger(replier.recvStr());
                 // When the replier receives the message, replies with one of their key shares
-                replier.send(participantNodeSharedRandomValueHalves[i].toString()); //
+                replier.send(participantNodeSharedRandomValueHalves[i].toString());
                 i++;
             }
         // The "last" node doesn't have any requestor sockets
         if (nodeIndex != room.getRoomSize())
             for (ZMQ.Socket requestor : requestors) {
                 // The requestor sends a key share
-                requestor.send(participantNodeSharedRandomValueHalves[i].toString()); //
+                requestor.send(participantNodeSharedRandomValueHalves[i].toString());
                 // The requestor waits to receive a reply with one of the key shares
-                this.otherParticipantNodeSharedRandomValueHalves[i] = new BigInteger(requestor.recvStr()); //
+                this.otherParticipantNodeSharedRandomValueHalves[i] = new BigInteger(requestor.recvStr());
                 i++;
             }
 
@@ -133,16 +133,16 @@ public class DiffieHellman implements KeyGeneration {
         int _a = nodeIndex - 1;
         int i;
         for(i = 0; i < _a; i++) {
-            roundKeys[i] = otherParticipantNodeHalves[i].modPow(exponentValuesForKeys[i], p).negate(); //
-            sharedRandomValues[i] = otherParticipantNodeSharedRandomValueHalves[i].modPow(exponentValuesForRandomShares[i], p).negate(); //
+            roundKeys[i] = otherParticipantNodeHalves[i].modPow(exponentValuesForKeys[i], p).negate();
+            sharedRandomValues[i] = otherParticipantNodeSharedRandomValueHalves[i].modPow(exponentValuesForRandomShares[i], p).negate();
         }
         for (int j = i; j < roundKeys.length; j++) {
             roundKeys[j] = otherParticipantNodeHalves[j].modPow(exponentValuesForKeys[j], p);
-            sharedRandomValues[j] = otherParticipantNodeSharedRandomValueHalves[j].modPow(exponentValuesForRandomShares[j], p); //
+            sharedRandomValues[j] = otherParticipantNodeSharedRandomValueHalves[j].modPow(exponentValuesForRandomShares[j], p);
         }
         BigInteger roundKeyValue = BigInteger.ZERO;
         for (BigInteger roundKey : roundKeys) {
-            roundKeyValue = roundKeyValue.add(roundKey).mod(p);
+            roundKeyValue = roundKeyValue.add(roundKey);
         }
         return roundKeyValue;
     }
