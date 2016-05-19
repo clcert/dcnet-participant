@@ -43,7 +43,7 @@ public class OutputMessage {
      * @return random characters append to message
      */
     private String generateRandomString(int l) {
-        String strAllowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%&"; // 62 characters
+        String strAllowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%&"; // 64 characters
         StringBuilder sbRandomString = new StringBuilder(l);
         for(int i = 0 ; i < l; i++){
             //get random integer between 0 and string length
