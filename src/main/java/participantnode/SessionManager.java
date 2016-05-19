@@ -6,6 +6,7 @@ import crypto.ZeroKnowledgeProof;
 import dcnet.Room;
 import json.CommitmentAndProofOfKnowledge;
 import json.OutputMessageAndProofOfKnowledge;
+import json.ProofOfKnowledge;
 import json.ProofOfKnowledgePedersen;
 import keygeneration.KeyGeneration;
 import keygeneration.SecretSharing;
@@ -247,7 +248,8 @@ public class SessionManager {
                     // Calculate random for commitment as the sum of both random used before (commitment on key and commitment on message)
                     BigInteger randomForCommitmentOnOutputMessage = randomForCommitmentOnKey.add(randomForCommitmentOnMessage);
                     // Generate proofOfKnowledge on OutputMessage (proof of knowledge FOR output message)
-                    ProofOfKnowledgePedersen proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledgePedersen(outputParticipantMessage.getProtocolMessage(), randomForCommitmentOnOutputMessage);
+                    // ProofOfKnowledgePedersen proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledgePedersen(outputParticipantMessage.getProtocolMessage(), randomForCommitmentOnOutputMessage);
+                    ProofOfKnowledge proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(randomForCommitmentOnOutputMessage);
                     // Generate Json string with Object containing both outputMessage and proofOfKnowledge
                     OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new OutputMessageAndProofOfKnowledge(outputParticipantMessage, proofOfKnowledgeOnOutputMessage);
                     String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledge, OutputMessageAndProofOfKnowledge.class);
@@ -282,8 +284,9 @@ public class SessionManager {
                         int participantNodeIndex = outputMessageAndProofOfKnowledge.getProofOfKnowledge().getNodeIndex();
                         // Construct commitment on outputMessage as the multiplication of commitmentOnKey and commitmentOnMessage
                         BigInteger commitmentOnOutputMessage = commitmentsOnKey[participantNodeIndex - 1].multiply(commitmentsOnMessage[participantNodeIndex - 1]).mod(room.getP());
+                        BigInteger beta = commitmentOnOutputMessage.multiply(room.getG().modPow(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage(), room.getP()).modInverse(room.getP()));
                         // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
-                        if (!zkp.verifyProofOfKnowledgePedersen(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), commitmentOnOutputMessage))
+                        if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), beta))
                             System.out.println("WRONG PoK on OutputMessage. Round: " + round + ", Node: " + participantNodeIndex);
                         // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
                         sumOfO = sumOfO.add(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage()).mod(room.getP());
