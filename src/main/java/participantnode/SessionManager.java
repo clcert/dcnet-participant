@@ -159,7 +159,7 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                /** COMMITMENTS ON KEYS PART **/
+                /** SEND COMMITMENT AND POK ON KEY **/
                 // Get round keys (shared keys) of the current participant node
                 BigInteger[] roundKeys = keyGeneration.getRoundKeys();
                 // Get shared random values
@@ -180,6 +180,7 @@ public class SessionManager {
                 // Send commitment on key and index to the room
                 node.getSender().send(commitmentAndProofOfKnowledgeOnKeyJson);
 
+                /** RECEIVE COMMITMENTS AND POKs ON KEYS **/
                 // Receive commitments of other participant nodes where it needs to check that the multiplication of all is 1
                 BigInteger multiplicationOnCommitments = BigInteger.ONE;
                 for (int i = 0; i < room.getRoomSize(); i++) {
@@ -204,7 +205,7 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                /** COMMITMENT ON MESSAGE PART **/
+                /** SEND COMMITMENT AND POK ON MESSAGE **/
                 // Set protocol message to make a commitment to
                 BigInteger protocolMessage;
                 if (!messageInThisRound)
@@ -223,6 +224,7 @@ public class SessionManager {
                 // Send Json to the room (which contains the commitment and the proofOfKnowledge)
                 node.getSender().send(commitmentAndProofOfKnowledgeOnMessageJson);
 
+                /** RECEIVE COMMITMENTS AND POKs ON MESSAGES **/
                 // Receive proofs of other participant nodes where we need to check each of them
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a String (json)
@@ -239,7 +241,7 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                /** OUTPUT MESSAGE AND PROOF OF KNOWLEDGE SENDING **/
+                /** SEND OUTPUT MESSAGE AND POK ASSOCIATED **/
                 // Add round key to the message
                 outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                 zeroMessage.setRoundKeyValue(keyRoundValue);
@@ -269,7 +271,7 @@ public class SessionManager {
                     node.getSender().send(outputMessageRoundJson);
                 }
 
-                /** RECEIVE OUTPUT MESSAGES FROM OTHER NODES **/
+                /** RECEIVE OUTPUT MESSAGES AND POKs ASSOCIATED **/
                 if (round == 1) {
                     // Variable to count how many messages were received from the receiver thread
                     int messagesReceivedInThisRound = 0;
@@ -337,7 +339,7 @@ public class SessionManager {
                 }
             }
 
-            /** COLLISION IN ROUND CHECKING **/
+            /** NO COLLISION ROUND **/
             // <sumOfT> = 1 => No Collision Round => a message went through clearly, received by the rest of the nodes
             if (sumOfT.equals(BigInteger.ONE)) {
                 // Increase the number of messages that went through the protocol
@@ -357,30 +359,16 @@ public class SessionManager {
                     finished = true;
             }
 
-            // <sumOfT> != 1 => Collision produced or no messages sent in this round (last can only occur in probabilistic mode)
             else {
+                /** PROBLEMATIC ROUND (sumOfT == 0) **/
+                // <sumOfT> == 0
+                // TODO: Do something if this case happens
 
-                /* In probabilistic mode, two things could happen and they are both solved the same way: (see Reference for more information)
-                 * 1) No messages were sent in a real round (<sumOfT> = 0)
-                 * 2) All messages involved in the collision of the "father" round are sent in this round and the same collision is produced */
-
-                // We have to re-do the "father" round in order to expect that not all the participant nodes involved in the collision re-send their message in the same round
-                //if (round != 1 && (sumOfT.equals(BigInteger.ZERO) || sumOfO.equals(messagesSentInPreviousRounds.get(round/2)))) {
-                    // Add the "father" round to happen after this one
-                    //addRoundToHappenFirst(nextRoundsToHappen, round/2);
-                    // Remove the virtual round related to this problematic round
-                    //removeRoundToHappen(nextRoundsToHappen, round+1);
-                    // As we removed the next round from happening, we have to reassign the sending round to the "father" round once more
-                    //if (nextRoundAllowedToSend == round+1 || nextRoundAllowedToSend == round)
-                    //    nextRoundAllowedToSend = round/2;
-
-                //}
-
-
+                /** COLLISION ROUND **/
                 // <sumOfT> > 1 => A Collision was produced
-
                 // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
                 if (nextRoundAllowedToSend == round) {
+                    /** RESENDING PROTOCOL **/
                     // Non probabilistic mode (see Reference for more information)
                     if (room.getNonProbabilisticMode()) {
                         // Calculate average message, if my message is below that value i re-send in the round (2*round)
