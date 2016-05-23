@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 MAINTAINER Camilo Gomez <camilo@niclabs.cl>
 
-ENV MSG 10 DIRECTORY '172.17.0.2'
+ENV MSG 10 DIRECTORY '172.17.0.2' CHEATER 'false'
 
 RUN apt-get update && apt-get install -y software-properties-common \
 										 git && \
@@ -15,4 +15,4 @@ RUN	cd collision_resolution_protocol/ && \
 	git pull && \
     ./gradlew build
 
-CMD cd collision_resolution_protocol/ && git pull > /dev/null 2>&1 && ./gradlew -q run -PappArgs="['$MSG','$DIRECTORY']"
+CMD cd collision_resolution_protocol/ && git pull > /dev/null 2>&1 && ./gradlew -q run -PappArgs="['$MSG','$DIRECTORY','$CHEATER']"
