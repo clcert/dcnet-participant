@@ -70,7 +70,7 @@ public class SessionManager {
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    public void runSession(int nodeIndex, String participantMessage, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
         // Print info about the room
         System.out.println("PARTICIPANT NODE " + nodeIndex + " of " + room.getRoomSize());
@@ -401,11 +401,19 @@ public class SessionManager {
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0)
-                                nextRoundAllowedToSend = 2 * round;
-                                // If not, i re-send my message in the round (2*round + 1)
-                            else
-                                nextRoundAllowedToSend = 2 * round + 1;
+                            if (outputParticipantMessage.getParticipantMessageWithPaddingBigInteger().compareTo(sumOfM.divide(sumOfT)) <= 0) {
+                                if (cheaterNode)
+                                    nextRoundAllowedToSend = 2 * round + 1;
+                                else
+                                    nextRoundAllowedToSend = 2 * round;
+                            }
+                            // If not, i re-send my message in the round (2*round + 1)
+                            else {
+                                if (cheaterNode)
+                                    nextRoundAllowedToSend = 2 * round;
+                                else
+                                    nextRoundAllowedToSend = 2 * round + 1;
+                            }
                         }
                         // Probabilistic mode (see Reference for more information)
                         else {

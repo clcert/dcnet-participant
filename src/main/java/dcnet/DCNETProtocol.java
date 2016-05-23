@@ -23,7 +23,7 @@ public class DCNETProtocol {
      * @param directoryIp ip address of the directory node
      * @param out PrintStream where to write the messages that go through the protocol
      */
-    static public void runProtocol(String message, String directoryIp, PrintStream out) throws SocketException {
+    static public void runProtocol(String message, String directoryIp, boolean cheaterNode, PrintStream out) throws SocketException {
         // Create DirectoryNode object with the IP from arguments
         DirectoryNode directoryNode = new DirectoryNode(directoryIp);
 
@@ -61,7 +61,7 @@ public class DCNETProtocol {
 
         // Run session with the established parameters
         try {
-            sessionManager.runSession(nodeIndex, message, room, participantNode, receiverThread, out);
+            sessionManager.runSession(nodeIndex, message, cheaterNode, room, participantNode, receiverThread, out);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             System.exit(0);

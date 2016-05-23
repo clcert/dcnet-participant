@@ -13,8 +13,9 @@ public class TestInConsole {
         // Parse arguments
         String message = args[0];
         String directoryIp = args[1];
+        boolean cheaterNode = Boolean.parseBoolean(args[2]);
 
-        DCNETProtocol.runProtocol(message, directoryIp, System.out);
+        DCNETProtocol.runProtocol(message, directoryIp, cheaterNode, System.out);
     }
 
 }
