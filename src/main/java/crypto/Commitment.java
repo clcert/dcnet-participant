@@ -2,20 +2,20 @@ package crypto;
 
 import java.math.BigInteger;
 
-public class Commitment {
+class Commitment {
 
-    BigInteger g, p;
+    private BigInteger g, p;
 
-    public Commitment(BigInteger g, BigInteger p) {
+    Commitment(BigInteger g, BigInteger p) {
         this.g = g;
         this.p = p;
     }
 
-    public BigInteger calculateCommitment(BigInteger x) {
+    BigInteger calculateCommitment(BigInteger x) {
         return this.g.modPow(x, this.p);
     }
 
-    public BigInteger getG() {
+    BigInteger getG() {
         return g;
     }
 }
