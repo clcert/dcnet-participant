@@ -374,9 +374,10 @@ public class SessionManager {
                 // <sumOfT> == 0 => if we are in a deterministic mode, this means that someone cheated, and it's necessary to change the mode
                 if (sumOfT.equals(BigInteger.ZERO)) {
                     // TODO: Test resending mode (from deterministic to probabilistic)
-                    System.out.println("PROBLEMATIC ROUND ^"); // *******
-                    if (room.getNonProbabilisticMode())
+                    if (room.getNonProbabilisticMode()) {
+                        System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
                         room.setNonProbabilisticMode(false);
+                    }
                 }
 
                 /** COLLISION ROUND **/
@@ -386,13 +387,14 @@ public class SessionManager {
                     /** PROBLEMATIC ROUND **/
                     // <sumOfT> repeats in this real round and the "father" round. Someone cheated and it's necessary to change the mode
                     if (round != 1 && round%2 == 0 && sumOfO.equals(messagesSentInPreviousRounds.get(round/2))) {
-                        System.out.println("PROBLEMATIC ROUND ^"); // *******
                         // Remove next round to happen (it will be a virtual round with no messages sent)
                         removeRoundToHappen(nextRoundsToHappen, round + 1);
                         // Change resending mode
                         // TODO: Test resending mode (from deterministic to probabilistic)
-                        if (room.getNonProbabilisticMode())
+                        if (room.getNonProbabilisticMode()) {
+                            System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
                             room.setNonProbabilisticMode(false);
+                        }
                     }
 
                     /** RESENDING PROTOCOL **/
