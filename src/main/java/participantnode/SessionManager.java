@@ -360,7 +360,7 @@ public class SessionManager {
             }
 
             else {
-                /** PROBLEMATIC ROUND (sumOfT == 0) **/
+                /** PROBLEMATIC ROUND **/
                 // <sumOfT> == 0
                 if (sumOfT.equals(BigInteger.ZERO)) {
                     // TODO: Do something if this case happens
