@@ -132,4 +132,8 @@ public class Room {
     public int getRoomSize() {
         return this.roomSize;
     }
+
+    public void setNonProbabilisticMode(boolean nonProbabilisticMode) {
+        this.nonProbabilisticMode = nonProbabilisticMode;
+    }
 }

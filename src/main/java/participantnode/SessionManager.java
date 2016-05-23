@@ -328,6 +328,16 @@ public class SessionManager {
             // Divide sumOfO in sumOfM and sumOfT (see Reference for more information)
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
+
+            // Print info about the room in prob mode
+            if (!room.getNonProbabilisticMode()) {
+                if (sumOfM.toString().length() > 15)
+                    System.out.println("C_" + round + ":\t(" + sumOfM.toString().substring(0, 10) + "..., " + sumOfT + ")");
+                else
+                    System.out.println("C_" + round + ":\t(" + sumOfM + ", " + sumOfT + ")");
+            }
+
+
             // If we are playing the first round, assign the size of the collision
             if (round == 1) {
                 collisionSize = Integer.parseInt(sumOfT.toString());
@@ -346,7 +356,7 @@ public class SessionManager {
                 messagesSentWithNoCollisions++;
 
                 // Print message that went through the protocol
-                out.println("ANON: " + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
+                out.println("ANON:\t" + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
 
                 /* If the message that went through is mine, my message was transmitted.
                  * We have to set the variable in order to start sending zero messages in subsequently rounds */
@@ -361,17 +371,31 @@ public class SessionManager {
 
             else {
                 /** PROBLEMATIC ROUND **/
-                // <sumOfT> == 0
+                // <sumOfT> == 0 => if we are in a deterministic mode, this means that someone cheated, and it's necessary to change the mode
                 if (sumOfT.equals(BigInteger.ZERO)) {
-                    // TODO: Do something if this case happens
+                    // TODO: Test resending mode (from deterministic to probabilistic)
+                    if (room.getNonProbabilisticMode())
+                        room.setNonProbabilisticMode(false);
                 }
 
                 /** COLLISION ROUND **/
                 // <sumOfT> > 1 => A Collision was produced
                 if (sumOfT.compareTo(BigInteger.ONE) > 0) {
+
+                    /** PROBLEMATIC ROUND **/
+                    // <sumOfT> repeats in this real round and the "father" round. Someone cheated and it's necessary to change the mode
+                    if (round != 1 && round%2 == 0 && sumOfO.equals(messagesSentInPreviousRounds.get(round/2))) {
+                        // Remove next round to happen (it will be a virtual round with no messages sent)
+                        removeRoundToHappen(nextRoundsToHappen, round + 1);
+                        // Change resending mode
+                        // TODO: Test resending mode (from deterministic to probabilistic)
+                        if (room.getNonProbabilisticMode())
+                            room.setNonProbabilisticMode(false);
+                    }
+
+                    /** RESENDING PROTOCOL **/
                     // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
                     if (nextRoundAllowedToSend == round) {
-                        /** RESENDING PROTOCOL **/
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
@@ -391,9 +415,9 @@ public class SessionManager {
                                 nextRoundAllowedToSend = 2 * round + 1;
                         }
                     }
+                    // Add (2*round) and (2*round + 1) rounds to future plays
+                    addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
                 }
-                // Add (2*round) and (2*round + 1) rounds to future plays
-                addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
             }
         }
 
@@ -491,6 +515,15 @@ public class SessionManager {
     private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
         nextRoundsToHappen.add(firstRoundToAdd);
         nextRoundsToHappen.add(secondRoundToAdd);
+    }
+
+    /**
+     * Add one round to happen afterwards (is added at the end of the LinkedList)
+     * @param nextRoundsToHappen list with round that are going to happen in the future
+     * @param round index of the round to add
+     */
+    private void addRoundToHappenNext(LinkedList<Integer> nextRoundsToHappen, int round) {
+        nextRoundsToHappen.add(round);
     }
 
     /**

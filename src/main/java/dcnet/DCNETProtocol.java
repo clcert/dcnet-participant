@@ -29,7 +29,7 @@ public class DCNETProtocol {
 
         // Create ParticipantNode object, extracting before the local IP address of the machine where the node is running
         String nodeIp = ParticipantNode.getLocalNetworkIp();
-        System.out.println("My IP: " + nodeIp);
+        System.out.println("Participant IP: " + nodeIp);
         ParticipantNode participantNode = new ParticipantNode(nodeIp);
 
         // Create empty objects Room and SessionManager
