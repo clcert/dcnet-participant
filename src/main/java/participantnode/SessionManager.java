@@ -40,7 +40,7 @@ public class SessionManager {
     private Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     private LinkedList<Integer> nextRoundsToHappen;
     private PedersenCommitment pedersenCommitment;
-    private long executionTime;
+    private long executionTime, firstMessageTime, averageTimePerMessage;
 
 
     /**
@@ -59,6 +59,7 @@ public class SessionManager {
         nextRoundsToHappen = new LinkedList<>();
         nextRoundsToHappen.addFirst(1);
         executionTime = 0;
+        firstMessageTime = 0;
         pedersenCommitment = new PedersenCommitment();
     }
 
@@ -355,6 +356,9 @@ public class SessionManager {
                 // Increase the number of messages that went through the protocol
                 messagesSentWithNoCollisions++;
 
+                if (messagesSentWithNoCollisions == 1)
+                    firstMessageTime = System.nanoTime() - t1;
+
                 // Print message that went through the protocol
                 out.println("ANON:\t" + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
 
@@ -373,7 +377,7 @@ public class SessionManager {
                 /** PROBLEMATIC ROUND **/
                 // <sumOfT> == 0 => if we are in a deterministic mode, this means that someone cheated, and it's necessary to change the mode
                 if (sumOfT.equals(BigInteger.ZERO)) {
-                    // TODO: Test resending mode (from deterministic to probabilistic)
+                    // Change resending mode
                     if (room.getNonProbabilisticMode()) {
                         System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
                         room.setNonProbabilisticMode(false);
@@ -390,7 +394,6 @@ public class SessionManager {
                         // Remove next round to happen (it will be a virtual round with no messages sent)
                         removeRoundToHappen(nextRoundsToHappen, round + 1);
                         // Change resending mode
-                        // TODO: Test resending mode (from deterministic to probabilistic)
                         if (room.getNonProbabilisticMode()) {
                             System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
                             room.setNonProbabilisticMode(false);
@@ -437,6 +440,8 @@ public class SessionManager {
         long t2 = System.nanoTime();
         // Save execution time
         executionTime = t2-t1;
+        // Save average time per message
+        averageTimePerMessage = executionTime / messagesSentWithNoCollisions;
     }
 
     /**
@@ -472,6 +477,22 @@ public class SessionManager {
      */
     public long getExecutionTime() {
         return executionTime;
+    }
+
+    /**
+     *
+     * @return time to get the first message of this session
+     */
+    public long getFirstMessageTime() {
+        return firstMessageTime;
+    }
+
+    /**
+     *
+     * @return average time per message of this session
+     */
+    public long getAverageTimePerMessage() {
+        return averageTimePerMessage;
     }
 
     /**

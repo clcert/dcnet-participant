@@ -70,7 +70,9 @@ public class DCNETProtocol {
         }
 
         // Print total time of execution and how many rounds the session played
-        System.out.println("\nTotal Time: " + sessionManager.getExecutionTime() / 1000000000.0 + " seconds");
+        System.out.println("\nTotal Time: " + sessionManager.getExecutionTime() / 1000000000.00 + " seconds");
+        System.out.println("Time to get first message: " + sessionManager.getFirstMessageTime() / 1000000000.00 + " seconds");
+        System.out.println("Average time per message: " + sessionManager.getAverageTimePerMessage() / 1000000000.00 + " seconds");
         System.out.println("Real rounds played: " + sessionManager.getRealRoundsPlayed());
 
         // Close the threads and destroy the context

@@ -6,7 +6,7 @@ import java.net.SocketException;
 public class TestInConsole {
 
     /**
-     * Usage: ./gradlew run -PappArgs=[{message},{directoryIP}]
+     * Usage: ./gradlew run -PappArgs=[{message},{directoryIP},{cheatingMode}]
      * @param args message and ip address of directory node
      */
     public static void main(String[] args) throws UnsupportedEncodingException, SocketException {
