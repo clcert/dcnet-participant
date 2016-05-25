@@ -42,7 +42,6 @@ public class SessionManager {
     private PedersenCommitment pedersenCommitment;
     private long executionTime, firstMessageTime, averageTimePerMessage;
 
-
     /**
      * Initialize all parameters of SessionManager with default values
      */
@@ -113,7 +112,6 @@ public class SessionManager {
         /** ROUNDS **/
         // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
-
             // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors, room);
 
@@ -330,14 +328,13 @@ public class SessionManager {
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
 
-            // Print info about the room in prob mode
+            // Print info about the messages sent in probabilistic mode
             if (!room.getNonProbabilisticMode()) {
                 if (sumOfM.toString().length() > 15)
                     System.out.println("C_" + round + ":\t(" + sumOfM.toString().substring(0, 10) + "..., " + sumOfT + ")");
                 else
                     System.out.println("C_" + round + ":\t(" + sumOfM + ", " + sumOfT + ")");
             }
-
 
             // If we are playing the first round, assign the size of the collision
             if (round == 1) {
