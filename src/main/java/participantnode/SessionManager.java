@@ -72,14 +72,8 @@ public class SessionManager {
      */
     public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
-        // Print info about the room
-        System.out.println("PARTICIPANT NODE " + nodeIndex + " of " + room.getRoomSize());
-        if (participantMessage.equals("")) {
+        if (participantMessage.equals(""))
             participantMessage = "0";
-            System.out.println("\nP_" + nodeIndex + " doesn't want to communicate any message\n");
-        }
-        else
-            System.out.println("\nm_" + nodeIndex + " = " + participantMessage + "\n");
 
         // Create an outputMessage
         OutputMessage outputParticipantMessage = new OutputMessage();
