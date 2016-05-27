@@ -6,6 +6,9 @@ apply plugin: 'application'
 
 mainClassName = 'TestInConsole'
 
+targetCompatibility = '1.7'
+sourceCompatibility = '1.7'
+
 // Create a single .jar with all dependencies
 task fatJar(type: Jar) {
     manifest {
