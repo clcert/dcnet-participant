@@ -1,7 +1,6 @@
 import dcnet.DCNETProtocol;
 
-import java.io.UnsupportedEncodingException;
-import java.net.SocketException;
+import java.io.IOException;
 
 public class TestInConsole {
 
@@ -9,7 +8,7 @@ public class TestInConsole {
      * Usage: ./gradlew run -PappArgs=[{message},{directoryIP},{cheatingMode}]
      * @param args message and ip address of directory node
      */
-    public static void main(String[] args) throws UnsupportedEncodingException, SocketException {
+    public static void main(String[] args) throws IOException {
         // Parse arguments
         String message = args[0];
         String directoryIp = args[1];

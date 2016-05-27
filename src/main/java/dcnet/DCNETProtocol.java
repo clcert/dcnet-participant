@@ -7,6 +7,7 @@ import participantnode.ParticipantNode;
 import participantnode.Receiver;
 import participantnode.SessionManager;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
@@ -31,7 +32,7 @@ public class DCNETProtocol {
     private int numberOfRealRounds;
     private int roomSize;
 
-    public boolean runProtocol(PrintStream out) {
+    public boolean runProtocol(PrintStream out) throws IOException {
         // Run session with the established parameters
         try {
             sessionManager.runSession(nodeIndex, messageToSend, cheaterNode, room, participantNode, receiverThread, out);

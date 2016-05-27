@@ -13,8 +13,8 @@ import keygeneration.KeyGeneration;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import java.io.IOException;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -70,7 +70,7 @@ public class SessionManager {
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws IOException, NoSuchAlgorithmException {
 
         if (participantMessage.equals(""))
             participantMessage = "0";
@@ -351,7 +351,9 @@ public class SessionManager {
                     firstMessageTime = System.nanoTime() - t1;
 
                 // Print message that went through the protocol
-                out.println("ANON:\t" + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
+                // out.println("ANON:\t" + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
+                String singleMessage = OutputMessage.getMessageWithoutRandomness(sumOfM, room);
+                out.println(singleMessage);
 
                 /* If the message that went through is mine, my message was transmitted.
                  * We have to set the variable in order to start sending zero messages in subsequently rounds */
