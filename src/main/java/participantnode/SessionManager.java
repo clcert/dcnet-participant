@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.LinkedList;
@@ -70,7 +71,7 @@ public class SessionManager {
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out) throws IOException, NoSuchAlgorithmException {
+    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out, ArrayList<String> messagesList) throws IOException, NoSuchAlgorithmException {
 
         if (participantMessage.equals(""))
             participantMessage = "0";
@@ -353,6 +354,9 @@ public class SessionManager {
                 // Print message that went through the protocol
                 // out.println("ANON:\t" + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
                 String singleMessage = OutputMessage.getMessageWithoutRandomness(sumOfM, room);
+                // Add message to List
+                messagesList.add(singleMessage);
+                // Print message
                 out.println(singleMessage);
 
                 /* If the message that went through is mine, my message was transmitted.

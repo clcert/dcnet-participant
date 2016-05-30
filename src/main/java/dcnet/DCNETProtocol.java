@@ -12,6 +12,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 
 /**
  *
@@ -31,11 +32,13 @@ public class DCNETProtocol {
     private double totalTime, firstMessageTime, averageTimePerMessage;
     private int numberOfRealRounds;
     private int roomSize;
+    private ArrayList<String> messagesList;
 
     public boolean runProtocol(PrintStream out) throws IOException {
         // Run session with the established parameters
         try {
-            sessionManager.runSession(nodeIndex, messageToSend, cheaterNode, room, participantNode, receiverThread, out);
+            messagesList = new ArrayList<>();
+            sessionManager.runSession(nodeIndex, messageToSend, cheaterNode, room, participantNode, receiverThread, out, messagesList);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             System.exit(0);
@@ -136,4 +139,9 @@ public class DCNETProtocol {
     public int getRoomSize() {
         return nodeIndex;
     }
+
+    public ArrayList<String> getMessagesList() {
+        return messagesList;
+    }
+
 }
