@@ -33,6 +33,7 @@ public class DCNETProtocol {
     private int numberOfRealRounds;
     private int roomSize;
     private ArrayList<String> messagesList;
+    private int messageMaxLength;
 
     public boolean runProtocol(PrintStream out) throws IOException {
         // Run session with the established parameters
@@ -102,6 +103,7 @@ public class DCNETProtocol {
         DCNETProtocol.participantNode = participantNode;
         DCNETProtocol.receiverThread = receiverThread;
         DCNETProtocol.context = context;
+        messageMaxLength = room.getL();
 
         return true;
     }
@@ -138,6 +140,10 @@ public class DCNETProtocol {
 
     public int getRoomSize() {
         return roomSize;
+    }
+
+    public int getMessageMaxLength() {
+        return messageMaxLength;
     }
 
     public ArrayList<String> getMessagesList() {
