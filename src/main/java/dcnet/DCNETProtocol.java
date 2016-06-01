@@ -137,7 +137,7 @@ public class DCNETProtocol {
     }
 
     public int getRoomSize() {
-        return nodeIndex;
+        return roomSize;
     }
 
     public ArrayList<String> getMessagesList() {
