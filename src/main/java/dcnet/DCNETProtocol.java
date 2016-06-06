@@ -21,26 +21,28 @@ import java.util.Observable;
 public class DCNETProtocol {
 
     private int nodeIndex;
-    private static Room room;
-    private static ParticipantNode participantNode;
-    private static ZMQ.Socket receiverThread;
-    private static ZContext context;
-    String directoryIp;
-    String nodeIp;
+    private Room room;
+    private ParticipantNode participantNode;
+    private ZMQ.Socket receiverThread;
+    private ZContext context;
+    private String directoryIp;
+    private String nodeIp;
     private String messageToSend;
-    private static SessionManager sessionManager;
+    private SessionManager sessionManager;
     private boolean cheaterNode;
     private double totalTime, firstMessageTime, averageTimePerMessage;
     private int numberOfRealRounds;
     private int roomSize;
     private ArrayList<String> messagesList;
     private int messageMaxLength;
+    private ObservableMessageArrived observableMessageArrived;
 
     public boolean runProtocol(PrintStream out) throws IOException {
         // Run session with the established parameters
         try {
             messagesList = new ArrayList<>();
-            sessionManager.runSession(nodeIndex, messageToSend, cheaterNode, room, participantNode, receiverThread, out, messagesList);
+            observableMessageArrived = new ObservableMessageArrived("");
+            sessionManager.runSession(nodeIndex, messageToSend, cheaterNode, room, participantNode, receiverThread, out, messagesList, observableMessageArrived);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             System.exit(0);
@@ -98,12 +100,12 @@ public class DCNETProtocol {
         // Create sender socket
         participantNode.createSender(context);
 
-        DCNETProtocol.sessionManager = sessionManager;
+        this.sessionManager = sessionManager;
         this.nodeIndex = nodeIndex;
-        DCNETProtocol.room = room;
-        DCNETProtocol.participantNode = participantNode;
-        DCNETProtocol.receiverThread = receiverThread;
-        DCNETProtocol.context = context;
+        this.room = room;
+        this.participantNode = participantNode;
+        this.receiverThread = receiverThread;
+        this.context = context;
         messageMaxLength = room.getL();
 
         return true;
@@ -151,21 +153,25 @@ public class DCNETProtocol {
         return messagesList;
     }
 
-    public class ObservableMessagesArrived extends Observable {
-        private int messagesArrived = 0;
+    public ObservableMessageArrived getObservableMessageArrived() {
+        return observableMessageArrived;
+    }
 
-        public ObservableMessagesArrived(int messagesArrived) {
-            this.messagesArrived = messagesArrived;
+    public class ObservableMessageArrived extends Observable {
+        private String messageArrived = "";
+
+        public ObservableMessageArrived(String messagesArrived) {
+            this.messageArrived = messagesArrived;
         }
 
-        public void setValue(int participantsLeft) {
-            this.messagesArrived = participantsLeft;
+        public void setValue(String messageArrived) {
+            this.messageArrived = messageArrived;
             setChanged();
             notifyObservers();
         }
 
-        public int getValue() {
-            return this.messagesArrived;
+        public String getValue() {
+            return this.messageArrived;
         }
     }
 

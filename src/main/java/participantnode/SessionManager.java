@@ -3,6 +3,7 @@ package participantnode;
 import com.google.gson.Gson;
 import crypto.PedersenCommitment;
 import crypto.ZeroKnowledgeProof;
+import dcnet.DCNETProtocol;
 import dcnet.Room;
 import json.CommitmentAndProofOfKnowledge;
 import json.OutputMessageAndProofOfKnowledge;
@@ -71,7 +72,7 @@ public class SessionManager {
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out, ArrayList<String> messagesList) throws IOException, NoSuchAlgorithmException {
+    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out, ArrayList<String> messagesList, DCNETProtocol.ObservableMessageArrived observableMessageArrived) throws IOException, NoSuchAlgorithmException {
 
         if (participantMessage.equals(""))
             participantMessage = "0";
@@ -352,12 +353,13 @@ public class SessionManager {
                     firstMessageTime = System.nanoTime() - t1;
 
                 // Print message that went through the protocol
-                // out.println("ANON:\t" + OutputMessage.getMessageWithoutRandomness(sumOfM, room));
                 String singleMessage = OutputMessage.getMessageWithoutRandomness(sumOfM, room);
                 // Add message to List
                 messagesList.add(singleMessage);
                 // Print message
                 out.println(singleMessage);
+                // Set message to Observable object
+                observableMessageArrived.setValue(singleMessage);
 
                 /* If the message that went through is mine, my message was transmitted.
                  * We have to set the variable in order to start sending zero messages in subsequently rounds */
