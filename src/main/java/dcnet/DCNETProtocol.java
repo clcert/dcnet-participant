@@ -13,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Observable;
 
 /**
  *
@@ -148,6 +149,24 @@ public class DCNETProtocol {
 
     public ArrayList<String> getMessagesList() {
         return messagesList;
+    }
+
+    public class ObservableMessagesArrived extends Observable {
+        private int messagesArrived = 0;
+
+        public ObservableMessagesArrived(int messagesArrived) {
+            this.messagesArrived = messagesArrived;
+        }
+
+        public void setValue(int participantsLeft) {
+            this.messagesArrived = participantsLeft;
+            setChanged();
+            notifyObservers();
+        }
+
+        public int getValue() {
+            return this.messagesArrived;
+        }
     }
 
 }
