@@ -37,11 +37,14 @@ public class DCNETProtocol {
     private int messageMaxLength;
     private ObservableMessageArrived observableMessageArrived;
 
+    public DCNETProtocol() {
+        messagesList = new ArrayList<>();
+        observableMessageArrived = new ObservableMessageArrived("");
+    }
+
     public boolean runProtocol(PrintStream out) throws IOException {
         // Run session with the established parameters
         try {
-            messagesList = new ArrayList<>();
-            observableMessageArrived = new ObservableMessageArrived("");
             sessionManager.runSession(nodeIndex, messageToSend, cheaterNode, room, participantNode, receiverThread, out, messagesList, observableMessageArrived);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
