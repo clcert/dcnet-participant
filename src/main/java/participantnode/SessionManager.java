@@ -252,7 +252,25 @@ public class SessionManager {
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 }
+                else if ((round/2)%2 == 0) {
+                    // TODO: DO SOMETHING WHEN MY FATHER ROUND IS REAL
+                    // TODO: ZKP that my message is either 0 or is equal to the message that i sent in the father round
+                    // Create Json objects with each possible message to send
+                    outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                    zeroMessageJson = new Gson().toJson(zeroMessage);
+                    // Set the corresponding message to send in this round
+                    String outputMessageRoundJson;
+                    if (messageInThisRound)
+                        outputMessageRoundJson = outputParticipantMessageJson;
+                    else
+                        outputMessageRoundJson = zeroMessageJson;
+                    // Send the message
+                    node.getSender().send(outputMessageRoundJson);
+                }
                 else {
+                    // TODO: DO SOMETHING WHEN MY FATHER ROUND IS VIRTUAL
+                    // TODO: ZKP that my message is either 0 or codifies a message that was sent in a previous real
+                    // TODO: round and not in real rounds between this and that previous one
                     // Create Json objects with each possible message to send
                     outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                     zeroMessageJson = new Gson().toJson(zeroMessage);
@@ -291,7 +309,24 @@ public class SessionManager {
                         messagesReceivedInThisRound++;
                     }
                 }
+                else if ((round/2)%2 == 0) {
+                    // TODO: DO SOMETHING WHEN MY FATHER ROUND IS REAL
+                    // Variable to count how many messages were received from the receiver thread
+                    int messagesReceivedInThisRound = 0;
+                    // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
+                    while (messagesReceivedInThisRound < room.getRoomSize()) {
+                        // Receive a message
+                        byte[] messageReceivedFromReceiverThread = receiverThread.recv();
+                        // Transform incoming message to a BigInteger
+                        BigInteger incomingOutputMessage = new BigInteger(messageReceivedFromReceiverThread);
+                        // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
+                        sumOfO = sumOfO.add(incomingOutputMessage).mod(room.getP());
+                        // Increase the number of messages received
+                        messagesReceivedInThisRound++;
+                    }
+                }
                 else {
+                    // TODO: DO SOMETHING WHEN MY FATHER ROUND IS VIRTUAL
                     // Variable to count how many messages were received from the receiver thread
                     int messagesReceivedInThisRound = 0;
                     // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
