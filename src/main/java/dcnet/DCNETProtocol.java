@@ -36,10 +36,12 @@ public class DCNETProtocol {
     private ArrayList<String> messagesList;
     private int messageMaxLength;
     private ObservableMessageArrived observableMessageArrived;
+    private ObservableParticipantsLeft observableParticipantsLeft;
 
     public DCNETProtocol() {
         messagesList = new ArrayList<>();
         observableMessageArrived = new ObservableMessageArrived("");
+        observableParticipantsLeft = new ObservableParticipantsLeft(-1);
     }
 
     public boolean runProtocol(PrintStream out) throws IOException {
@@ -85,7 +87,7 @@ public class DCNETProtocol {
         ZContext context = new ZContext();
 
         // Connect ParticipantNode to DirectoryNode and wait response from DirectoryNode with the information of the rest of the room
-        participantNode.connectToDirectoryNode(directoryNode, room, context);
+        participantNode.connectToDirectoryNode(directoryNode, room, context, observableParticipantsLeft);
 
         this.directoryIp = directoryIp;
         this.roomSize = room.getRoomSize();
@@ -160,6 +162,10 @@ public class DCNETProtocol {
         return observableMessageArrived;
     }
 
+    public ObservableParticipantsLeft getObservableParticipantsLeft() {
+        return observableParticipantsLeft;
+    }
+
     public class ObservableMessageArrived extends Observable {
         private String messageArrived = "";
 
@@ -176,6 +182,25 @@ public class DCNETProtocol {
         public String getValue() {
             return this.messageArrived;
         }
+    }
+
+    public class ObservableParticipantsLeft extends Observable {
+        private int participantsLeft;
+
+        public ObservableParticipantsLeft(int participantsLeft) {
+            this.participantsLeft = participantsLeft;
+        }
+
+        public void setValue(int participantsLeft) {
+            this.participantsLeft = participantsLeft;
+            setChanged();
+            notifyObservers();
+        }
+
+        public int getValue() {
+            return this.participantsLeft;
+        }
+
     }
 
 }

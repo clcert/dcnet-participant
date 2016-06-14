@@ -1,6 +1,7 @@
 package participantnode;
 
 import com.google.gson.Gson;
+import dcnet.DCNETProtocol;
 import dcnet.DirectoryNode;
 import dcnet.InfoFromDirectory;
 import dcnet.Room;
@@ -89,7 +90,7 @@ public class ParticipantNode {
      * @param room room where this participant node is going to send messages
      * @param context context where the zmq sockets need to run
      */
-    public void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context) {
+    public void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context, DCNETProtocol.ObservableParticipantsLeft observableParticipantsLeft) {
         // Create Directory Subscriber and connect to 5555 port
         ZMQ.Socket directorySubscriber = context.createSocket(ZMQ.SUB);
         directorySubscriber.connect("tcp://" + directoryNode.getDirectoryIp() + ":5555");
@@ -102,6 +103,20 @@ public class ParticipantNode {
         // Send my IP to the Directory through the PUSH socket
         directoryPush.send(getNodeIp());
 
+        // Receive ACK from DirectoryNode
+        // Create the PULL socket and bind it to the port 5554
+        ZMQ.Socket directoryPull = context.createSocket(ZMQ.PULL);
+        directoryPull.bind("tcp://*:5554");
+        directoryPull.recvStr();
+
+        // Receive messages with how many participants left to complete the room
+        String participantsLeft = directoryPull.recvStr();
+        observableParticipantsLeft.setValue(Integer.parseInt(participantsLeft));
+        while (!participantsLeft.equals("0")) {
+            participantsLeft = directoryPull.recvStr();
+            observableParticipantsLeft.setValue(Integer.parseInt(participantsLeft));
+        }
+
         // Wait message from the Directory node (using the SUB socket) with all the {index,ip} pairs of the room
         String directoryJson = directorySubscriber.recvStr();
 
@@ -110,6 +125,7 @@ public class ParticipantNode {
 
         directorySubscriber.close();
         directoryPush.close();
+        directoryPull.close();
 
     }
 
