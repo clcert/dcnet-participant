@@ -108,6 +108,7 @@ public class ParticipantNode {
         ZMQ.Socket directoryPull = context.createSocket(ZMQ.PULL);
         directoryPull.bind("tcp://*:5554");
         directoryPull.recvStr();
+        observableParticipantsLeft.setValue(-1);
 
         // Receive messages with how many participants left to complete the room
         String participantsLeft = directoryPull.recvStr();

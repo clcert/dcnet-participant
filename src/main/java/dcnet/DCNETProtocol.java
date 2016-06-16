@@ -41,7 +41,7 @@ public class DCNETProtocol {
     public DCNETProtocol() {
         messagesList = new ArrayList<>();
         observableMessageArrived = new ObservableMessageArrived("");
-        observableParticipantsLeft = new ObservableParticipantsLeft(-1);
+        observableParticipantsLeft = new ObservableParticipantsLeft();
     }
 
     public boolean runProtocol(PrintStream out) throws IOException {
@@ -187,9 +187,7 @@ public class DCNETProtocol {
     public class ObservableParticipantsLeft extends Observable {
         private int participantsLeft;
 
-        public ObservableParticipantsLeft(int participantsLeft) {
-            this.participantsLeft = participantsLeft;
-        }
+        public ObservableParticipantsLeft() {}
 
         public void setValue(int participantsLeft) {
             this.participantsLeft = participantsLeft;
