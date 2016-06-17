@@ -15,7 +15,6 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -72,7 +71,7 @@ public class SessionManager {
      * @param node participant node
      * @param receiverThread thread where participant node is listening
      */
-    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, PrintStream out, ArrayList<String> messagesList, DCNETProtocol.ObservableMessageArrived observableMessageArrived) throws IOException, NoSuchAlgorithmException {
+    public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, ArrayList<String> messagesList, DCNETProtocol.ObservableMessageArrived observableMessageArrived) throws IOException, NoSuchAlgorithmException {
 
         if (participantMessage.equals(""))
             participantMessage = "0";
@@ -189,13 +188,13 @@ public class SessionManager {
                     commitmentsOnKey[receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentOnKey;
                     // Verify proofOfKnowledge
                     if (!zkp.verifyProofOfKnowledgePedersen(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge(), receivedCommitmentOnKey))
-                        System.out.println("WRONG PoK on Key. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex());
+                        System.err.println("WRONG PoK on Key. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex());
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(receivedCommitmentOnKey).mod(room.getP());
                 }
                 // Check that multiplication result is 1
                 if (!multiplicationOnCommitments.equals(BigInteger.ONE))
-                    System.out.println("Round " + round + " commitments on keys are WRONG");
+                    System.err.println("Round " + round + " commitments on keys are WRONG");
 
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
@@ -230,7 +229,7 @@ public class SessionManager {
                     commitmentsOnMessage[receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentAndProofOfKnowledgeOnMessage.getCommitment();
                     // Verify proof of knowledge
                     if (!zkp.verifyProofOfKnowledgePedersen(receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge(), receivedCommitmentAndProofOfKnowledgeOnMessage.getCommitment()))
-                        System.out.println("WRONG PoK. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex());
+                        System.err.println("WRONG PoK. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex());
                 }
 
                 // Synchronize nodes to let know that we all finish the commitments on messages part
@@ -302,7 +301,7 @@ public class SessionManager {
                         BigInteger beta = commitmentOnOutputMessage.multiply(room.getG().modPow(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage(), room.getP()).modInverse(room.getP())).mod(room.getP());
                         // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
                         if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), beta))
-                            System.out.println("WRONG PoK on OutputMessage. Round: " + round + ", Node: " + participantNodeIndex);
+                            System.err.println("WRONG PoK on OutputMessage. Round: " + round + ", Node: " + participantNodeIndex);
                         // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
                         sumOfO = sumOfO.add(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage()).mod(room.getP());
                         // Increase the number of messages received
@@ -372,7 +371,7 @@ public class SessionManager {
                 collisionSize = Integer.parseInt(sumOfT.toString());
                 // If the size is 0, it means that no messages were sent during this session, so we finish the protocol
                 if (collisionSize == 0) {
-                    System.out.println("NO MESSAGES WERE SENT");
+                    System.err.println("NO MESSAGES WERE SENT");
                     finished = true;
                     continue;
                 }
@@ -391,8 +390,6 @@ public class SessionManager {
                 String singleMessage = OutputMessage.getMessageWithoutRandomness(sumOfM, room);
                 // Add message to List
                 messagesList.add(singleMessage);
-                // Print message
-                out.println(singleMessage);
                 // Set message to Observable object
                 observableMessageArrived.setValue(singleMessage);
 
@@ -413,7 +410,7 @@ public class SessionManager {
                 if (sumOfT.equals(BigInteger.ZERO)) {
                     // Change resending mode
                     if (room.getNonProbabilisticMode()) {
-                        System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
+                        // System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
                         room.setNonProbabilisticMode(false);
                     }
                 }
@@ -429,7 +426,7 @@ public class SessionManager {
                         removeRoundToHappen(nextRoundsToHappen, round + 1);
                         // Change resending mode
                         if (room.getNonProbabilisticMode()) {
-                            System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
+                            // System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
                             room.setNonProbabilisticMode(false);
                         }
                     }

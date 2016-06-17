@@ -8,7 +8,6 @@ import participantnode.Receiver;
 import participantnode.SessionManager;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.security.NoSuchAlgorithmException;
@@ -44,10 +43,10 @@ public class DCNETProtocol {
         observableParticipantsLeft = new ObservableParticipantsLeft();
     }
 
-    public boolean runProtocol(PrintStream out) throws IOException {
+    public boolean runProtocol() throws IOException {
         // Run session with the established parameters
         try {
-            sessionManager.runSession(nodeIndex, messageToSend, cheaterNode, room, participantNode, receiverThread, out, messagesList, observableMessageArrived);
+            sessionManager.runSession(nodeIndex, messageToSend, cheaterNode, room, participantNode, receiverThread, messagesList, observableMessageArrived);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             System.exit(0);
