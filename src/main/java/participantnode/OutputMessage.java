@@ -13,6 +13,9 @@ public class OutputMessage {
 
     private BigInteger protocolMessage;
     private BigInteger participantMessageWithPaddingBigInteger;
+    private BigInteger plainMessage;
+    private BigInteger finalBit;
+    private BigInteger randomPadding;
 
     static private int RANDOM_PADDING_LENGTH;
 
@@ -20,6 +23,18 @@ public class OutputMessage {
      *
      */
     OutputMessage() {}
+
+    public BigInteger getPlainMessage() {
+        return plainMessage;
+    }
+
+    public BigInteger getFinalBit() {
+        return finalBit;
+    }
+
+    public BigInteger getRandomPadding() {
+        return randomPadding;
+    }
 
     /**
      *
@@ -83,9 +98,11 @@ public class OutputMessage {
         BigInteger randomStringBigInteger = BigInteger.ZERO;
         if (randomString.length() != 0)
             randomStringBigInteger = new BigInteger(randomString.getBytes("UTF-8"));
+        randomPadding = randomStringBigInteger;
 
         // Transform participant message to Big Integer
         BigInteger participantMessageBigInteger = new BigInteger(participantMessage.getBytes("UTF-8"));
+        plainMessage = participantMessageBigInteger;
 
         // Calculate concatenation of participant message and random characters, leaving a gap of log(n+1) bits between them
         this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(two.pow(RANDOM_PADDING_LENGTH*8).multiply(nPlusOne)).add(randomStringBigInteger);
@@ -94,10 +111,12 @@ public class OutputMessage {
         // If the message is 0, the node doesn't want to send any message to the room
         if (participantMessage.equals("0")) {
             this.protocolMessage = BigInteger.ZERO;
+            finalBit = BigInteger.ZERO;
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
             this.protocolMessage = participantMessageWithPaddingBigInteger.multiply(nPlusOne).add(BigInteger.ONE);
+            finalBit = BigInteger.ONE;
         }
     }
 

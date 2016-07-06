@@ -29,15 +29,15 @@ import java.util.LinkedList;
 public class SessionManager {
 
     private ZMQ.Socket[] repliers,
-                         requestors;
+            requestors;
     private boolean messageTransmitted,
-                    finished,
-                    messageInThisRound;
+            finished,
+            messageInThisRound;
     private int round,
-                realRoundsPlayed,
-                nextRoundAllowedToSend,
-                collisionSize,
-                messagesSentWithNoCollisions;
+            realRoundsPlayed,
+            nextRoundAllowedToSend,
+            collisionSize,
+            messagesSentWithNoCollisions;
     private Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     private LinkedList<Integer> nextRoundsToHappen;
     private PedersenCommitment pedersenCommitment;
@@ -65,11 +65,12 @@ public class SessionManager {
 
     /**
      * Method that runs a single session for a single participant node within an specific room
-     * @param nodeIndex index of the participant node
+     *
+     * @param nodeIndex          index of the participant node
      * @param participantMessage string with the message that participant node wants to communicate
-     * @param room room where the message is going to be send
-     * @param node participant node
-     * @param receiverThread thread where participant node is listening
+     * @param room               room where the message is going to be send
+     * @param node               participant node
+     * @param receiverThread     thread where participant node is listening
      */
     public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, ArrayList<String> messagesList, DCNETProtocol.ObservableMessageArrived observableMessageArrived) throws IOException, NoSuchAlgorithmException {
 
@@ -131,10 +132,17 @@ public class SessionManager {
             BigInteger[] commitmentsOnMessage = new BigInteger[room.getRoomSize()];
 
             /** REAL ROUND (first and even rounds) **/
-            if (round == 1 || round%2 == 0) {
+            if (round == 1 || round % 2 == 0) {
 
                 // Check if in this round the participant will send a real message or a zero message
                 messageInThisRound = !messageTransmitted && nextRoundAllowedToSend == round;
+
+                // Set the round message object depending if the participant will send a message or not
+                OutputMessage roundMessage;
+                if (messageInThisRound)
+                    roundMessage = outputParticipantMessage;
+                else
+                    roundMessage = zeroMessage;
 
                 // Set variable that we are playing a real round and add one to the count
                 realRoundsPlayed++;
@@ -201,11 +209,7 @@ public class SessionManager {
 
                 /** SEND COMMITMENT AND POK ON MESSAGE **/
                 // Set protocol message to make a commitment to
-                BigInteger protocolMessage;
-                if (!messageInThisRound)
-                    protocolMessage = BigInteger.ZERO;
-                else
-                    protocolMessage = outputParticipantMessage.getProtocolMessage();
+                BigInteger protocolMessage = roundMessage.getProtocolMessage();
                 // Generate random value for commitment
                 BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
                 // Generate Commitment on Message
@@ -250,23 +254,17 @@ public class SessionManager {
                     String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledge, OutputMessageAndProofOfKnowledge.class);
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
-                }
-                else if ((round/2)%2 == 0) {
+                } else if ((round / 2) % 2 == 0) {
                     // TODO: DO SOMETHING WHEN MY FATHER ROUND IS REAL
                     // TODO: ZKP that my message is either 0 or is equal to the message that i sent in the father round
                     // Create Json objects with each possible message to send
                     outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                     zeroMessageJson = new Gson().toJson(zeroMessage);
                     // Set the corresponding message to send in this round
-                    String outputMessageRoundJson;
-                    if (messageInThisRound)
-                        outputMessageRoundJson = outputParticipantMessageJson;
-                    else
-                        outputMessageRoundJson = zeroMessageJson;
+                    String outputMessageRoundJson = new Gson().toJson(roundMessage);
                     // Send the message
                     node.getSender().send(outputMessageRoundJson);
-                }
-                else {
+                } else {
                     // TODO: DO SOMETHING WHEN MY FATHER ROUND IS VIRTUAL
                     // TODO: ZKP that my message is either 0 or codifies a message that was sent in a previous real
                     // TODO: round and not in real rounds between this and that previous one
@@ -274,11 +272,7 @@ public class SessionManager {
                     outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                     zeroMessageJson = new Gson().toJson(zeroMessage);
                     // Set the corresponding message to send in this round
-                    String outputMessageRoundJson;
-                    if (messageInThisRound)
-                        outputMessageRoundJson = outputParticipantMessageJson;
-                    else
-                        outputMessageRoundJson = zeroMessageJson;
+                    String outputMessageRoundJson = new Gson().toJson(roundMessage);
                     // Send the message
                     node.getSender().send(outputMessageRoundJson);
                 }
@@ -307,8 +301,7 @@ public class SessionManager {
                         // Increase the number of messages received
                         messagesReceivedInThisRound++;
                     }
-                }
-                else if ((round/2)%2 == 0) {
+                } else if ((round / 2) % 2 == 0) {
                     // TODO: DO SOMETHING WHEN MY FATHER ROUND IS REAL
                     // Variable to count how many messages were received from the receiver thread
                     int messagesReceivedInThisRound = 0;
@@ -323,8 +316,7 @@ public class SessionManager {
                         // Increase the number of messages received
                         messagesReceivedInThisRound++;
                     }
-                }
-                else {
+                } else {
                     // TODO: DO SOMETHING WHEN MY FATHER ROUND IS VIRTUAL
                     // Variable to count how many messages were received from the receiver thread
                     int messagesReceivedInThisRound = 0;
@@ -402,9 +394,7 @@ public class SessionManager {
                  * Set variable to finalize the protocol in the next round */
                 if (messagesSentWithNoCollisions == collisionSize)
                     finished = true;
-            }
-
-            else {
+            } else {
                 /** PROBLEMATIC ROUND **/
                 // <sumOfT> == 0 => if we are in a deterministic mode, this means that someone cheated, and it's necessary to change the mode
                 if (sumOfT.equals(BigInteger.ZERO)) {
@@ -421,7 +411,7 @@ public class SessionManager {
 
                     /** PROBLEMATIC ROUND **/
                     // <sumOfT> repeats in this real round and the "father" round. Someone cheated and it's necessary to change the mode
-                    if (round != 1 && round%2 == 0 && sumOfO.equals(messagesSentInPreviousRounds.get(round/2))) {
+                    if (round != 1 && round % 2 == 0 && sumOfO.equals(messagesSentInPreviousRounds.get(round / 2))) {
                         // Remove next round to happen (it will be a virtual round with no messages sent)
                         removeRoundToHappen(nextRoundsToHappen, round + 1);
                         // Change resending mode
@@ -470,13 +460,12 @@ public class SessionManager {
         // Finish time measurement
         long t2 = System.nanoTime();
         // Save execution time
-        executionTime = t2-t1;
+        executionTime = t2 - t1;
         // Save average time per message
         averageTimePerMessage = executionTime / messagesSentWithNoCollisions;
     }
 
     /**
-     *
      * @param sharedRandomValues array with all the shared random values used for commitments on key
      * @return sum of all values on sharedRandomValues
      */
@@ -489,9 +478,8 @@ public class SessionManager {
     }
 
     /**
-     *
      * @param commitmentsOnKeys commitments in each individual round key (shared with another participant node)
-     * @param room Room where the participant node is playing
+     * @param room              Room where the participant node is playing
      * @return multiplication of each individual commitment: c = c_1*c_2*...*c_n (mod p)
      */
     private BigInteger generateCommitmentOnKey(BigInteger[] commitmentsOnKeys, Room room) {
@@ -503,7 +491,6 @@ public class SessionManager {
     }
 
     /**
-     *
      * @return total execution time of this session
      */
     public long getExecutionTime() {
@@ -511,7 +498,6 @@ public class SessionManager {
     }
 
     /**
-     *
      * @return time to get the first message of this session
      */
     public long getFirstMessageTime() {
@@ -519,7 +505,6 @@ public class SessionManager {
     }
 
     /**
-     *
      * @return average time per message of this session
      */
     public long getAverageTimePerMessage() {
@@ -527,11 +512,10 @@ public class SessionManager {
     }
 
     /**
-     *
-     * @param nodeIndex index of the participant node
-     * @param repliers array with zmq sockets that work as repliers
+     * @param nodeIndex  index of the participant node
+     * @param repliers   array with zmq sockets that work as repliers
      * @param requestors array with zmq sockets that work as requestors
-     * @param room room where the messages are going send
+     * @param room       room where the messages are going send
      */
     private void synchronizeNodes(int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         // The "first" node doesn't have any replier sockets
@@ -554,8 +538,9 @@ public class SessionManager {
 
     /**
      * Remove a round to happen afterwards
+     *
      * @param nextRoundsToHappen list with rounds that are going to happen in the future
-     * @param round index of the round that wants to remove from happening
+     * @param round              index of the round that wants to remove from happening
      */
     private void removeRoundToHappen(LinkedList<Integer> nextRoundsToHappen, int round) {
         nextRoundsToHappen.removeFirstOccurrence(round);
@@ -563,8 +548,9 @@ public class SessionManager {
 
     /**
      * Add a round to happen immediately after the running one
+     *
      * @param nextRoundsToHappen list with rounds that are going to happen in the future
-     * @param round index of the round that wants to add to happen in the future
+     * @param round              index of the round that wants to add to happen in the future
      */
     private void addRoundToHappenFirst(LinkedList<Integer> nextRoundsToHappen, int round) {
         nextRoundsToHappen.addFirst(round);
@@ -572,9 +558,10 @@ public class SessionManager {
 
     /**
      * Add two rounds to happen afterwards (they are added at the end of the LinkedList)
+     *
      * @param nextRoundsToHappen list with rounds that are going to happen in the future
-     * @param firstRoundToAdd index of the round
-     * @param secondRoundToAdd index of the round
+     * @param firstRoundToAdd    index of the round
+     * @param secondRoundToAdd   index of the round
      */
     private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
         nextRoundsToHappen.add(firstRoundToAdd);
@@ -583,8 +570,9 @@ public class SessionManager {
 
     /**
      * Add one round to happen afterwards (is added at the end of the LinkedList)
+     *
      * @param nextRoundsToHappen list with round that are going to happen in the future
-     * @param round index of the round to add
+     * @param round              index of the round to add
      */
     private void addRoundToHappenNext(LinkedList<Integer> nextRoundsToHappen, int round) {
         nextRoundsToHappen.add(round);
@@ -593,8 +581,9 @@ public class SessionManager {
     /**
      * Create all the repliers (the quantity depends on the index of the node) socket
      * necessary to run the protocol (see Reference for more information)
+     *
      * @param nodeIndex index of the participant node
-     * @param context context where the zmq sockets are going to run
+     * @param context   context where the zmq sockets are going to run
      */
     public void initializeRepliersArray(int nodeIndex, ZContext context) {
         // Create an array of sockets
@@ -602,12 +591,12 @@ public class SessionManager {
         // The "first" node doesn't have any replier sockets
         if (nodeIndex != 1) {
             // Initialize the array with exactly (<nodeIndex> - 1) sockets
-            repliers = new ZMQ.Socket[nodeIndex-1];
+            repliers = new ZMQ.Socket[nodeIndex - 1];
             for (int i = 0; i < repliers.length; i++) {
                 // Create the REP socket
                 repliers[i] = context.createSocket(ZMQ.REP);
                 // Bind this REP socket to the correspondent port in order to be connected by his correspondent REQ socket of another node
-                repliers[i].bind("tcp://*:" + (7000+i));
+                repliers[i].bind("tcp://*:" + (7000 + i));
             }
         }
         // Return the array with the replier sockets
@@ -617,9 +606,10 @@ public class SessionManager {
     /**
      * Create all the requestors (the quantity depends on the index of the node) socket necessary to run the protocol
      * (see Reference for more information)
+     *
      * @param nodeIndex index of the participant node
-     * @param context context where the zmq sockets are going to run
-     * @param room room where the messages are being sent
+     * @param context   context where the zmq sockets are going to run
+     * @param room      room where the messages are being sent
      */
     public void initializeRequestorsArray(int nodeIndex, ZContext context, Room room) {
         // Create an array of sockets
@@ -640,7 +630,6 @@ public class SessionManager {
     }
 
     /**
-     *
      * @return number of real rounds played in this session
      */
     public int getRealRoundsPlayed() {
@@ -648,9 +637,8 @@ public class SessionManager {
     }
 
     /**
-     *
      * @param nodeIndex index of the participant node
-     * @param roomSize size of the room
+     * @param roomSize  size of the room
      */
     public void closeRepliersAndRequestorsSockets(int nodeIndex, int roomSize) {
         if (nodeIndex != 1) {
