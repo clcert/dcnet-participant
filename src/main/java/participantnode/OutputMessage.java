@@ -11,11 +11,11 @@ import java.util.Random;
  */
 public class OutputMessage {
 
-    private BigInteger protocolMessage;
-    private BigInteger participantMessageWithPaddingBigInteger;
-    private BigInteger plainMessage;
-    private BigInteger finalBit;
-    private BigInteger randomPadding;
+    private BigInteger plainMessage; // m
+    private BigInteger randomPadding; // r*
+    private BigInteger plainMessageWithRandomPadding; // m + r*
+    private BigInteger finalBit; // b
+    private BigInteger protocolMessage; // m + r* + b
 
     static private int RANDOM_PADDING_LENGTH;
 
@@ -40,8 +40,8 @@ public class OutputMessage {
      *
      * @return message in BigInteger form
      */
-    BigInteger getParticipantMessageWithPaddingBigInteger() {
-        return participantMessageWithPaddingBigInteger;
+    BigInteger getPlainMessageWithRandomPadding() {
+        return plainMessageWithRandomPadding;
     }
 
     /**
@@ -72,14 +72,14 @@ public class OutputMessage {
 
     /**
      *
-     * @param messageWithRandomness message that went through the protocol which has a random string appended
+     * @param messageWithRandomPadding message that went through the protocol which has a random string appended
      * @return message without the randomness
      */
-    static String getMessageWithoutRandomness(BigInteger messageWithRandomness, Room room) throws UnsupportedEncodingException {
+    static String getMessageWithoutRandomPadding(BigInteger messageWithRandomPadding, Room room) throws UnsupportedEncodingException {
         BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
         BigInteger two = BigInteger.valueOf(2);
 
-        BigInteger _a = messageWithRandomness.divide(two.pow(RANDOM_PADDING_LENGTH*8).multiply(nPlusOne));
+        BigInteger _a = messageWithRandomPadding.divide(two.pow(RANDOM_PADDING_LENGTH*8).multiply(nPlusOne));
         return new String(_a.toByteArray(), "UTF-8");
     }
 
@@ -105,7 +105,7 @@ public class OutputMessage {
         plainMessage = participantMessageBigInteger;
 
         // Calculate concatenation of participant message and random characters, leaving a gap of log(n+1) bits between them
-        this.participantMessageWithPaddingBigInteger = participantMessageBigInteger.multiply(two.pow(RANDOM_PADDING_LENGTH*8).multiply(nPlusOne)).add(randomStringBigInteger);
+        this.plainMessageWithRandomPadding = participantMessageBigInteger.multiply(two.pow(RANDOM_PADDING_LENGTH*8).multiply(nPlusOne)).add(randomStringBigInteger);
 
         // Set to the OutputMessage object the actual message that the node wants to communicate (<m>)
         // If the message is 0, the node doesn't want to send any message to the room
@@ -115,7 +115,7 @@ public class OutputMessage {
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
-            this.protocolMessage = participantMessageWithPaddingBigInteger.multiply(nPlusOne).add(BigInteger.ONE);
+            this.protocolMessage = plainMessageWithRandomPadding.multiply(nPlusOne).add(BigInteger.ONE);
             finalBit = BigInteger.ONE;
         }
     }
