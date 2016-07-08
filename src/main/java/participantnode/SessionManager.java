@@ -469,7 +469,8 @@ public class SessionManager {
                         }
                     }
                     // Add (2*round) and (2*round + 1) rounds to future plays
-                    addRoundsToHappenNext(nextRoundsToHappen, 2 * round, 2 * round + 1);
+                    addRoundToHappenNext(nextRoundsToHappen, 2 * round);
+                    addRoundToHappenNext(nextRoundsToHappen, 2 * round + 1);
                 }
             }
         }
@@ -561,28 +562,6 @@ public class SessionManager {
      */
     private void removeRoundToHappen(LinkedList<Integer> nextRoundsToHappen, int round) {
         nextRoundsToHappen.removeFirstOccurrence(round);
-    }
-
-    /**
-     * Add a round to happen immediately after the running one
-     *
-     * @param nextRoundsToHappen list with rounds that are going to happen in the future
-     * @param round              index of the round that wants to add to happen in the future
-     */
-    private void addRoundToHappenFirst(LinkedList<Integer> nextRoundsToHappen, int round) {
-        nextRoundsToHappen.addFirst(round);
-    }
-
-    /**
-     * Add two rounds to happen afterwards (they are added at the end of the LinkedList)
-     *
-     * @param nextRoundsToHappen list with rounds that are going to happen in the future
-     * @param firstRoundToAdd    index of the round
-     * @param secondRoundToAdd   index of the round
-     */
-    private void addRoundsToHappenNext(LinkedList<Integer> nextRoundsToHappen, int firstRoundToAdd, int secondRoundToAdd) {
-        nextRoundsToHappen.add(firstRoundToAdd);
-        nextRoundsToHappen.add(secondRoundToAdd);
     }
 
     /**
