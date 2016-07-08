@@ -77,18 +77,17 @@ public class SessionManager {
         if (participantMessage.equals(""))
             participantMessage = "0";
 
-        // Create an outputParticipantMessage
+        // Create an outputMessage
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
         outputParticipantMessage.setParticipantMessage(participantMessage, room);
+        BigInteger plainMessageWithRandomPadding = outputParticipantMessage.getPlainMessageWithRandomPadding();
+        String outputParticipantMessageJson;
 
         // Create a zeroMessage
         OutputMessage zeroMessage = new OutputMessage();
-        zeroMessage.setPaddingLength(room.getPadLength());
         zeroMessage.setParticipantMessage("0", room);
-
-        // Create a roundMessage
-        OutputMessage roundMessage;
+        String zeroMessageJson;
 
         // Sleep to overlap slow joiner problem
         // TODO: fix this using a better solution
@@ -139,9 +138,6 @@ public class SessionManager {
 
                 // Check if in this round the participant will send a real message or a zero message
                 messageInThisRound = !messageTransmitted && nextRoundAllowedToSend == round;
-
-                // Set the round message object depending if the participant will send a message or not
-                roundMessage = messageInThisRound ? outputParticipantMessage : zeroMessage;
 
                 // Set variable that we are playing a real round and add one to the count
                 realRoundsPlayed++;
@@ -207,8 +203,24 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 /** SEND COMMITMENT AND POK ON MESSAGE **/
+                // Set protocol message to make a commitment to and add round key to the message to construct Json that will be sent
+                String outputMessageRoundJson;
+                BigInteger protocolRoundMessage;
+                if (messageInThisRound) {
+                    protocolRoundMessage = outputParticipantMessage.getProtocolMessage();
+                    outputParticipantMessage.setRoundKeyValue(keyRoundValue);
+                    outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
+                    outputMessageRoundJson = outputParticipantMessageJson;
+                }
+                else {
+                    protocolRoundMessage = BigInteger.ZERO;
+                    zeroMessage.setRoundKeyValue(keyRoundValue);
+                    zeroMessageJson = new Gson().toJson(zeroMessage);
+                    outputMessageRoundJson = zeroMessageJson;
+                }
 
-                BigInteger plainMessage = roundMessage.getPlainMessage();
+                // TODO: Implement correct format of message proof
+                /*BigInteger plainMessage = roundMessage.getPlainMessage();
                 BigInteger randomPadding = roundMessage.getRandomPadding();
                 BigInteger finalBit = roundMessage.getFinalBit();
 
@@ -222,17 +234,14 @@ public class SessionManager {
 
                 ProofOfKnowledge proofForFinalBitIsZero = zkp.generateProofOfKnowledge(commitmentOnFinalBit, randomForFinalBit);
                 ProofOfKnowledge proofForPlainMessageIsZero = zkp.generateProofOfKnowledge(commitmentOnPlainMessage, randomForPlainMessage);
-                ProofOfKnowledge proofForFinalBitIsOne = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);
+                ProofOfKnowledge proofForFinalBitIsOne = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);*/
 
-
-                // Set protocol message to make a commitment to
-                BigInteger protocolMessage = roundMessage.getProtocolMessage();
                 // Generate random value for commitment
                 BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
                 // Generate Commitment on Message
-                BigInteger commitmentOnMessage = pedersenCommitment.calculateCommitment(protocolMessage, randomForCommitmentOnMessage);
+                BigInteger commitmentOnMessage = pedersenCommitment.calculateCommitment(protocolRoundMessage, randomForCommitmentOnMessage);
                 // Generate ProofOfKnowledgePedersen associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
-                ProofOfKnowledgePedersen proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledgePedersen(commitmentOnMessage, protocolMessage, randomForCommitmentOnMessage);
+                ProofOfKnowledgePedersen proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledgePedersen(commitmentOnMessage, protocolRoundMessage, randomForCommitmentOnMessage);
                 // Generate JSON string of an Object containing both commitment and proofOfKnowledge
                 CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnMessage = new CommitmentAndProofOfKnowledge(commitmentOnMessage, proofOfKnowledgeOnMessage);
                 String commitmentAndProofOfKnowledgeOnMessageJson = new Gson().toJson(commitmentAndProofOfKnowledgeOnMessage, CommitmentAndProofOfKnowledge.class);
@@ -257,11 +266,6 @@ public class SessionManager {
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 /** SEND OUTPUT MESSAGE AND POK ASSOCIATED **/
-                // Add round key to the message
-                roundMessage.setRoundKeyValue(keyRoundValue);
-                // outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                // zeroMessage.setRoundKeyValue(keyRoundValue);
-
                 // Set Proof of Knowledge that is needed for round 1
                 if (round == 1) {
                     // Calculate random for commitment as the sum of both random used before (commitment on key and commitment on message)
@@ -269,26 +273,28 @@ public class SessionManager {
                     // Generate proofOfKnowledge for OutputMessage, as a commitment for the sum of both randomness used (for commitments on key and message)
                     ProofOfKnowledge proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(randomForCommitmentOnOutputMessage);
                     // Generate Json string with Object containing both outputMessage and proofOfKnowledge
-                    OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new OutputMessageAndProofOfKnowledge(roundMessage, proofOfKnowledgeOnOutputMessage);
+                    OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new OutputMessageAndProofOfKnowledge(outputParticipantMessage, proofOfKnowledgeOnOutputMessage);
                     String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledge, OutputMessageAndProofOfKnowledge.class);
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 } else if ((round / 2) % 2 == 0) {
                     // TODO: DO SOMETHING WHEN MY FATHER ROUND IS REAL
                     // TODO: ZKP that my message is either 0 or is equal to the message that i sent in the father round
-                    // Set the corresponding message to send in this round
-                    String outputMessageRoundJson = new Gson().toJson(roundMessage);
                     // Send the message
                     node.getSender().send(outputMessageRoundJson);
                 } else {
                     // TODO: DO SOMETHING WHEN MY FATHER ROUND IS VIRTUAL
                     // TODO: ZKP that my message is either 0 or codifies a message that was sent in a previous real
                     // TODO: round and not in real rounds between this and that previous one
-                    // Set the corresponding message to send in this round
-                    String outputMessageRoundJson = new Gson().toJson(roundMessage);
                     // Send the message
                     node.getSender().send(outputMessageRoundJson);
                 }
+
+                // Subtract round key to the message in order to send a clear one in the next round
+                if (messageInThisRound)
+                    outputParticipantMessage.setRoundKeyValue(keyRoundValue.negate());
+                else
+                    zeroMessage.setRoundKeyValue(keyRoundValue.negate());
 
                 /** RECEIVE OUTPUT MESSAGES AND POKs ASSOCIATED **/
                 if (round == 1) {
@@ -400,7 +406,7 @@ public class SessionManager {
 
                 /* If the message that went through is mine, my message was transmitted.
                  * We have to set the variable in order to start sending zero messages in subsequently rounds */
-                if (outputParticipantMessage.getPlainMessageWithRandomPadding().equals(sumOfM))
+                if (plainMessageWithRandomPadding.equals(sumOfM))
                     messageTransmitted = true;
 
                 /* If the number of messages that went through equals the collision size, the first collision was completely resolved.
@@ -413,7 +419,6 @@ public class SessionManager {
                 if (sumOfT.equals(BigInteger.ZERO)) {
                     // Change resending mode
                     if (room.getNonProbabilisticMode()) {
-                        // System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
                         room.setNonProbabilisticMode(false);
                     }
                 }
@@ -429,7 +434,6 @@ public class SessionManager {
                         removeRoundToHappen(nextRoundsToHappen, round + 1);
                         // Change resending mode
                         if (room.getNonProbabilisticMode()) {
-                            // System.out.println("ROUND " + round + " PROBLEMATIC: CHANGING RESENDING MODE TO PROBABILISTIC"); // *******
                             room.setNonProbabilisticMode(false);
                         }
                     }
@@ -440,7 +444,7 @@ public class SessionManager {
                         // Non probabilistic mode (see Reference for more information)
                         if (room.getNonProbabilisticMode()) {
                             // Calculate average message, if my message is below that value i re-send in the round (2*round)
-                            if (outputParticipantMessage.getPlainMessageWithRandomPadding().compareTo(sumOfM.divide(sumOfT)) <= 0) {
+                            if (plainMessageWithRandomPadding.compareTo(sumOfM.divide(sumOfT)) <= 0) {
                                 if (cheaterNode)
                                     nextRoundAllowedToSend = 2 * round + 1;
                                 else
