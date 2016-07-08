@@ -202,28 +202,32 @@ public class SessionManager {
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
 
-                /** SEND COMMITMENT AND POK ON MESSAGE **/
+                /** SET MESSAGES AND OBJECTS OF THIS ROUND **/
                 // Set protocol message to make a commitment to and add round key to the message to construct Json that will be sent
                 String outputMessageRoundJson;
                 BigInteger protocolRoundMessage;
+                BigInteger plainMessage, randomPadding, finalBit;
                 if (messageInThisRound) {
                     protocolRoundMessage = outputParticipantMessage.getProtocolMessage();
                     outputParticipantMessage.setRoundKeyValue(keyRoundValue);
                     outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
                     outputMessageRoundJson = outputParticipantMessageJson;
+                    plainMessage = outputParticipantMessage.getPlainMessage();
+                    randomPadding = outputParticipantMessage.getRandomPadding();
+                    finalBit = outputParticipantMessage.getFinalBit();
                 }
                 else {
                     protocolRoundMessage = BigInteger.ZERO;
                     zeroMessage.setRoundKeyValue(keyRoundValue);
                     zeroMessageJson = new Gson().toJson(zeroMessage);
                     outputMessageRoundJson = zeroMessageJson;
+                    plainMessage = zeroMessage.getPlainMessage();
+                    randomPadding = zeroMessage.getRandomPadding();
+                    finalBit = zeroMessage.getFinalBit();
                 }
 
+                /** SEND CORRECT FORMAT OF MESSAGE PROOF **/
                 // TODO: Implement correct format of message proof
-                /*BigInteger plainMessage = roundMessage.getPlainMessage();
-                BigInteger randomPadding = roundMessage.getRandomPadding();
-                BigInteger finalBit = roundMessage.getFinalBit();
-
                 BigInteger randomForPlainMessage = pedersenCommitment.generateRandom();
                 BigInteger randomForRandomPadding = pedersenCommitment.generateRandom();
                 BigInteger randomForFinalBit = pedersenCommitment.generateRandom();
@@ -232,10 +236,17 @@ public class SessionManager {
                 BigInteger commitmentOnRandomPadding = pedersenCommitment.calculateCommitment(randomPadding, randomForRandomPadding);
                 BigInteger commitmentOnFinalBit = pedersenCommitment.calculateCommitment(finalBit, randomForFinalBit);
 
-                ProofOfKnowledge proofForFinalBitIsZero = zkp.generateProofOfKnowledge(commitmentOnFinalBit, randomForFinalBit);
-                ProofOfKnowledge proofForPlainMessageIsZero = zkp.generateProofOfKnowledge(commitmentOnPlainMessage, randomForPlainMessage);
-                ProofOfKnowledge proofForFinalBitIsOne = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);*/
+                if (messageInThisRound) {
+                    ProofOfKnowledge proofForFinalBitIsOne = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);
+                }
+                else {
+                    ProofOfKnowledge proofForFinalBitIsZero = zkp.generateProofOfKnowledge(commitmentOnFinalBit, randomForFinalBit);
+                    ProofOfKnowledge proofForPlainMessageIsZero = zkp.generateProofOfKnowledge(commitmentOnPlainMessage, randomForPlainMessage);
+                }
 
+                BigInteger commitmentOnMessage2 = constructCommitmentOnMessage(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, room);
+
+                /** SEND COMMITMENT AND POK ON MESSAGE **/
                 // Generate random value for commitment
                 BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
                 // Generate Commitment on Message
@@ -481,6 +492,16 @@ public class SessionManager {
         executionTime = t2 - t1;
         // Save average time per message
         averageTimePerMessage = executionTime / messagesSentWithNoCollisions;
+    }
+
+    private BigInteger constructCommitmentOnMessage(BigInteger commitmentOnPlainMessage, BigInteger commitmentOnRandomPadding, BigInteger commitmentOnFinalBit, Room room) {
+        BigInteger two = BigInteger.valueOf(2);
+        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
+        int randomPaddingLength = room.getPadLength();
+
+        // TODO: Construct commitment of the Message using the three previous commitments (plainMessage, randomPadding and finalBit)
+
+        return null;
     }
 
     /**
