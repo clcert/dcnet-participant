@@ -228,11 +228,12 @@ public class SessionManager {
                 }
 
                 /** SEND CORRECT FORMAT OF MESSAGE PROOF **/
-
+                // Random values
                 BigInteger randomForPlainMessage = pedersenCommitment.generateRandom();
                 BigInteger randomForRandomPadding = pedersenCommitment.generateRandom();
                 BigInteger randomForFinalBit = pedersenCommitment.generateRandom();
 
+                // Commitments for single values
                 BigInteger commitmentOnPlainMessage = pedersenCommitment.calculateCommitment(plainMessage, randomForPlainMessage);
                 BigInteger commitmentOnRandomPadding = pedersenCommitment.calculateCommitment(randomPadding, randomForRandomPadding);
                 BigInteger commitmentOnFinalBit = pedersenCommitment.calculateCommitment(finalBit, randomForFinalBit);
@@ -249,7 +250,7 @@ public class SessionManager {
                 // TODO: SEND THE INDIVIDUAL COMMITMENTS AND PROOF OF FORMAT TO THE REST OF THE ROOM
 
 
-                /** SEND COMMITMENT AND POK ON MESSAGE **/
+                /** SEND POK ON MESSAGE **/
 
                 // Generate Commitment on Message
                 BigInteger commitmentOnMessage = constructCommitmentOnMessage(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, room);
