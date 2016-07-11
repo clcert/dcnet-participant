@@ -87,6 +87,7 @@ public class SessionManager {
         // Create a zeroMessage
         OutputMessage zeroMessage = new OutputMessage();
         zeroMessage.setParticipantMessage("0", room);
+        zeroMessage.setPaddingLength(room.getPadLength());
         String zeroMessageJson;
 
         // Sleep to overlap slow joiner problem
@@ -227,7 +228,7 @@ public class SessionManager {
                 }
 
                 /** SEND CORRECT FORMAT OF MESSAGE PROOF **/
-                // TODO: Implement correct format of message proof
+
                 BigInteger randomForPlainMessage = pedersenCommitment.generateRandom();
                 BigInteger randomForRandomPadding = pedersenCommitment.generateRandom();
                 BigInteger randomForFinalBit = pedersenCommitment.generateRandom();
@@ -236,6 +237,7 @@ public class SessionManager {
                 BigInteger commitmentOnRandomPadding = pedersenCommitment.calculateCommitment(randomPadding, randomForRandomPadding);
                 BigInteger commitmentOnFinalBit = pedersenCommitment.calculateCommitment(finalBit, randomForFinalBit);
 
+                // TODO: IMPLEMENT CORRECT FORMAT ON MESSAGE USING INDIVIDUAL PROOFS IN EACH CASE
                 if (messageInThisRound) {
                     ProofOfKnowledge proofForFinalBitIsOne = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);
                 }
@@ -244,18 +246,26 @@ public class SessionManager {
                     ProofOfKnowledge proofForPlainMessageIsZero = zkp.generateProofOfKnowledge(commitmentOnPlainMessage, randomForPlainMessage);
                 }
 
-                BigInteger commitmentOnMessage2 = constructCommitmentOnMessage(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, room);
+                // TODO: SEND THE INDIVIDUAL COMMITMENTS AND PROOF OF FORMAT TO THE REST OF THE ROOM
+
 
                 /** SEND COMMITMENT AND POK ON MESSAGE **/
-                // Generate random value for commitment
-                BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
+
                 // Generate Commitment on Message
-                BigInteger commitmentOnMessage = pedersenCommitment.calculateCommitment(protocolRoundMessage, randomForCommitmentOnMessage);
+                BigInteger commitmentOnMessage = constructCommitmentOnMessage(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, room);
+                // BigInteger commitmentOnMessage = pedersenCommitment.calculateCommitment(protocolRoundMessage, randomForCommitmentOnMessage);
+
+                // Generate random value for commitment
+                BigInteger randomForCommitmentOnMessage = calculateRandomForCommitmentOnMessage(randomForPlainMessage, randomForRandomPadding, randomForFinalBit, room);
+                // BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
+
                 // Generate ProofOfKnowledgePedersen associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
                 ProofOfKnowledgePedersen proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledgePedersen(commitmentOnMessage, protocolRoundMessage, randomForCommitmentOnMessage);
+
                 // Generate JSON string of an Object containing both commitment and proofOfKnowledge
                 CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnMessage = new CommitmentAndProofOfKnowledge(commitmentOnMessage, proofOfKnowledgeOnMessage);
                 String commitmentAndProofOfKnowledgeOnMessageJson = new Gson().toJson(commitmentAndProofOfKnowledgeOnMessage, CommitmentAndProofOfKnowledge.class);
+
                 // Send Json to the room (which contains the commitment and the proofOfKnowledge)
                 node.getSender().send(commitmentAndProofOfKnowledgeOnMessageJson);
 
@@ -270,7 +280,7 @@ public class SessionManager {
                     commitmentsOnMessage[receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentAndProofOfKnowledgeOnMessage.getCommitment();
                     // Verify proof of knowledge
                     if (!zkp.verifyProofOfKnowledgePedersen(receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge(), receivedCommitmentAndProofOfKnowledgeOnMessage.getCommitment()))
-                        System.err.println("WRONG PoK. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex());
+                        System.err.println("WRONG PoK on Message. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex());
                 }
 
                 // Synchronize nodes to let know that we all finish the commitments on messages part
@@ -494,14 +504,37 @@ public class SessionManager {
         averageTimePerMessage = executionTime / messagesSentWithNoCollisions;
     }
 
+    private BigInteger calculateProtocolMessage(BigInteger plainMessage, BigInteger randomPadding, BigInteger finalBit, Room room) {
+        BigInteger two = BigInteger.valueOf(2);
+        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
+        int randomPaddingLength = room.getPadLength()*8;
+
+        return plainMessage.multiply(two.pow(randomPaddingLength).multiply(nPlusOne)).add(randomPadding).multiply(nPlusOne).add(finalBit);
+    }
+
+    private BigInteger calculateRandomForCommitmentOnMessage(BigInteger randomForPlainMessage, BigInteger randomForRandomPadding, BigInteger randomForFinalBit, Room room) {
+        BigInteger two = BigInteger.valueOf(2);
+        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
+        int nPlusOneInteger = room.getRoomSize()+1;
+        int randomPaddingLength = room.getPadLength()*8; // z
+
+        return randomForPlainMessage.multiply(two.pow(randomPaddingLength).multiply(nPlusOne)).add(randomForRandomPadding).multiply(nPlusOne).add(randomForFinalBit);
+
+    }
+
     private BigInteger constructCommitmentOnMessage(BigInteger commitmentOnPlainMessage, BigInteger commitmentOnRandomPadding, BigInteger commitmentOnFinalBit, Room room) {
         BigInteger two = BigInteger.valueOf(2);
         BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
-        int randomPaddingLength = room.getPadLength();
+        int nPlusOneInteger = room.getRoomSize()+1;
+        int randomPaddingLength = room.getPadLength()*8; // z
 
-        // TODO: Construct commitment of the Message using the three previous commitments (plainMessage, randomPadding and finalBit)
+        return commitmentOnPlainMessage
+                .modPow(two.pow(randomPaddingLength).multiply(nPlusOne), room.getP())
+                .multiply(commitmentOnRandomPadding)
+                .pow(nPlusOneInteger)
+                .multiply(commitmentOnFinalBit)
+                .mod(room.getP());
 
-        return null;
     }
 
     /**

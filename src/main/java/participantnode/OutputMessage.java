@@ -112,6 +112,8 @@ public class OutputMessage {
         if (participantMessage.equals("0")) {
             this.protocolMessage = BigInteger.ZERO;
             finalBit = BigInteger.ZERO;
+            this.randomPadding = BigInteger.ZERO; //
+            this.plainMessage = BigInteger.ZERO; //
         }
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
