@@ -5,10 +5,7 @@ import crypto.PedersenCommitment;
 import crypto.ZeroKnowledgeProof;
 import dcnet.DCNETProtocol;
 import dcnet.Room;
-import json.CommitmentAndProofOfKnowledge;
-import json.OutputMessageAndProofOfKnowledge;
-import json.ProofOfKnowledge;
-import json.ProofOfKnowledgePedersen;
+import json.*;
 import keygeneration.DiffieHellman;
 import keygeneration.KeyGeneration;
 import org.zeromq.ZContext;
@@ -238,6 +235,9 @@ public class SessionManager {
                 BigInteger commitmentOnRandomPadding = pedersenCommitment.calculateCommitment(randomPadding, randomForRandomPadding);
                 BigInteger commitmentOnFinalBit = pedersenCommitment.calculateCommitment(finalBit, randomForFinalBit);
 
+                // Create Object with single commitments
+                CommitmentsOnSingleValues commitmentsOnSingleValues = new CommitmentsOnSingleValues(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, nodeIndex);
+
                 // TODO: IMPLEMENT CORRECT FORMAT ON MESSAGE USING INDIVIDUAL PROOFS IN EACH CASE
                 if (messageInThisRound) {
                     ProofOfKnowledge proofForFinalBitIsOne = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);
@@ -247,41 +247,51 @@ public class SessionManager {
                     ProofOfKnowledge proofForPlainMessageIsZero = zkp.generateProofOfKnowledge(commitmentOnPlainMessage, randomForPlainMessage);
                 }
 
-                // TODO: SEND THE INDIVIDUAL COMMITMENTS AND PROOF OF FORMAT TO THE REST OF THE ROOM
+                // TODO: SEND THE PROOF OF FORMAT TO THE REST OF THE ROOM
+                String commitmentsOnSingleValuesJson = new Gson().toJson(commitmentsOnSingleValues, CommitmentsOnSingleValues.class);
+                node.getSender().send(commitmentsOnSingleValuesJson);
+
+                /** RECEIVE COMMITMENTS ON SINGLE VALUES **/
+                for (int i = 0; i < room.getRoomSize(); i++) {
+                    String receivedCommitmentsOnSingleValuesJson = receiverThread.recvStr();
+                    CommitmentsOnSingleValues receivedCommitmentsOnSingleValues = new Gson().fromJson(receivedCommitmentsOnSingleValuesJson, CommitmentsOnSingleValues.class);
+
+                    BigInteger receivedCommitmentOnPlainMessage = receivedCommitmentsOnSingleValues.getCommitmentOnPlainMessage();
+                    BigInteger receivedCommitmentOnRandomPadding = receivedCommitmentsOnSingleValues.getCommitmentOnRandomPadding();
+                    BigInteger receivedCommitmentOnFinalBit = receivedCommitmentsOnSingleValues.getCommitmentOnFinalBit();
+
+                    BigInteger receivedCommitmentOnMessage = constructCommitmentOnMessage(receivedCommitmentOnPlainMessage, receivedCommitmentOnRandomPadding, receivedCommitmentOnFinalBit, room);
+                    commitmentsOnMessage[receivedCommitmentsOnSingleValues.getNodeIndex() - 1] = receivedCommitmentOnMessage;
+
+                }
 
 
                 /** SEND POK ON MESSAGE **/
 
                 // Generate Commitment on Message
                 BigInteger commitmentOnMessage = constructCommitmentOnMessage(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, room);
-                // BigInteger commitmentOnMessage = pedersenCommitment.calculateCommitment(protocolRoundMessage, randomForCommitmentOnMessage);
 
                 // Generate random value for commitment
                 BigInteger randomForCommitmentOnMessage = calculateRandomForCommitmentOnMessage(randomForPlainMessage, randomForRandomPadding, randomForFinalBit, room);
-                // BigInteger randomForCommitmentOnMessage = pedersenCommitment.generateRandom();
 
                 // Generate ProofOfKnowledgePedersen associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
                 ProofOfKnowledgePedersen proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledgePedersen(commitmentOnMessage, protocolRoundMessage, randomForCommitmentOnMessage);
 
-                // Generate JSON string of an Object containing both commitment and proofOfKnowledge
-                CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnMessage = new CommitmentAndProofOfKnowledge(commitmentOnMessage, proofOfKnowledgeOnMessage);
-                String commitmentAndProofOfKnowledgeOnMessageJson = new Gson().toJson(commitmentAndProofOfKnowledgeOnMessage, CommitmentAndProofOfKnowledge.class);
+                String proofOfKnowledgeOnMessageJson = new Gson().toJson(proofOfKnowledgeOnMessage, ProofOfKnowledgePedersen.class);
 
                 // Send Json to the room (which contains the commitment and the proofOfKnowledge)
-                node.getSender().send(commitmentAndProofOfKnowledgeOnMessageJson);
+                node.getSender().send(proofOfKnowledgeOnMessageJson);
 
                 /** RECEIVE COMMITMENTS AND POKs ON MESSAGES **/
                 // Receive proofs of other participant nodes where we need to check each of them
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a String (json)
-                    String receivedCommitmentAndProofOfKnowledgeOnMessageJson = receiverThread.recvStr();
+                    String receivedProofOfKnowledgeOnMessageJson = receiverThread.recvStr();
                     // Transform String (json) to object ProofOfKnowledgePedersen
-                    CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnMessage = new Gson().fromJson(receivedCommitmentAndProofOfKnowledgeOnMessageJson, CommitmentAndProofOfKnowledge.class);
-                    // Store commitment for future checking
-                    commitmentsOnMessage[receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentAndProofOfKnowledgeOnMessage.getCommitment();
+                    ProofOfKnowledgePedersen receivedProofOfKnowledgeOnMessage = new Gson().fromJson(receivedProofOfKnowledgeOnMessageJson, ProofOfKnowledgePedersen.class);
                     // Verify proof of knowledge
-                    if (!zkp.verifyProofOfKnowledgePedersen(receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge(), receivedCommitmentAndProofOfKnowledgeOnMessage.getCommitment()))
-                        System.err.println("WRONG PoK on Message. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnMessage.getProofOfKnowledge().getNodeIndex());
+                    if (!zkp.verifyProofOfKnowledgePedersen(receivedProofOfKnowledgeOnMessage, commitmentsOnMessage[receivedProofOfKnowledgeOnMessage.getNodeIndex() - 1]))
+                        System.err.println("WRONG PoK on Message. Round: " + round + ", Node: " + receivedProofOfKnowledgeOnMessage.getNodeIndex());
                 }
 
                 // Synchronize nodes to let know that we all finish the commitments on messages part

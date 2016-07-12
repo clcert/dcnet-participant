@@ -50,6 +50,14 @@ public class Receiver implements ZThread.IAttachedRunnable {
                 pipe.send(inputKeyCommitment);
             }
 
+            /** COMMITMENTS FOR SINGLE VALUES **/
+            for (int i = 0; i < roomSize; i++) {
+                // Received commitments on single values from a node in the room
+                String inputCommitmentsOnSingleValues = receiver.recvStr().trim();
+                // Send string (json) to sender thread
+                pipe.send(inputCommitmentsOnSingleValues);
+            }
+
             /** COMMITMENTS AND POK ON MESSAGES **/
             for (int i = 0; i < roomSize; i++) {
                 // Receive proof of knowledge from a node in the room as a String (json)

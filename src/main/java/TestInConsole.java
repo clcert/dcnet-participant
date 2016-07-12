@@ -22,25 +22,27 @@ public class TestInConsole {
         MessagesArrivedObserver messagesArrivedObserver = new MessagesArrivedObserver(dcnetProtocol.getObservableMessageArrived());
         dcnetProtocol.getObservableMessageArrived().addObserver(messagesArrivedObserver);
 
-        System.out.println("Connecting to Room " + directoryIp + "...");
+        System.err.println("Connecting to Room " + directoryIp + "...");
         dcnetProtocol.connectToDirectory(directoryIp);
 
-        System.out.println("Participant IP: " + dcnetProtocol.getNodeIp());
+        System.err.println("Participant IP: " + dcnetProtocol.getNodeIp());
 
-        System.out.println("PARTICIPANT NODE " + dcnetProtocol.getNodeIndex() + " of " + dcnetProtocol.getRoomSize());
+        System.err.println("PARTICIPANT NODE " + dcnetProtocol.getNodeIndex() + " of " + dcnetProtocol.getRoomSize());
         if (message.equals("")) {
-            System.out.println("\nP_" + dcnetProtocol.getNodeIndex() + " doesn't want to communicate any message\n");
+            System.err.println("\nP_" + dcnetProtocol.getNodeIndex() + " doesn't want to communicate any message\n");
         }
         else
-            System.out.println("\nm_" + dcnetProtocol.getNodeIndex() + " = " + message + "\n");
+            System.err.println("\nm_" + dcnetProtocol.getNodeIndex() + " = " + message + "\n");
 
         dcnetProtocol.setMessageToSend(message, cheaterNode);
         dcnetProtocol.runProtocol();
 
-        System.out.println("\nTotal Time: " + dcnetProtocol.getTotalTime() + " seconds");
-        System.out.println("Time to get first message: " + dcnetProtocol.getFirstMessageTime() + " seconds");
-        System.out.println("Average time per message: " + dcnetProtocol.getAverageTimePerMessage() + " seconds");
-        System.out.println("Real rounds played: " + dcnetProtocol.getNumberOfRealRounds());
+        System.err.println("\nTotal Time: " + dcnetProtocol.getTotalTime() + " seconds");
+        System.err.println("Time to get first message: " + dcnetProtocol.getFirstMessageTime() + " seconds");
+        System.err.println("Average time per message: " + dcnetProtocol.getAverageTimePerMessage() + " seconds");
+        System.err.println("Real rounds played: " + dcnetProtocol.getNumberOfRealRounds());
+
+        System.out.println(dcnetProtocol.getTotalTime() + "," + dcnetProtocol.getFirstMessageTime() + "," + dcnetProtocol.getAverageTimePerMessage());
 
     }
 
@@ -57,14 +59,14 @@ public class TestInConsole {
             if (observable == observableParticipantsLeft) {
                 final int participantsLeftToConnect = observableParticipantsLeft.getValue();
                 if (participantsLeftToConnect == -1) {
-                    System.out.println("Connected to Room!");
+                    System.err.println("Connected to Room!");
                 }
                 else {
                     if (participantsLeftToConnect == 1) {
-                        System.out.println("Waiting " + participantsLeftToConnect + " participant to join room");
+                        System.err.println("Waiting " + participantsLeftToConnect + " participant to join room");
                     }
                     else if (participantsLeftToConnect != 0) {
-                        System.out.println("Waiting " + participantsLeftToConnect + " participants to join room");
+                        System.err.println("Waiting " + participantsLeftToConnect + " participants to join room");
                     }
                 }
             }
@@ -83,7 +85,7 @@ public class TestInConsole {
         public void update(Observable observable, Object data) {
             if (observable == observableMessageArrived) {
                 final String messageArrivedValue = observableMessageArrived.getValue();
-                System.out.println("ANON: " + messageArrivedValue);
+                System.err.println("ANON: " + messageArrivedValue);
             }
         }
 
