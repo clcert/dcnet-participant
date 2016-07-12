@@ -144,10 +144,13 @@ public class SessionManager {
                 // Initialize KeyGeneration
                 /*KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(), nodeIndex, repliers, requestors, room);*/
                 KeyGeneration keyGeneration = new DiffieHellman(room.getRoomSize() - 1, room.getG(), room.getP(), nodeIndex, repliers, requestors, room);
+
                 // Generate Participant Node values
                 keyGeneration.generateParticipantNodeValues();
+
                 // Get other participants values (to produce cancellation keys)
                 keyGeneration.getOtherParticipantNodesValues();
+
                 // Generation of the main key round value (operation over the shared key values)
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 
@@ -157,21 +160,28 @@ public class SessionManager {
                 /** SEND COMMITMENT AND POK ON KEY **/
                 // Get round keys (shared keys) of the current participant node
                 BigInteger[] roundKeys = keyGeneration.getRoundKeys();
+
                 // Get shared random values
                 BigInteger[] sharedRandomValues = keyGeneration.getSharedRandomValues();
+
                 // Calculate and save commitments on each round key
                 BigInteger[] commitmentsOnKeys = new BigInteger[roundKeys.length];
                 for (int i = 0; i < roundKeys.length; i++)
                     commitmentsOnKeys[i] = pedersenCommitment.calculateCommitment(roundKeys[i], sharedRandomValues[i]);
+
                 // Retrieve random for commitment on key
                 BigInteger randomRoundValue = calculateRandomForCommitmentOnKey(sharedRandomValues);
+
                 // Generate general commitment value for the resulting round key (operation over round keys)
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
+
                 // Generate proof of knowledge on key stored in commitment
                 ProofOfKnowledgePedersen proofOfKnowledgeOnKey = zkp.generateProofOfKnowledgePedersen(commitmentOnKey, keyRoundValue, randomRoundValue);
+
                 // Generate Json string containing commitmentOnKey and proofOfKnowledge
                 CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnKey = new CommitmentAndProofOfKnowledge(commitmentOnKey, proofOfKnowledgeOnKey);
                 String commitmentAndProofOfKnowledgeOnKeyJson = new Gson().toJson(commitmentAndProofOfKnowledgeOnKey, CommitmentAndProofOfKnowledge.class);
+
                 // Send commitment on key and index to the room
                 node.getSender().send(commitmentAndProofOfKnowledgeOnKeyJson);
 
@@ -181,15 +191,20 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
+
                     // Transform string (json) to CommitmentAndProofOfKnowledge object
                     CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnKey = new Gson().fromJson(receivedCommitmentAndProofOfKnowledgeOnKeyJson, CommitmentAndProofOfKnowledge.class);
+
                     // Get commitmentOnKey
                     BigInteger receivedCommitmentOnKey = receivedCommitmentAndProofOfKnowledgeOnKey.getCommitment();
+
                     // Store commitment for future checking
                     commitmentsOnKey[receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentOnKey;
+
                     // Verify proofOfKnowledge
                     if (!zkp.verifyProofOfKnowledgePedersen(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge(), receivedCommitmentOnKey))
                         System.err.println("WRONG PoK on Key. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex());
+
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(receivedCommitmentOnKey).mod(room.getP());
                 }
@@ -240,11 +255,10 @@ public class SessionManager {
 
                 // TODO: IMPLEMENT CORRECT FORMAT ON MESSAGE USING INDIVIDUAL PROOFS IN EACH CASE
                 if (messageInThisRound) {
-                    ProofOfKnowledge proofForFinalBitIsOne = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);
+                    ProofOfKnowledge proofForMessageToSend = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);
                 }
                 else {
-                    ProofOfKnowledge proofForFinalBitIsZero = zkp.generateProofOfKnowledge(commitmentOnFinalBit, randomForFinalBit);
-                    ProofOfKnowledge proofForPlainMessageIsZero = zkp.generateProofOfKnowledge(commitmentOnPlainMessage, randomForPlainMessage);
+                    ProofOfKnowledge[] proofForNoMessageToSend = zkp.generateProofOfKnowledgeAND(commitmentOnFinalBit, randomForFinalBit, commitmentOnPlainMessage, randomForPlainMessage);
                 }
 
                 // TODO: SEND THE PROOF OF FORMAT TO THE REST OF THE ROOM
@@ -262,9 +276,10 @@ public class SessionManager {
 
                     BigInteger receivedCommitmentOnMessage = constructCommitmentOnMessage(receivedCommitmentOnPlainMessage, receivedCommitmentOnRandomPadding, receivedCommitmentOnFinalBit, room);
                     commitmentsOnMessage[receivedCommitmentsOnSingleValues.getNodeIndex() - 1] = receivedCommitmentOnMessage;
-
                 }
 
+                // Synchronize nodes to let know that we all finish the single values commitments part
+                synchronizeNodes(nodeIndex, repliers, requestors, room);
 
                 /** SEND POK ON MESSAGE **/
 
@@ -276,10 +291,9 @@ public class SessionManager {
 
                 // Generate ProofOfKnowledgePedersen associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
                 ProofOfKnowledgePedersen proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledgePedersen(commitmentOnMessage, protocolRoundMessage, randomForCommitmentOnMessage);
-
                 String proofOfKnowledgeOnMessageJson = new Gson().toJson(proofOfKnowledgeOnMessage, ProofOfKnowledgePedersen.class);
 
-                // Send Json to the room (which contains the commitment and the proofOfKnowledge)
+                // Send Json to the room (which contains the proofOfKnowledge)
                 node.getSender().send(proofOfKnowledgeOnMessageJson);
 
                 /** RECEIVE COMMITMENTS AND POKs ON MESSAGES **/
@@ -515,18 +529,9 @@ public class SessionManager {
         averageTimePerMessage = executionTime / messagesSentWithNoCollisions;
     }
 
-    private BigInteger calculateProtocolMessage(BigInteger plainMessage, BigInteger randomPadding, BigInteger finalBit, Room room) {
-        BigInteger two = BigInteger.valueOf(2);
-        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
-        int randomPaddingLength = room.getPadLength()*8;
-
-        return plainMessage.multiply(two.pow(randomPaddingLength).multiply(nPlusOne)).add(randomPadding).multiply(nPlusOne).add(finalBit);
-    }
-
     private BigInteger calculateRandomForCommitmentOnMessage(BigInteger randomForPlainMessage, BigInteger randomForRandomPadding, BigInteger randomForFinalBit, Room room) {
         BigInteger two = BigInteger.valueOf(2);
         BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
-        int nPlusOneInteger = room.getRoomSize()+1;
         int randomPaddingLength = room.getPadLength()*8; // z
 
         return randomForPlainMessage.multiply(two.pow(randomPaddingLength).multiply(nPlusOne)).add(randomForRandomPadding).multiply(nPlusOne).add(randomForFinalBit);

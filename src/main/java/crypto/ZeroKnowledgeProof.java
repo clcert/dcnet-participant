@@ -1,6 +1,7 @@
 package crypto;
 
 import json.ProofOfKnowledge;
+import json.ProofOfKnowledgeOR;
 import json.ProofOfKnowledgePedersen;
 
 import java.io.UnsupportedEncodingException;
@@ -15,7 +16,7 @@ public class ZeroKnowledgeProof {
 
     private final int nodeIndex;
     private PedersenCommitment pedersenCommitment;
-    private BigInteger p;
+    private BigInteger p, q;
 
     /**
      *
@@ -28,6 +29,7 @@ public class ZeroKnowledgeProof {
     public ZeroKnowledgeProof(BigInteger g, BigInteger h, BigInteger q, BigInteger p, int nodeIndex) {
         this.pedersenCommitment = new PedersenCommitment(g, h, q, p);
         this.p = p;
+        this.q = q;
         this.nodeIndex = nodeIndex;
     }
 
@@ -161,6 +163,65 @@ public class ZeroKnowledgeProof {
         BigInteger a = r.add(b.multiply(x)); // a = r + b*x
 
         return new ProofOfKnowledge(commitment.getG(), z, a, nodeIndex);
+
+    }
+
+    /**
+     *
+     * @return proof of knowledge that participant node knows x in c1 = g^x and y in c2 = h^y
+     */
+    public ProofOfKnowledge[] generateProofOfKnowledgeAND(BigInteger c1, BigInteger c2, BigInteger x, BigInteger y) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        return new ProofOfKnowledge[]{generateProofOfKnowledge(c1, x), generateProofOfKnowledge(c2, y)};
+    }
+
+    /**
+     *
+     * @return proof of knowledge that participant node knows either x in h1 = g^x or y in h2 = g^y
+     */
+    public ProofOfKnowledgeOR generateProofOfKnowledgeOR(BigInteger h1, BigInteger x, BigInteger h2) {
+        BigInteger t1 = this.pedersenCommitment.generateRandom();
+        BigInteger s2 = this.pedersenCommitment.generateRandom();
+        BigInteger c2 = this.pedersenCommitment.generateRandom();
+
+        Commitment commitment = new Commitment(this.pedersenCommitment.getH(), this.p);
+        PedersenCommitment pedersenCommitment = new PedersenCommitment(this.pedersenCommitment.getH(), h2, this.q, this.p);
+
+        BigInteger y1 = commitment.calculateCommitment(t1);
+        BigInteger y2 = pedersenCommitment.calculateCommitment(s2, c2.negate());
+
+        BigInteger c = this.pedersenCommitment.generateRandom();
+        // TODO: Calculate c as a hash of public values
+
+        BigInteger c1 = c.subtract(c2).mod(this.q);
+
+        BigInteger s1 = t1.add(c1.multiply(x));
+
+        return new ProofOfKnowledgeOR(c1, c2, s1, s2, y1, y2);
+    }
+
+    public boolean verifyProofOfKnowledgeOR(ProofOfKnowledgeOR proofOfKnowledgeOR, BigInteger h1, BigInteger h2) {
+        BigInteger c1 = proofOfKnowledgeOR.getC1();
+        BigInteger c2 = proofOfKnowledgeOR.getC2();
+        BigInteger s1 = proofOfKnowledgeOR.getS1();
+        BigInteger s2 = proofOfKnowledgeOR.getS2();
+        BigInteger y1 = proofOfKnowledgeOR.getY1();
+        BigInteger y2 = proofOfKnowledgeOR.getY2();
+
+        BigInteger c = this.pedersenCommitment.generateRandom();
+        // TODO: Calculate c as a hash of public values
+        BigInteger cSum = c1.add(c2);
+
+        Commitment commitment = new Commitment(this.pedersenCommitment.getH(), this.p);
+        PedersenCommitment pedersenCommitment1 = new PedersenCommitment(y1, h1, this.q, this.p);
+        PedersenCommitment pedersenCommitment2 = new PedersenCommitment(y2, h2, this.q, this.p);
+
+        BigInteger _a = commitment.calculateCommitment(s1);
+        BigInteger _b = pedersenCommitment1.calculateCommitment(BigInteger.ONE, c1);
+
+        BigInteger _c = commitment.calculateCommitment(s2);
+        BigInteger _d = pedersenCommitment2.calculateCommitment(BigInteger.ONE, c2);
+
+        return c.equals(cSum) && _a.equals(_b) && _c.equals(_d);
 
     }
 
