@@ -1,6 +1,7 @@
 package participantnode;
 
 import com.google.gson.Gson;
+import crypto.Commitment;
 import crypto.PedersenCommitment;
 import crypto.ZeroKnowledgeProof;
 import dcnet.DCNETProtocol;
@@ -99,7 +100,7 @@ public class SessionManager {
         pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
 
         // Initialize ZeroKnowledgeProof with values of the room
-        ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(room.getG(), room.getH(), room.getQ(), room.getP(), nodeIndex);
+        ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(nodeIndex);
 
         // Set time to measure entire protocol
         long t1 = System.nanoTime();
@@ -176,7 +177,7 @@ public class SessionManager {
                 BigInteger commitmentOnKey = generateCommitmentOnKey(commitmentsOnKeys, room);
 
                 // Generate proof of knowledge on key stored in commitment
-                ProofOfKnowledgePedersen proofOfKnowledgeOnKey = zkp.generateProofOfKnowledgePedersen(commitmentOnKey, keyRoundValue, randomRoundValue);
+                ProofOfKnowledgePedersen proofOfKnowledgeOnKey = zkp.generateProofOfKnowledgePedersen(commitmentOnKey, room.getG(), keyRoundValue, room.getH(), randomRoundValue, room.getQ(), room.getP());
 
                 // Generate Json string containing commitmentOnKey and proofOfKnowledge
                 CommitmentAndProofOfKnowledge commitmentAndProofOfKnowledgeOnKey = new CommitmentAndProofOfKnowledge(commitmentOnKey, proofOfKnowledgeOnKey);
@@ -202,7 +203,7 @@ public class SessionManager {
                     commitmentsOnKey[receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex() - 1] = receivedCommitmentOnKey;
 
                     // Verify proofOfKnowledge
-                    if (!zkp.verifyProofOfKnowledgePedersen(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge(), receivedCommitmentOnKey))
+                    if (!zkp.verifyProofOfKnowledgePedersen(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge(), receivedCommitmentOnKey, room.getG(), room.getH(), room.getQ(), room.getP()))
                         System.err.println("WRONG PoK on Key. Round: " + round + ", Node: " + receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex());
 
                     // Calculate multiplication of incoming commitments
@@ -255,10 +256,11 @@ public class SessionManager {
 
                 // TODO: IMPLEMENT CORRECT FORMAT ON MESSAGE USING INDIVIDUAL PROOFS IN EACH CASE
                 if (messageInThisRound) {
-                    ProofOfKnowledge proofForMessageToSend = zkp.generateProofOfKnowledge(room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()), randomForFinalBit);
+                    BigInteger commitmentGenerated = room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP());
+                    ProofOfKnowledge proofForMessageToSend = zkp.generateProofOfKnowledge(commitmentGenerated, room.getH(), randomForFinalBit, room.getQ(), room.getP());
                 }
                 else {
-                    ProofOfKnowledge[] proofForNoMessageToSend = zkp.generateProofOfKnowledgeAND(commitmentOnFinalBit, randomForFinalBit, commitmentOnPlainMessage, randomForPlainMessage);
+                    ProofOfKnowledge[] proofForNoMessageToSend = zkp.generateProofOfKnowledgeAND(commitmentOnFinalBit, commitmentOnPlainMessage, room.getH(), randomForFinalBit, room.getH(), randomForPlainMessage, room.getQ(), room.getP());
                 }
 
                 // TODO: SEND THE PROOF OF FORMAT TO THE REST OF THE ROOM
@@ -290,7 +292,7 @@ public class SessionManager {
                 BigInteger randomForCommitmentOnMessage = calculateRandomForCommitmentOnMessage(randomForPlainMessage, randomForRandomPadding, randomForFinalBit, room);
 
                 // Generate ProofOfKnowledgePedersen associated with the commitment for the protocol message, using randomForCommitment as the necessary random value
-                ProofOfKnowledgePedersen proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledgePedersen(commitmentOnMessage, protocolRoundMessage, randomForCommitmentOnMessage);
+                ProofOfKnowledgePedersen proofOfKnowledgeOnMessage = zkp.generateProofOfKnowledgePedersen(commitmentOnMessage, room.getG(), protocolRoundMessage, room.getH(), randomForCommitmentOnMessage, room.getQ(), room.getP());
                 String proofOfKnowledgeOnMessageJson = new Gson().toJson(proofOfKnowledgeOnMessage, ProofOfKnowledgePedersen.class);
 
                 // Send Json to the room (which contains the proofOfKnowledge)
@@ -304,7 +306,7 @@ public class SessionManager {
                     // Transform String (json) to object ProofOfKnowledgePedersen
                     ProofOfKnowledgePedersen receivedProofOfKnowledgeOnMessage = new Gson().fromJson(receivedProofOfKnowledgeOnMessageJson, ProofOfKnowledgePedersen.class);
                     // Verify proof of knowledge
-                    if (!zkp.verifyProofOfKnowledgePedersen(receivedProofOfKnowledgeOnMessage, commitmentsOnMessage[receivedProofOfKnowledgeOnMessage.getNodeIndex() - 1]))
+                    if (!zkp.verifyProofOfKnowledgePedersen(receivedProofOfKnowledgeOnMessage, commitmentsOnMessage[receivedProofOfKnowledgeOnMessage.getNodeIndex() - 1], room.getG(), room.getH(), room.getQ(), room.getP()))
                         System.err.println("WRONG PoK on Message. Round: " + round + ", Node: " + receivedProofOfKnowledgeOnMessage.getNodeIndex());
                 }
 
@@ -316,8 +318,10 @@ public class SessionManager {
                 if (round == 1) {
                     // Calculate random for commitment as the sum of both random used before (commitment on key and commitment on message)
                     BigInteger randomForCommitmentOnOutputMessage = randomRoundValue.add(randomForCommitmentOnMessage);
+                    // Commitment for the sum of both randomness used
+                    BigInteger commitmentOnSumOfRandomness = new Commitment(room.getH(), room.getQ(), room.getP()).calculateCommitment(randomForCommitmentOnOutputMessage);
                     // Generate proofOfKnowledge for OutputMessage, as a commitment for the sum of both randomness used (for commitments on key and message)
-                    ProofOfKnowledge proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(randomForCommitmentOnOutputMessage);
+                    ProofOfKnowledge proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(commitmentOnSumOfRandomness, room.getH(), randomForCommitmentOnOutputMessage, room.getQ(), room.getP());
                     // Generate Json string with Object containing both outputMessage and proofOfKnowledge
                     OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new OutputMessageAndProofOfKnowledge(outputParticipantMessage, proofOfKnowledgeOnOutputMessage);
                     String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledge, OutputMessageAndProofOfKnowledge.class);
@@ -359,7 +363,7 @@ public class SessionManager {
                         // Construct beta in order to verify proof of knowledge sent by the participant node
                         BigInteger beta = commitmentOnOutputMessage.multiply(room.getG().modPow(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage(), room.getP()).modInverse(room.getP())).mod(room.getP());
                         // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
-                        if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), beta))
+                        if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), beta, room.getH(), room.getQ(), room.getP()))
                             System.err.println("WRONG PoK on OutputMessage. Round: " + round + ", Node: " + participantNodeIndex);
                         // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
                         sumOfO = sumOfO.add(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage()).mod(room.getP());
