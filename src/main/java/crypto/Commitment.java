@@ -1,17 +1,28 @@
 package crypto;
 
 import java.math.BigInteger;
+import java.util.Random;
 
-class Commitment {
+public class Commitment {
 
-    private BigInteger g, p;
+    private BigInteger g, q, p;
 
-    Commitment(BigInteger g, BigInteger p) {
+    public Commitment(BigInteger g, BigInteger q, BigInteger p) {
         this.g = g;
+        this.q = q;
         this.p = p;
     }
 
-    BigInteger calculateCommitment(BigInteger x) {
+    /**
+     *
+     * @return random value in group Z_q
+     */
+    public BigInteger generateRandom() {
+        BigInteger random = new BigInteger(this.q.bitCount(), new Random());
+        return random.mod(this.q);
+    }
+
+    public BigInteger calculateCommitment(BigInteger x) {
         return this.g.modPow(x, this.p);
     }
 
