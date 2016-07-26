@@ -36,6 +36,7 @@ public class DCNETProtocol {
     private int messageMaxLength;
     private ObservableMessageArrived observableMessageArrived;
     private ObservableParticipantsLeft observableParticipantsLeft;
+    private double syncTime;
 
     public DCNETProtocol() {
         messagesList = new ArrayList<>();
@@ -59,6 +60,7 @@ public class DCNETProtocol {
         this.firstMessageTime = sessionManager.getFirstMessageTime() / 1000000000.0;
         this.averageTimePerMessage = sessionManager.getAverageTimePerMessage() / 1000000000.0;
         this.numberOfRealRounds = sessionManager.getRealRoundsPlayed();
+        this.syncTime = sessionManager.getTotalSyncTime() / 1000000000.0;
 
         // Close the threads and destroy the context
         receiverThread.close();
@@ -123,6 +125,10 @@ public class DCNETProtocol {
 
     public String getNodeIp() {
         return nodeIp;
+    }
+
+    public double getSyncTime() {
+        return syncTime;
     }
 
     public double getTotalTime() {

@@ -39,7 +39,7 @@ public class SessionManager {
     private Dictionary<Integer, BigInteger> messagesSentInPreviousRounds;
     private LinkedList<Integer> nextRoundsToHappen;
     private PedersenCommitment pedersenCommitment;
-    private long executionTime, firstMessageTime, averageTimePerMessage;
+    private long executionTime, firstMessageTime, averageTimePerMessage, totalSyncTime;
 
     /**
      * Initialize all parameters of SessionManager with default values
@@ -59,6 +59,7 @@ public class SessionManager {
         executionTime = 0;
         firstMessageTime = 0;
         pedersenCommitment = new PedersenCommitment();
+        totalSyncTime = 0;
     }
 
     /**
@@ -96,6 +97,8 @@ public class SessionManager {
             e.printStackTrace();
         }
 
+        long initialSyncTime;
+
         // Set values of subsequently commitments with the public info of the Room
         pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
 
@@ -109,8 +112,10 @@ public class SessionManager {
         // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
 
+            initialSyncTime = System.nanoTime();
             // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors, room);
+            totalSyncTime += System.nanoTime() - initialSyncTime;
 
             /* Check if the protocol was finished in the last round played.
              * If it so, let know to the receiver thread, wait for his response and break the loop */
@@ -155,8 +160,10 @@ public class SessionManager {
                 // Generation of the main key round value (operation over the shared key values)
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 
+                initialSyncTime = System.nanoTime();
                 // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
+                totalSyncTime += System.nanoTime() - initialSyncTime;
 
                 /** SEND COMMITMENT AND POK ON KEY **/
                 // Get round keys (shared keys) of the current participant node
@@ -213,8 +220,10 @@ public class SessionManager {
                 if (!multiplicationOnCommitments.equals(BigInteger.ONE))
                     System.err.println("Round " + round + " commitments on keys are WRONG");
 
+                initialSyncTime = System.nanoTime();
                 // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
+                totalSyncTime += System.nanoTime() - initialSyncTime;
 
                 /** SET MESSAGES AND OBJECTS OF THIS ROUND **/
                 // Set protocol message to make a commitment to and add round key to the message to construct Json that will be sent
@@ -280,8 +289,10 @@ public class SessionManager {
                     commitmentsOnMessage[receivedCommitmentsOnSingleValues.getNodeIndex() - 1] = receivedCommitmentOnMessage;
                 }
 
+                initialSyncTime = System.nanoTime();
                 // Synchronize nodes to let know that we all finish the single values commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
+                totalSyncTime += System.nanoTime() - initialSyncTime;
 
                 /** SEND POK ON MESSAGE **/
 
@@ -310,8 +321,10 @@ public class SessionManager {
                         System.err.println("WRONG PoK on Message. Round: " + round + ", Node: " + receivedProofOfKnowledgeOnMessage.getNodeIndex());
                 }
 
+                initialSyncTime = System.nanoTime();
                 // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
+                totalSyncTime += System.nanoTime() - initialSyncTime;
 
                 /** SEND OUTPUT MESSAGE AND POK ASSOCIATED **/
                 // Set Proof of Knowledge that is needed for round 1
@@ -704,6 +717,10 @@ public class SessionManager {
      */
     public int getRealRoundsPlayed() {
         return realRoundsPlayed;
+    }
+
+    public long getTotalSyncTime() {
+        return totalSyncTime;
     }
 
     /**

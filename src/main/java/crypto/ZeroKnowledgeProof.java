@@ -10,14 +10,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- *
+ * @author Camilo J. Gómez (camilo@niclabs.cl)
  */
 public class ZeroKnowledgeProof {
 
     private final int nodeIndex;
 
     /**
-     *
+     * Constructor with parameter for crypto.ZeroKnowledgeProof class
      * @param nodeIndex index of current participant node
      */
     public ZeroKnowledgeProof(int nodeIndex) {

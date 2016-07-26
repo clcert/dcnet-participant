@@ -43,6 +43,7 @@ public class TestInConsole {
         System.err.println("Real rounds played: " + dcnetProtocol.getNumberOfRealRounds());
 
         System.out.println(dcnetProtocol.getTotalTime() + "," + dcnetProtocol.getFirstMessageTime() + "," + dcnetProtocol.getAverageTimePerMessage());
+        System.out.println("Sync Time: " +  dcnetProtocol.getSyncTime() + " (" + dcnetProtocol.getSyncTime()*100.0/dcnetProtocol.getTotalTime() + "%)");
 
     }
 
