@@ -12,9 +12,9 @@ public class Commitment {
 
     /**
      * Constructor for crypto.Commitment class
-     * @param g generator of group G_q
+     * @param g generator of group \(G_q\)
      * @param q large prime
-     * @param p large prime s.t. p = kq + 1
+     * @param p large prime s.t. \(p = kq + 1\)
      */
     public Commitment(BigInteger g, BigInteger q, BigInteger p) {
         this.g = g;
@@ -24,7 +24,7 @@ public class Commitment {
 
     /**
      * Generates a random value
-     * @return random value in group Z_q
+     * @return random value in group \(\mathbb{Z}_q\)
      */
     BigInteger generateRandom() {
         BigInteger random = new BigInteger(this.q.bitCount(), new Random());
@@ -32,17 +32,17 @@ public class Commitment {
     }
 
     /**
-     * Calculate a generate a commitment for x
-     * @param x value in group Z_q
-     * @return commitment c = g^x (mod p)
+     * Calculate and generate a commitment for \(x\)
+     * @param x value in group \(\mathbb{Z}_q\)
+     * @return commitment \(c = g^x \pmod{p}\)
      */
     public BigInteger calculateCommitment(BigInteger x) {
         return this.g.modPow(x, this.p);
     }
 
     /**
-     * Getter for the generator g of the class
-     * @return generator g of group G_q
+     * Getter for the generator \(g\) of the class
+     * @return generator \(g\) of group \(G_q\)
      */
     BigInteger getG() {
         return g;

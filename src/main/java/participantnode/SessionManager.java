@@ -70,6 +70,11 @@ public class SessionManager {
      * @param room               room where the message is going to be send
      * @param node               participant node
      * @param receiverThread     thread where participant node is listening
+     * @param messagesList test
+     * @param cheaterNode test
+     * @param observableMessageArrived test
+     * @throws IOException test
+     * @throws NoSuchAlgorithmException test
      */
     public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, ArrayList<String> messagesList, DCNETProtocol.ObservableMessageArrived observableMessageArrived) throws IOException, NoSuchAlgorithmException {
 
@@ -269,7 +274,7 @@ public class SessionManager {
                     ProofOfKnowledge proofForMessageToSend = zkp.generateProofOfKnowledge(commitmentGenerated, room.getH(), randomForFinalBit, room.getQ(), room.getP());
                 }
                 else {
-                    ProofOfKnowledge[] proofForNoMessageToSend = zkp.generateProofOfKnowledgeAND(commitmentOnFinalBit, commitmentOnPlainMessage, room.getH(), randomForFinalBit, room.getH(), randomForPlainMessage, room.getQ(), room.getP());
+                    ProofOfKnowledgeAND proofForNoMessageToSend = zkp.generateProofOfKnowledgeAND(commitmentOnFinalBit, commitmentOnPlainMessage, room.getH(), randomForFinalBit, room.getH(), randomForPlainMessage, room.getQ(), room.getP());
                 }
 
                 // TODO: SEND THE PROOF OF FORMAT TO THE REST OF THE ROOM

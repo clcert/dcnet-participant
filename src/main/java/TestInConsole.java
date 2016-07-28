@@ -9,6 +9,7 @@ public class TestInConsole {
     /**
      * Usage: ./gradlew run -PappArgs=[{message},{directoryIP},{cheatingMode}]
      * @param args message and ip address of directory node
+     * @throws IOException test
      */
     public static void main(String[] args) throws IOException {
         // Parse arguments

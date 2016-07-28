@@ -32,6 +32,7 @@ public class ParticipantNode {
     /**
      * Get the LAN IP address of the node
      * @return local network ip address of the participant node
+     * @throws SocketException test
      */
     static public String getLocalNetworkIp() throws SocketException {
         String ip = "";
@@ -89,6 +90,7 @@ public class ParticipantNode {
      * @param directoryNode directory node where this participant node is connected to
      * @param room room where this participant node is going to send messages
      * @param context context where the zmq sockets need to run
+     * @param observableParticipantsLeft test
      */
     public void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context, DCNETProtocol.ObservableParticipantsLeft observableParticipantsLeft) {
         // Create Directory Subscriber and connect to 5555 port

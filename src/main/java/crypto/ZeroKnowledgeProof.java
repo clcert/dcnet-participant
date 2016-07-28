@@ -1,6 +1,7 @@
 package crypto;
 
 import json.ProofOfKnowledge;
+import json.ProofOfKnowledgeAND;
 import json.ProofOfKnowledgeOR;
 import json.ProofOfKnowledgePedersen;
 
@@ -25,17 +26,17 @@ public class ZeroKnowledgeProof {
     }
 
     /**
-     *
-     * @param c commitment s.t. c = g^x h^r (mod p)
-     * @param g generator of group G_q
-     * @param x value in Z_q
-     * @param h generator of group G_q
-     * @param r value in Z_q
+     * Generate Proof of Knowledge that participant knows \((x, r)\) in \(c = g^x h^r \pmod{p}\)
+     * @param c commitment s.t. \(c = g^x h^r \pmod{p}\)
+     * @param g generator of group \(G_q\)
+     * @param x value in \(\mathbb{Z}_q\)
+     * @param h generator of group \(G_q\)
+     * @param r value in \(\mathbb{Z}_q\)
      * @param q large prime
-     * @param p large prime s.t. p = kq + 1
-     * @return ProofOfKnowledge s.t. node knows (x,r) in c = g^x h^r (mod p)
-     * @throws NoSuchAlgorithmException
-     * @throws UnsupportedEncodingException
+     * @param p large prime s.t. \(p = kq + 1\)
+     * @return ProofOfKnowledge s.t. node knows \((x,r)\) in \(c = g^x h^r \pmod{p}\)
+     * @throws NoSuchAlgorithmException test
+     * @throws UnsupportedEncodingException test
      */
     public ProofOfKnowledgePedersen generateProofOfKnowledgePedersen(BigInteger c, BigInteger g, BigInteger x, BigInteger h, BigInteger r, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h, q, p);
@@ -63,16 +64,16 @@ public class ZeroKnowledgeProof {
     }
 
     /**
-     *
-     * @param proof ProofOfKnowledge that node knows (x,r) in c = g^x h^r (mod p)
-     * @param c commitment s.t. c = g^x h^r (mod p)
-     * @param g generator of group G_q
-     * @param h generator of group G_q
+     * Verifies if the Proof of Knowledge provide is valid or not for knowing \((x, r)\) in \(c = g^x h^r \pmod{p}\)
+     * @param proof ProofOfKnowledge that node knows \((x,r)\) in \(c = g^x h^r \pmod{p}\)
+     * @param c commitment s.t. \(c = g^x h^r \pmod{p}\)
+     * @param g generator of group \(G_q\)
+     * @param h generator of group \(G_q\)
      * @param q large prime
-     * @param p large prime s.t. p = kq + 1
+     * @param p large prime s.t. \(p = kq + 1\)
      * @return true if proof is correct, false otherwise
-     * @throws NoSuchAlgorithmException
-     * @throws UnsupportedEncodingException
+     * @throws NoSuchAlgorithmException test
+     * @throws UnsupportedEncodingException test
      */
     public boolean verifyProofOfKnowledgePedersen(ProofOfKnowledgePedersen proof, BigInteger c, BigInteger g, BigInteger h, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h, q, p);
@@ -94,14 +95,14 @@ public class ZeroKnowledgeProof {
 
     /**
      *
-     * @param c commitment s.t. c = g^x (mod p)
-     * @param g generator of group G_q
-     * @param x value in Z_q
+     * @param c commitment s.t. \(c = g^x \pmod{p}\)
+     * @param g generator of group \(G_q\)
+     * @param x value in \(\mathbb{Z}_q\)
      * @param q large prime
-     * @param p large prime s.t. p = kq + 1
-     * @return ProofOfKnowledge that node knows x in c = g^x (mod p)
-     * @throws NoSuchAlgorithmException
-     * @throws UnsupportedEncodingException
+     * @param p large prime s.t. \(p = kq + 1\)
+     * @return ProofOfKnowledge that node knows \(x\) in \(c = g^x \pmod{p}\)
+     * @throws NoSuchAlgorithmException test
+     * @throws UnsupportedEncodingException test
      */
     public ProofOfKnowledge generateProofOfKnowledge(BigInteger c, BigInteger g, BigInteger x, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         Commitment commitment = new Commitment(g, q, p);
@@ -126,14 +127,14 @@ public class ZeroKnowledgeProof {
 
     /**
      *
-     * @param proof ProofOfKnowledge that node knows x in c = g^x (mod p)
-     * @param c commitment s.t. c = g^x (mod p)
-     * @param g generator of group G_q
+     * @param proof ProofOfKnowledge that node knows \(x\) in \(c = g^x \pmod{p}\)
+     * @param c commitment s.t. \(c = g^x \pmod{p}\)
+     * @param g generator of group \(G_q\)
      * @param q large prime
-     * @param p large prime s.t p = kq + 1
+     * @param p large prime s.t \(p = kq + 1\)
      * @return true if proof is correct, false otherwise
-     * @throws NoSuchAlgorithmException
-     * @throws UnsupportedEncodingException
+     * @throws NoSuchAlgorithmException test
+     * @throws UnsupportedEncodingException test
      */
     public boolean verifyProofOfKnowledge(ProofOfKnowledge proof, BigInteger c, BigInteger g, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         Commitment commitment = new Commitment(g, q, p);
@@ -154,20 +155,45 @@ public class ZeroKnowledgeProof {
 
     /**
      *
-     * @param c1 commitment s.t. c1 = g^x1 (mod p)
-     * @param c2 commitment s.t. c2 = h^x2 (mod p)
-     * @param g generator of group G_q
-     * @param x1 value in Z_q
-     * @param h generator of group G_q
-     * @param x2 value in Z_q
+     * @param c1 commitment s.t. \(c_1 = g^{x_1} \pmod{p}\)
+     * @param c2 commitment s.t. \(c_2 = h^{x_2} \pmod{p}\)
+     * @param g generator of group \(G_q\)
+     * @param x1 value in \(\mathbb{Z}_q\)
+     * @param h generator of group \(G_q\)
+     * @param x2 value in \(\mathbb{Z}_q\)
      * @param q large prime
-     * @param p large prime s.t. p = kq + 1
-     * @return ProofOfKnowledge(s) that node knows x1 in c1 = g^x1 (mod p) and x2 in c2 = h^x2 (mod p)
-     * @throws UnsupportedEncodingException
-     * @throws NoSuchAlgorithmException
+     * @param p large prime s.t. \(p = kq + 1\)
+     * @return ProofOfKnowledge that node knows \(x_1\) in \(c_1 = g^{x_1} \pmod{p}\) and \(x_2\) in \(c_2 = h^{x_2} \pmod{p}\)
+     * @throws UnsupportedEncodingException test
+     * @throws NoSuchAlgorithmException test
      */
-    public ProofOfKnowledge[] generateProofOfKnowledgeAND(BigInteger c1, BigInteger c2, BigInteger g, BigInteger x1, BigInteger h, BigInteger x2, BigInteger q, BigInteger p) throws UnsupportedEncodingException, NoSuchAlgorithmException {
-        return new ProofOfKnowledge[]{generateProofOfKnowledge(c1, g, x1, q, p), generateProofOfKnowledge(c2, h, x2, q, p)};
+    public ProofOfKnowledgeAND generateProofOfKnowledgeAND(BigInteger c1, BigInteger c2, BigInteger g, BigInteger x1, BigInteger h, BigInteger x2, BigInteger q, BigInteger p) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        Commitment commitment1 = new Commitment(g, q, p);
+        Commitment commitment2 = new Commitment(h, q, p);
+
+        BigInteger r1 = commitment1.generateRandom(); // r1 random value in Z_q
+        BigInteger r2 = commitment2.generateRandom(); // r2 random value in Z_q
+
+        BigInteger z1 = commitment1.calculateCommitment(r1); // z1 = g^r1 (mod p)
+        BigInteger z2 = commitment2.calculateCommitment(r2); // z2 = h^r2 (mod p)
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        String publicValueOnHash = z1.toString().concat(
+                                   z2.toString()).concat(
+                                   g.toString()).concat(
+                                   h.toString()).concat(
+                                   c1.toString()).concat(
+                                   c2.toString()).concat(
+                                   "" + this.nodeIndex);
+        md.update(publicValueOnHash.getBytes("UTF-8"));
+        byte[] hashOnPublicValues = md.digest();
+        BigInteger b = new BigInteger(hashOnPublicValues); // b = H( z1 || z2 || g || h || c1 || c2 || nodeIndex )
+
+        BigInteger a1 = r1.add(b.multiply(x1)); // a1 = r1 + b*x1
+        BigInteger a2 = r2.add(b.multiply(x2)); // a2 = r2 + b*x2
+
+        return new ProofOfKnowledgeAND(g, h, z1, z2, a1, a2, nodeIndex);
+
     }
 
     /**
@@ -179,7 +205,10 @@ public class ZeroKnowledgeProof {
      * @param q large prime
      * @param p large prime s.t. p = kq + 1
      * @return ProofOfKnowledgeOR that node knows x1 in c1 = g^x1 (mod p) or c2 = g^x2 (mod p)
+     * @throws UnsupportedEncodingException test
+     * @throws NoSuchAlgorithmException test
      */
+    // TODO: Fix this method
     public ProofOfKnowledgeOR generateProofOfKnowledgeOR(BigInteger h1, BigInteger g, BigInteger x1, BigInteger h2, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         Commitment commitment = new Commitment(g, q, p);
 
@@ -221,6 +250,8 @@ public class ZeroKnowledgeProof {
      * @param q large prime
      * @param p large prime s.t. p = kq + 1
      * @return true if proof is correct, false otherwise
+     * @throws UnsupportedEncodingException test
+     * @throws NoSuchAlgorithmException test
      */
     public boolean verifyProofOfKnowledgeOR(ProofOfKnowledgeOR proofOfKnowledgeOR, BigInteger h1, BigInteger h2, BigInteger g, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         BigInteger c1 = proofOfKnowledgeOR.getC1();
