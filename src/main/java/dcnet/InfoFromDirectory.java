@@ -17,7 +17,6 @@ public class InfoFromDirectory {
     private int padLength;
 
     /**
-     *
      * @return array with info of nodes connected in the room
      */
     ParticipantNodeInfoFromDirectory[] getNodes() {
@@ -25,7 +24,6 @@ public class InfoFromDirectory {
     }
 
     /**
-     *
      * @return generator g
      */
     BigInteger getG() {
@@ -33,7 +31,6 @@ public class InfoFromDirectory {
     }
 
     /**
-     *
      * @return generator h
      */
     BigInteger getH() {
@@ -41,7 +38,6 @@ public class InfoFromDirectory {
     }
 
     /**
-     *
      * @return large prime q
      */
     BigInteger getQ() {
@@ -49,7 +45,6 @@ public class InfoFromDirectory {
     }
 
     /**
-     *
      * @return large prime p
      */
     BigInteger getP() {
@@ -57,7 +52,6 @@ public class InfoFromDirectory {
     }
 
     /**
-     *
      * @return resending mode of the room: true if it's non probabilistic, false if not
      */
     boolean getNonProbabilistic() {
@@ -65,7 +59,6 @@ public class InfoFromDirectory {
     }
 
     /**
-     *
      * @return max characters length of a message
      */
     int getL() {
@@ -73,7 +66,6 @@ public class InfoFromDirectory {
     }
 
     /**
-     *
      * @return random padding characters length added to all messages to prevent equal messages
      */
     int getPadLength() {

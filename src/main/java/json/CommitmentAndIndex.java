@@ -11,9 +11,8 @@ public class CommitmentAndIndex {
     private int nodeIndex;
 
     /**
-     *
      * @param commitment commitment
-     * @param nodeIndex index of current participant node
+     * @param nodeIndex  index of current participant node
      */
     public CommitmentAndIndex(BigInteger commitment, int nodeIndex) {
         this.commitment = commitment;
@@ -21,7 +20,6 @@ public class CommitmentAndIndex {
     }
 
     /**
-     *
      * @return commitment
      */
     public BigInteger getCommitment() {
@@ -29,7 +27,6 @@ public class CommitmentAndIndex {
     }
 
     /**
-     *
      * @return index of current participant node
      */
     public int getNodeIndex() {

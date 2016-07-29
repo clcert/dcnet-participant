@@ -23,10 +23,12 @@ public class Room {
     /**
      *
      */
-    Room() {}
+    Room() {
+    }
 
     /**
      * Rescue index (key) of the given node
+     *
      * @param node participant node
      * @return index assigned to node
      */
@@ -43,7 +45,6 @@ public class Room {
     }
 
     /**
-     *
      * @param i index of the node
      * @return ip address of the node
      */
@@ -52,7 +53,6 @@ public class Room {
     }
 
     /**
-     *
      * @param infoFromDirectory info of nodes
      */
     public void setRoomInfoFromDirectory(InfoFromDirectory infoFromDirectory) {
@@ -70,7 +70,6 @@ public class Room {
     }
 
     /**
-     *
      * @return generator g
      */
     public BigInteger getG() {
@@ -78,7 +77,6 @@ public class Room {
     }
 
     /**
-     *
      * @return generator h
      */
     public BigInteger getH() {
@@ -86,7 +84,6 @@ public class Room {
     }
 
     /**
-     *
      * @return large prime q
      */
     public BigInteger getQ() {
@@ -94,7 +91,6 @@ public class Room {
     }
 
     /**
-     *
      * @return large prime p
      */
     public BigInteger getP() {
@@ -102,7 +98,6 @@ public class Room {
     }
 
     /**
-     *
      * @return max characters length of a message
      */
     int getL() {
@@ -110,7 +105,6 @@ public class Room {
     }
 
     /**
-     *
      * @return random padding characters length added to all messages to prevent equal messages
      */
     public int getPadLength() {
@@ -118,7 +112,6 @@ public class Room {
     }
 
     /**
-     *
      * @return true if the room is in non probabilistic mode or false if not
      */
     public boolean getNonProbabilisticMode() {
@@ -126,7 +119,6 @@ public class Room {
     }
 
     /**
-     *
      * @return maximum number of nodes in the room
      */
     public int getRoomSize() {

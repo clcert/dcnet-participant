@@ -44,12 +44,11 @@ public class SecretSharing implements KeyGeneration {
     private BigInteger roundRandom;
 
     /**
-     *
-     * @param n number of shares to split the secretKey
-     * @param nodeIndex index of current participant node
-     * @param repliers sockets repliers of current participant node
+     * @param n          number of shares to split the secretKey
+     * @param nodeIndex  index of current participant node
+     * @param repliers   sockets repliers of current participant node
      * @param requestors sockets requestors of current participant node
-     * @param room room where the current participant node is sending messages
+     * @param room       room where the current participant node is sending messages
      */
     public SecretSharing(int n, int nodeIndex, ZMQ.Socket[] repliers, ZMQ.Socket[] requestors, Room room) {
         this.n = n;
@@ -66,7 +65,6 @@ public class SecretSharing implements KeyGeneration {
     }
 
     /**
-     *
      * @return n-1 shares of the secretKey of current participant node
      */
     @Override
@@ -96,13 +94,12 @@ public class SecretSharing implements KeyGeneration {
     }
 
     /**
-     *
      * @return 1 share of each n-1 other participant nodes secrets
      */
     @Override
     public BigInteger[] getOtherParticipantNodesValues() {
         int i = 0;
-        BigInteger[] otherNodesRandomKeyShares = new BigInteger[room.getRoomSize()-1];
+        BigInteger[] otherNodesRandomKeyShares = new BigInteger[room.getRoomSize() - 1];
         // The "first" node doesn't have any replier sockets
         if (nodeIndex != 1)
             for (ZMQ.Socket replier : repliers) {
@@ -124,7 +121,7 @@ public class SecretSharing implements KeyGeneration {
         this.otherNodesKeyShares = otherNodesRandomKeyShares;
 
         i = 0;
-        BigInteger[] otherNodesRandomShares = new BigInteger[room.getRoomSize()-1]; //
+        BigInteger[] otherNodesRandomShares = new BigInteger[room.getRoomSize() - 1]; //
         // The "first" node doesn't have any replier sockets
         if (nodeIndex != 1)
             for (ZMQ.Socket replier : repliers) {
@@ -149,18 +146,16 @@ public class SecretSharing implements KeyGeneration {
     }
 
     /**
-     *
      * @return n-1 shares of the secretKey of current participant node
      */
     @Override
     public BigInteger[] getRoundKeys() {
         // Divide roundKey into n-1 shares
         //return this.secretKeyShares;
-        return splitSecret(this.roundKey, this.n-1);
+        return splitSecret(this.roundKey, this.n - 1);
     }
 
     /**
-     *
      * @return sum of all other participant nodes shared with current participant node
      * plus share of current participant node secretKey didn't share with the room, minus current participant node secretKey
      */
@@ -180,20 +175,18 @@ public class SecretSharing implements KeyGeneration {
     }
 
     /**
-     *
      * @return shared secretRandom values
      */
     @Override
     public BigInteger[] getSharedRandomValues() {
         // Divide roundRandom into n-1 shares
         //return secretRandomShares; //
-        return splitSecret(this.roundRandom, this.n-1);
+        return splitSecret(this.roundRandom, this.n - 1);
     }
 
     /**
-     *
      * @param secret value that wants to be shared
-     * @param n nu,ber of shares that secretKey will be separated
+     * @param n      nu,ber of shares that secretKey will be separated
      * @return array with all the n shares
      */
     private BigInteger[] splitSecret(BigInteger secret, int n) {

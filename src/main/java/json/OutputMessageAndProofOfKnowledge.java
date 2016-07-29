@@ -11,8 +11,7 @@ public class OutputMessageAndProofOfKnowledge {
     private ProofOfKnowledge proofOfKnowledge;
 
     /**
-     *
-     * @param outputMessage output message
+     * @param outputMessage    output message
      * @param proofOfKnowledge proof of knowledge
      */
     public OutputMessageAndProofOfKnowledge(OutputMessage outputMessage, ProofOfKnowledge proofOfKnowledge) {
@@ -21,7 +20,6 @@ public class OutputMessageAndProofOfKnowledge {
     }
 
     /**
-     *
      * @return output message
      */
     public OutputMessage getOutputMessage() {
@@ -29,7 +27,6 @@ public class OutputMessageAndProofOfKnowledge {
     }
 
     /**
-     *
      * @return proof of knowledge
      */
     public ProofOfKnowledge getProofOfKnowledge() {

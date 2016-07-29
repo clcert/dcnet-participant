@@ -8,6 +8,7 @@ public class TestInConsole {
 
     /**
      * Usage: ./gradlew run -PappArgs=[{message},{directoryIP},{cheatingMode}]
+     *
      * @param args message and ip address of directory node
      * @throws IOException test
      */
@@ -31,8 +32,7 @@ public class TestInConsole {
         System.err.println("PARTICIPANT NODE " + dcnetProtocol.getNodeIndex() + " of " + dcnetProtocol.getRoomSize());
         if (message.equals("")) {
             System.err.println("\nP_" + dcnetProtocol.getNodeIndex() + " doesn't want to communicate any message\n");
-        }
-        else
+        } else
             System.err.println("\nm_" + dcnetProtocol.getNodeIndex() + " = " + message + "\n");
 
         dcnetProtocol.setMessageToSend(message, cheaterNode);
@@ -44,7 +44,7 @@ public class TestInConsole {
         System.err.println("Real rounds played: " + dcnetProtocol.getNumberOfRealRounds());
 
         System.out.println(dcnetProtocol.getTotalTime() + "," + dcnetProtocol.getFirstMessageTime() + "," + dcnetProtocol.getAverageTimePerMessage());
-        System.out.println("Sync Time: " +  dcnetProtocol.getSyncTime() + " (" + dcnetProtocol.getSyncTime()*100.0/dcnetProtocol.getTotalTime() + "%)");
+        System.out.println("Sync Time: " + dcnetProtocol.getSyncTime() + " (" + dcnetProtocol.getSyncTime() * 100.0 / dcnetProtocol.getTotalTime() + "%)");
 
     }
 
@@ -62,12 +62,10 @@ public class TestInConsole {
                 final int participantsLeftToConnect = observableParticipantsLeft.getValue();
                 if (participantsLeftToConnect == -1) {
                     System.err.println("Connected to Room!");
-                }
-                else {
+                } else {
                     if (participantsLeftToConnect == 1) {
                         System.err.println("Waiting " + participantsLeftToConnect + " participant to join room");
-                    }
-                    else if (participantsLeftToConnect != 0) {
+                    } else if (participantsLeftToConnect != 0) {
                         System.err.println("Waiting " + participantsLeftToConnect + " participants to join room");
                     }
                 }

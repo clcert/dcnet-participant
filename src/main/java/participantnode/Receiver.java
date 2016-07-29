@@ -12,10 +12,9 @@ import org.zeromq.ZThread;
 public class Receiver implements ZThread.IAttachedRunnable {
 
     /**
-     *
-     * @param args room where the receiver thread needs to listen messages
+     * @param args    room where the receiver thread needs to listen messages
      * @param context context where the zmq sockets need to run
-     * @param pipe zmq socket created to connect both threads
+     * @param pipe    zmq socket created to connect both threads
      */
     @Override
     public void run(Object[] args, ZContext context, ZMQ.Socket pipe) {
@@ -39,7 +38,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
             // If not is finished, it is the number of the round that the room is playing
             int round = Integer.parseInt(inputFromSender);
             // If the round is virtual, the receiver thread will not receive any message from the room, so we skip it
-            if (round != 1 && round%2 != 0)
+            if (round != 1 && round % 2 != 0)
                 continue;
 
             /** COMMITMENTS ON KEYS PART **/
@@ -74,8 +73,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
                     // Send String (json) to the sender thread
                     pipe.send(inputOutputMessagePOKAndOutputMessage);
                 }
-            }
-            else {
+            } else {
                 for (int i = 0; i < roomSize; i++) {
                     // Receive message from a node in the room
                     String inputOutputMessage = receiver.recvStr().trim();
@@ -97,9 +95,8 @@ public class Receiver implements ZThread.IAttachedRunnable {
     }
 
     /**
-     *
      * @param receiver zmq socket that will receive messages
-     * @param room room where the receiver thread is listening messages
+     * @param room     room where the receiver thread is listening messages
      */
     private void connectReceiverThread(ZMQ.Socket receiver, Room room) {
         for (int i = 1; i <= room.getRoomSize(); i++)

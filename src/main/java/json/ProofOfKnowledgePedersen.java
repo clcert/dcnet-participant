@@ -11,10 +11,9 @@ public class ProofOfKnowledgePedersen {
     private int nodeIndex;
 
     /**
-     *
-     * @param d commitment on random values (y, s)
-     * @param u u = y + ex
-     * @param v v = s + er
+     * @param d         commitment on random values (y, s)
+     * @param u         u = y + ex
+     * @param v         v = s + er
      * @param nodeIndex index of participant node that sends the proof
      */
     public ProofOfKnowledgePedersen(BigInteger d, BigInteger u, BigInteger v, int nodeIndex) {
@@ -25,7 +24,6 @@ public class ProofOfKnowledgePedersen {
     }
 
     /**
-     *
      * @return commitment d
      */
     public BigInteger getD() {
@@ -33,7 +31,6 @@ public class ProofOfKnowledgePedersen {
     }
 
     /**
-     *
      * @return value u
      */
     public BigInteger getU() {
@@ -41,7 +38,6 @@ public class ProofOfKnowledgePedersen {
     }
 
     /**
-     *
      * @return value v
      */
     public BigInteger getV() {
@@ -49,7 +45,6 @@ public class ProofOfKnowledgePedersen {
     }
 
     /**
-     *
      * @return index of participant node sending this proof of knowledge
      */
     public int getNodeIndex() {

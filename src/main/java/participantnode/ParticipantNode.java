@@ -22,7 +22,6 @@ public class ParticipantNode {
     private ZMQ.Socket sender;
 
     /**
-     *
      * @param nodeIp ip address of the participant node
      */
     public ParticipantNode(String nodeIp) {
@@ -31,20 +30,21 @@ public class ParticipantNode {
 
     /**
      * Get the LAN IP address of the node
+     *
      * @return local network ip address of the participant node
      * @throws SocketException test
      */
     static public String getLocalNetworkIp() throws SocketException {
         String ip = "";
         Enumeration e = NetworkInterface.getNetworkInterfaces();
-        while(e.hasMoreElements()) {
+        while (e.hasMoreElements()) {
             NetworkInterface n = (NetworkInterface) e.nextElement();
             if (!n.getDisplayName().contains("docker")) {
                 Enumeration ee = n.getInetAddresses();
                 while (ee.hasMoreElements()) {
                     InetAddress i = (InetAddress) ee.nextElement();
                     if (!i.isLinkLocalAddress() && !i.isLoopbackAddress()) {
-                        ip =  i.getHostAddress();
+                        ip = i.getHostAddress();
                     }
                 }
             }
@@ -53,7 +53,6 @@ public class ParticipantNode {
     }
 
     /**
-     *
      * @param context context where the zmq sockets need to run
      */
     public void createSender(ZContext context) {
@@ -62,7 +61,6 @@ public class ParticipantNode {
     }
 
     /**
-     *
      * @param sender zmq socket which is going to send broadcast messages
      */
     private void bindSenderPort(ZMQ.Socket sender) {
@@ -70,7 +68,6 @@ public class ParticipantNode {
     }
 
     /**
-     *
      * @return zmq socket where the broadcast messages are going send through
      */
     ZMQ.Socket getSender() {
@@ -78,7 +75,6 @@ public class ParticipantNode {
     }
 
     /**
-     *
      * @return ip address of the participant node
      */
     public String getNodeIp() {
@@ -86,10 +82,9 @@ public class ParticipantNode {
     }
 
     /**
-     *
-     * @param directoryNode directory node where this participant node is connected to
-     * @param room room where this participant node is going to send messages
-     * @param context context where the zmq sockets need to run
+     * @param directoryNode              directory node where this participant node is connected to
+     * @param room                       room where this participant node is going to send messages
+     * @param context                    context where the zmq sockets need to run
      * @param observableParticipantsLeft test
      */
     public void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context, DCNETProtocol.ObservableParticipantsLeft observableParticipantsLeft) {

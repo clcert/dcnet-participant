@@ -9,6 +9,7 @@ public class DirectoryNode {
 
     /**
      * Constructor of the class using the ip address of the directory node
+     *
      * @param directoryIp ip address of the directory node
      */
     DirectoryNode(String directoryIp) {
@@ -17,6 +18,7 @@ public class DirectoryNode {
 
     /**
      * Get the ip address of the directory node
+     *
      * @return ip address of the directory node
      */
     public String getDirectoryIp() {

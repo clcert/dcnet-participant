@@ -11,8 +11,7 @@ public class CommitmentAndProofOfKnowledge {
     private ProofOfKnowledgePedersen proofOfKnowledge;
 
     /**
-     *
-     * @param commitment commitment
+     * @param commitment       commitment
      * @param proofOfKnowledge proof of knowledge on values hidden in commitment
      */
     public CommitmentAndProofOfKnowledge(BigInteger commitment, ProofOfKnowledgePedersen proofOfKnowledge) {
@@ -21,7 +20,6 @@ public class CommitmentAndProofOfKnowledge {
     }
 
     /**
-     *
      * @return commitment
      */
     public BigInteger getCommitment() {
@@ -29,7 +27,6 @@ public class CommitmentAndProofOfKnowledge {
     }
 
     /**
-     *
      * @return proof of knowledge
      */
     public ProofOfKnowledgePedersen getProofOfKnowledge() {

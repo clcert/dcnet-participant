@@ -192,7 +192,8 @@ public class DCNETProtocol {
     public class ObservableParticipantsLeft extends Observable {
         private int participantsLeft;
 
-        public ObservableParticipantsLeft() {}
+        public ObservableParticipantsLeft() {
+        }
 
         public void setValue(int participantsLeft) {
             this.participantsLeft = participantsLeft;

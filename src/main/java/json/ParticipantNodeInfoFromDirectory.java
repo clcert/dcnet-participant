@@ -9,7 +9,6 @@ public class ParticipantNodeInfoFromDirectory {
     private String ip;
 
     /**
-     *
      * @return index of current participant node
      */
     public int getIndex() {
@@ -17,7 +16,6 @@ public class ParticipantNodeInfoFromDirectory {
     }
 
     /**
-     *
      * @return ip address of current participant node
      */
     public String getIp() {

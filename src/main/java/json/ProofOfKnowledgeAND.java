@@ -11,7 +11,6 @@ public class ProofOfKnowledgeAND {
     private int nodeIndex;
 
     /**
-     *
      * @param g
      * @param h
      * @param z1
