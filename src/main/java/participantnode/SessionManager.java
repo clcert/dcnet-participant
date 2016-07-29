@@ -65,15 +65,15 @@ public class SessionManager {
     /**
      * Method that runs a single session for a single participant node within an specific room
      *
-     * @param nodeIndex          index of the participant node
-     * @param participantMessage string with the message that participant node wants to communicate
-     * @param room               room where the message is going to be send
-     * @param node               participant node
-     * @param receiverThread     thread where participant node is listening
-     * @param messagesList test
-     * @param cheaterNode test
+     * @param nodeIndex                index of the participant node
+     * @param participantMessage       string with the message that participant node wants to communicate
+     * @param room                     room where the message is going to be send
+     * @param node                     participant node
+     * @param receiverThread           thread where participant node is listening
+     * @param messagesList             test
+     * @param cheaterNode              test
      * @param observableMessageArrived test
-     * @throws IOException test
+     * @throws IOException              test
      * @throws NoSuchAlgorithmException test
      */
     public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, ArrayList<String> messagesList, DCNETProtocol.ObservableMessageArrived observableMessageArrived) throws IOException, NoSuchAlgorithmException {
@@ -243,8 +243,7 @@ public class SessionManager {
                     plainMessage = outputParticipantMessage.getPlainMessage();
                     randomPadding = outputParticipantMessage.getRandomPadding();
                     finalBit = outputParticipantMessage.getFinalBit();
-                }
-                else {
+                } else {
                     protocolRoundMessage = BigInteger.ZERO;
                     zeroMessage.setRoundKeyValue(keyRoundValue);
                     zeroMessageJson = new Gson().toJson(zeroMessage);
@@ -268,30 +267,36 @@ public class SessionManager {
                 // Create Object with single commitments
                 CommitmentsOnSingleValues commitmentsOnSingleValues = new CommitmentsOnSingleValues(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, nodeIndex);
 
-                // TODO: IMPLEMENT CORRECT FORMAT ON MESSAGE USING INDIVIDUAL PROOFS IN EACH CASE
+                ProofOfKnowledgeOR proofForMessageFormat;
+                BigInteger _comm = room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()); // _comm = C_b * g^{-1}
                 if (messageInThisRound) {
-                    BigInteger commitmentGenerated = room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP());
-                    ProofOfKnowledge proofForMessageToSend = zkp.generateProofOfKnowledge(commitmentGenerated, room.getH(), randomForFinalBit, room.getQ(), room.getP());
-                }
-                else {
-                    ProofOfKnowledgeAND proofForNoMessageToSend = zkp.generateProofOfKnowledgeAND(commitmentOnFinalBit, commitmentOnPlainMessage, room.getH(), randomForFinalBit, room.getH(), randomForPlainMessage, room.getQ(), room.getP());
+                    proofForMessageFormat = zkp.generateProofOfKnowledgeORX1(_comm, room.getH(), randomForFinalBit, commitmentOnFinalBit, commitmentOnPlainMessage, room.getQ(), room.getP());
+                } else {
+                    proofForMessageFormat = zkp.generateProofOfKnowledgeORX2X3(_comm, room.getH(), commitmentOnFinalBit, randomForFinalBit, commitmentOnPlainMessage, randomForPlainMessage, room.getQ(), room.getP());
                 }
 
-                // TODO: SEND THE PROOF OF FORMAT TO THE REST OF THE ROOM
-                String commitmentsOnSingleValuesJson = new Gson().toJson(commitmentsOnSingleValues, CommitmentsOnSingleValues.class);
-                node.getSender().send(commitmentsOnSingleValuesJson);
+                CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat = new CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat(commitmentsOnSingleValues, proofForMessageFormat);
+                String commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson = new Gson().toJson(commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat, CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat.class);
+                node.getSender().send(commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson);
 
-                /** RECEIVE COMMITMENTS ON SINGLE VALUES **/
+                /** RECEIVE COMMITMENTS ON SINGLE VALUES AND POK ON CORRECT MESSAGE FORMAT **/
                 for (int i = 0; i < room.getRoomSize(); i++) {
-                    String receivedCommitmentsOnSingleValuesJson = receiverThread.recvStr();
-                    CommitmentsOnSingleValues receivedCommitmentsOnSingleValues = new Gson().fromJson(receivedCommitmentsOnSingleValuesJson, CommitmentsOnSingleValues.class);
+                    String receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson = receiverThread.recvStr();
+                    CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat receivedCommitmentsOnSingleValuesAndPOKMessageFormat = new Gson().fromJson(receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson, CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat.class);
 
-                    BigInteger receivedCommitmentOnPlainMessage = receivedCommitmentsOnSingleValues.getCommitmentOnPlainMessage();
-                    BigInteger receivedCommitmentOnRandomPadding = receivedCommitmentsOnSingleValues.getCommitmentOnRandomPadding();
-                    BigInteger receivedCommitmentOnFinalBit = receivedCommitmentsOnSingleValues.getCommitmentOnFinalBit();
+                    BigInteger receivedCommitmentOnPlainMessage = receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getCommitmentsOnSingleValues().getCommitmentOnPlainMessage();
+                    BigInteger receivedCommitmentOnRandomPadding = receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getCommitmentsOnSingleValues().getCommitmentOnRandomPadding();
+                    BigInteger receivedCommitmentOnFinalBit = receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getCommitmentsOnSingleValues().getCommitmentOnFinalBit();
 
                     BigInteger receivedCommitmentOnMessage = constructCommitmentOnMessage(receivedCommitmentOnPlainMessage, receivedCommitmentOnRandomPadding, receivedCommitmentOnFinalBit, room);
-                    commitmentsOnMessage[receivedCommitmentsOnSingleValues.getNodeIndex() - 1] = receivedCommitmentOnMessage;
+                    commitmentsOnMessage[receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getCommitmentsOnSingleValues().getNodeIndex() - 1] = receivedCommitmentOnMessage;
+
+                    ProofOfKnowledgeOR receivedProofForMessageFormat = receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getProofOfKnowledgeOR();
+
+                    // Verify Proof of Knowledge
+                    BigInteger _rcvComm = room.getG().modInverse(room.getP()).multiply(receivedCommitmentOnFinalBit).mod(room.getP()); // _comm = C_b * g^{-1}
+                    if (!zkp.verifyProofOfKnowledgeOR(receivedProofForMessageFormat, _rcvComm, receivedCommitmentOnFinalBit, receivedCommitmentOnPlainMessage, room.getH(), room.getQ(), room.getP()))
+                        System.err.println("WRONG PoK on Message Format. Round: " + round + ", Node: " + receivedProofForMessageFormat.getNodeIndex());
                 }
 
                 initialSyncTime = System.nanoTime();
@@ -553,8 +558,8 @@ public class SessionManager {
 
     private BigInteger calculateRandomForCommitmentOnMessage(BigInteger randomForPlainMessage, BigInteger randomForRandomPadding, BigInteger randomForFinalBit, Room room) {
         BigInteger two = BigInteger.valueOf(2);
-        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
-        int randomPaddingLength = room.getPadLength()*8; // z
+        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize() + 1);
+        int randomPaddingLength = room.getPadLength() * 8; // z
 
         return randomForPlainMessage.multiply(two.pow(randomPaddingLength).multiply(nPlusOne)).add(randomForRandomPadding).multiply(nPlusOne).add(randomForFinalBit);
 
@@ -562,9 +567,9 @@ public class SessionManager {
 
     private BigInteger constructCommitmentOnMessage(BigInteger commitmentOnPlainMessage, BigInteger commitmentOnRandomPadding, BigInteger commitmentOnFinalBit, Room room) {
         BigInteger two = BigInteger.valueOf(2);
-        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize()+1);
-        int nPlusOneInteger = room.getRoomSize()+1;
-        int randomPaddingLength = room.getPadLength()*8; // z
+        BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize() + 1);
+        int nPlusOneInteger = room.getRoomSize() + 1;
+        int randomPaddingLength = room.getPadLength() * 8; // z
 
         return commitmentOnPlainMessage
                 .modPow(two.pow(randomPaddingLength).multiply(nPlusOne), room.getP())

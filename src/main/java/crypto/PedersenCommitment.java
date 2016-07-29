@@ -13,6 +13,7 @@ public class PedersenCommitment {
 
     /**
      * Constructor with parameters for crypto.PedersenCommitment class
+     *
      * @param g generator of group \(G_q\)
      * @param h generator of group \(G_q\)
      * @param q large prime
@@ -28,10 +29,12 @@ public class PedersenCommitment {
     /**
      * Empty constructor for crypto.PedersenCommitment class
      */
-    public PedersenCommitment() {}
+    public PedersenCommitment() {
+    }
 
     /**
      * Generates a random value
+     *
      * @return random value in group \(\mathbb{Z}_q\)
      */
     public BigInteger generateRandom() {
@@ -41,6 +44,7 @@ public class PedersenCommitment {
 
     /**
      * Calculate a generate a commitment for (secret, random)
+     *
      * @param secret message that will be hidden in the commitment
      * @param random random value used to create commitment
      * @return commitment value as \(c = g^s \cdot h^r \pmod{p} = (g^s \pmod{p} \cdot h^r \pmod{p}) \pmod{p}\)
@@ -51,6 +55,7 @@ public class PedersenCommitment {
 
     /**
      * Getter for the generator g of the class
+     *
      * @return generator \(g\) of group \(G_q\)
      */
     BigInteger getG() {
@@ -59,6 +64,7 @@ public class PedersenCommitment {
 
     /**
      * Getter for the generator h of the class
+     *
      * @return generator \(h\) of group \(G_q\)
      */
     BigInteger getH() {

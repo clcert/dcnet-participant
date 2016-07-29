@@ -12,6 +12,7 @@ public class Commitment {
 
     /**
      * Constructor for crypto.Commitment class
+     *
      * @param g generator of group \(G_q\)
      * @param q large prime
      * @param p large prime s.t. \(p = kq + 1\)
@@ -24,6 +25,7 @@ public class Commitment {
 
     /**
      * Generates a random value
+     *
      * @return random value in group \(\mathbb{Z}_q\)
      */
     BigInteger generateRandom() {
@@ -33,6 +35,7 @@ public class Commitment {
 
     /**
      * Calculate and generate a commitment for \(x\)
+     *
      * @param x value in group \(\mathbb{Z}_q\)
      * @return commitment \(c = g^x \pmod{p}\)
      */
@@ -42,6 +45,7 @@ public class Commitment {
 
     /**
      * Getter for the generator \(g\) of the class
+     *
      * @return generator \(g\) of group \(G_q\)
      */
     BigInteger getG() {
