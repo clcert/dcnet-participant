@@ -1,6 +1,7 @@
 import dcnet.DCNETProtocol;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -38,13 +39,14 @@ public class TestInConsole {
         dcnetProtocol.setMessageToSend(message, cheaterNode);
         dcnetProtocol.runProtocol();
 
-        System.err.println("\nTotal Time: " + dcnetProtocol.getTotalTime() + " seconds");
-        System.err.println("Time to get first message: " + dcnetProtocol.getFirstMessageTime() + " seconds");
-        System.err.println("Average time per message: " + dcnetProtocol.getAverageTimePerMessage() + " seconds");
-        System.err.println("Real rounds played: " + dcnetProtocol.getNumberOfRealRounds());
+        DecimalFormat df = new DecimalFormat("#0.000");
 
-        System.out.println(dcnetProtocol.getTotalTime() + "," + dcnetProtocol.getFirstMessageTime() + "," + dcnetProtocol.getAverageTimePerMessage());
-        System.out.println("Sync Time: " + dcnetProtocol.getSyncTime() + " (" + dcnetProtocol.getSyncTime() * 100.0 / dcnetProtocol.getTotalTime() + "%)");
+        System.err.println("\nTotal: \t\t" + df.format(dcnetProtocol.getTotalTime()) + " seconds");
+        System.err.println("First Message: \t" + df.format(dcnetProtocol.getFirstMessageTime()) + " seconds");
+        System.err.println("Avg. p/msg: \t" + df.format(dcnetProtocol.getAverageTimePerMessage()) + " seconds");
+        System.err.println("Real Rounds: \t" + dcnetProtocol.getNumberOfRealRounds() + " rounds");
+
+        System.out.println(df.format(dcnetProtocol.getTotalTime()) + ";" + df.format(dcnetProtocol.getFirstMessageTime()) + ";" + df.format(dcnetProtocol.getAverageTimePerMessage()));
 
     }
 

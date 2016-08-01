@@ -94,15 +94,14 @@ public class SessionManager {
         zeroMessage.setPaddingLength(room.getPadLength());
         String zeroMessageJson;
 
-        // Sleep to overlap slow joiner problem
+        // Synchronize nodes at the beginning to solve slow joiner problem
         // TODO: fix this using a better solution
-        try {
+        /*try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-
-        long initialSyncTime;
+        }*/
+        synchronizeNodes(nodeIndex, repliers, requestors, room);
 
         // Set values of subsequently commitments with the public info of the Room
         pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
