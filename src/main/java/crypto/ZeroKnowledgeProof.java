@@ -1,8 +1,9 @@
 package crypto;
 
 import json.ProofOfKnowledge;
-import json.ProofOfKnowledgeOR;
+import json.ProofOfKnowledgeMessageFormat;
 import json.ProofOfKnowledgePedersen;
+import json.ProofOfKnowledgeResendingFatherRoundReal;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -172,11 +173,11 @@ public class ZeroKnowledgeProof {
      * @param h3 commitment s.t. \(h_3 = g^{x_3} \pmod{p}\)
      * @param q  large prime
      * @param p  large prime s.t. \(p = kq + 1\)
-     * @return ProofOfKnowledgeOR that node knows \(x_1\) in \(c_1 = g^{x_1} \pmod{p} \lor (c_2 = g^{x_2} \pmod{p} \land c_3 = g^{x_3} \pmod{p})\)
+     * @return ProofOfKnowledgeMessageFormat that node knows \(x_1\) in \(c_1 = g^{x_1} \pmod{p} \lor (c_2 = g^{x_2} \pmod{p} \land c_3 = g^{x_3} \pmod{p})\)
      * @throws UnsupportedEncodingException test
      * @throws NoSuchAlgorithmException     test
      */
-    public ProofOfKnowledgeOR generateProofOfKnowledgeORX1(BigInteger h1, BigInteger g, BigInteger x1, BigInteger h2, BigInteger h3, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    public ProofOfKnowledgeMessageFormat generateProofOfKnowledgeMessageFormatX1(BigInteger h1, BigInteger g, BigInteger x1, BigInteger h2, BigInteger h3, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         Commitment commitment = new Commitment(g, q, p);
         PedersenCommitment pedersenCommitment2 = new PedersenCommitment(g, h2, q, p);
         PedersenCommitment pedersenCommitment3 = new PedersenCommitment(g, h3, q, p);
@@ -207,7 +208,7 @@ public class ZeroKnowledgeProof {
 
         BigInteger a1 = r1.add(c1.multiply(x1)); // a1 = r1 + c1*x1
 
-        return new ProofOfKnowledgeOR(c1, c2, z1, z2, z3, a1, r2, r3, nodeIndex);
+        return new ProofOfKnowledgeMessageFormat(c1, c2, z1, z2, z3, a1, r2, r3, nodeIndex);
 
     }
 
@@ -222,11 +223,11 @@ public class ZeroKnowledgeProof {
      * @param x3 value in \(\mathbb{Z}_q\)
      * @param q  large prime
      * @param p  large prime s.t. \(p = kq + 1\)
-     * @return ProofOfKnowledgeOR that node knows \((x_2, x_3)\) in \(h_1 = g^{x_1} \pmod{p} \lor (h_2 = g^{x_2} \pmod{p} \land h_3 = g^{x_3} \pmod{p})\)
+     * @return ProofOfKnowledgeMessageFormat that node knows \((x_2, x_3)\) in \(h_1 = g^{x_1} \pmod{p} \lor (h_2 = g^{x_2} \pmod{p} \land h_3 = g^{x_3} \pmod{p})\)
      * @throws UnsupportedEncodingException test
      * @throws NoSuchAlgorithmException     test
      */
-    public ProofOfKnowledgeOR generateProofOfKnowledgeORX2X3(BigInteger h1, BigInteger g, BigInteger h2, BigInteger x2, BigInteger h3, BigInteger x3, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    public ProofOfKnowledgeMessageFormat generateProofOfKnowledgeMessageFormatX2X3(BigInteger h1, BigInteger g, BigInteger h2, BigInteger x2, BigInteger h3, BigInteger x3, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         Commitment commitment = new Commitment(g, q, p);
         PedersenCommitment pedersenCommitment1 = new PedersenCommitment(g, h1, q, p);
 
@@ -257,7 +258,7 @@ public class ZeroKnowledgeProof {
         BigInteger a2 = r2.add(c2.multiply(x2)); // a2 = r2 + c2*x2
         BigInteger a3 = r3.add(c2.multiply(x3)); // a3 = r3 + c2*x3
 
-        return new ProofOfKnowledgeOR(c1, c2, z1, z2, z3, r1, a2, a3, nodeIndex);
+        return new ProofOfKnowledgeMessageFormat(c1, c2, z1, z2, z3, r1, a2, a3, nodeIndex);
 
     }
 
@@ -265,7 +266,7 @@ public class ZeroKnowledgeProof {
     /**
      * Verifies if the Proof of Knowledge provide is correct or not for knowing either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \pmod{p} \lor (h_2 = g^{x_2} \pmod{p} \land h_3 = g^{x_3} \pmod{p})\)
      *
-     * @param proofOfKnowledgeOR ProofOfKnowledgeOR that node knows either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \pmod{p} \lor (h_2 = g^{x_2} \pmod{p} \land h_3 = g^{x_3} \pmod{p})\)
+     * @param proofOfKnowledgeMessageFormat ProofOfKnowledgeMessageFormat that node knows either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \pmod{p} \lor (h_2 = g^{x_2} \pmod{p} \land h_3 = g^{x_3} \pmod{p})\)
      * @param h1                 commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
      * @param h2                 commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
      * @param h3                 commitment s.t. \(h_3 = g^{x_3} \pmod{p}\)
@@ -276,15 +277,15 @@ public class ZeroKnowledgeProof {
      * @throws UnsupportedEncodingException test
      * @throws NoSuchAlgorithmException     test
      */
-    public boolean verifyProofOfKnowledgeOR(ProofOfKnowledgeOR proofOfKnowledgeOR, BigInteger h1, BigInteger h2, BigInteger h3, BigInteger g, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        BigInteger c1 = proofOfKnowledgeOR.getC1();
-        BigInteger c2 = proofOfKnowledgeOR.getC2();
-        BigInteger z1 = proofOfKnowledgeOR.getZ1();
-        BigInteger z2 = proofOfKnowledgeOR.getZ2();
-        BigInteger z3 = proofOfKnowledgeOR.getZ3();
-        BigInteger a1 = proofOfKnowledgeOR.getA1();
-        BigInteger a2 = proofOfKnowledgeOR.getA2();
-        BigInteger a3 = proofOfKnowledgeOR.getA3();
+    public boolean verifyProofOfKnowledgeMessageFormat(ProofOfKnowledgeMessageFormat proofOfKnowledgeMessageFormat, BigInteger h1, BigInteger h2, BigInteger h3, BigInteger g, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        BigInteger c1 = proofOfKnowledgeMessageFormat.getC1();
+        BigInteger c2 = proofOfKnowledgeMessageFormat.getC2();
+        BigInteger z1 = proofOfKnowledgeMessageFormat.getZ1();
+        BigInteger z2 = proofOfKnowledgeMessageFormat.getZ2();
+        BigInteger z3 = proofOfKnowledgeMessageFormat.getZ3();
+        BigInteger a1 = proofOfKnowledgeMessageFormat.getA1();
+        BigInteger a2 = proofOfKnowledgeMessageFormat.getA2();
+        BigInteger a3 = proofOfKnowledgeMessageFormat.getA3();
 
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         String publicValueOnHash = z1.toString().concat(
@@ -294,7 +295,7 @@ public class ZeroKnowledgeProof {
                 h1.toString()).concat(
                 h2.toString()).concat(
                 h3.toString()).concat(
-                "" + proofOfKnowledgeOR.getNodeIndex());
+                "" + proofOfKnowledgeMessageFormat.getNodeIndex());
         md.update(publicValueOnHash.getBytes("UTF-8"));
         byte[] hashOnPublicValues = md.digest();
         BigInteger b = new BigInteger(hashOnPublicValues).mod(q); // b = H( z1 || z2 || z3 || g || h1 || h2 || h3 || nodeIndex ) (mod q)
@@ -316,6 +317,101 @@ public class ZeroKnowledgeProof {
         BigInteger _f = pedersenCommitment3.calculateCommitment(BigInteger.ONE, c2); // _f = z3 h3^c2 (mod p)
 
         return b.equals(cSum) && _a.equals(_b) && _c.equals(_d) && _e.equals(_f);
+
+    }
+
+    public ProofOfKnowledgeResendingFatherRoundReal generateProofOfKnowledgeResendingFatherRoundRealX1(BigInteger h1, BigInteger g, BigInteger x1, BigInteger h2, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        Commitment commitment = new Commitment(g, q, p);
+        PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h2, q, p);
+
+        BigInteger c2 = commitment.generateRandom();
+        BigInteger r1 = commitment.generateRandom();
+        BigInteger r2 = commitment.generateRandom();
+
+        BigInteger z1 = commitment.calculateCommitment(r1);
+        BigInteger z2 = pedersenCommitment.calculateCommitment(r2, c2.negate());
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        String publicValueOnHash = z1.toString().concat(
+                z2.toString()).concat(
+                g.toString()).concat(
+                h1.toString()).concat(
+                h2.toString()).concat(
+                "" + this.nodeIndex);
+        md.update(publicValueOnHash.getBytes("UTF-8"));
+        byte[] hashOnPublicValues = md.digest();
+        BigInteger b = new BigInteger(hashOnPublicValues).mod(q); // b = H( z1 || z2 || g || h1 || h2 || nodeIndex )
+
+        BigInteger c1 = b.subtract(c2).mod(q);
+
+        BigInteger a1 = r1.add(c1.multiply(x1));
+
+        return new ProofOfKnowledgeResendingFatherRoundReal(c1, c2, z1, z2, a1, r2, nodeIndex);
+
+    }
+
+    public ProofOfKnowledgeResendingFatherRoundReal generateProofOfKnowledgeResendingFatherRoundRealX2(BigInteger h1, BigInteger h2, BigInteger g, BigInteger x2, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        Commitment commitment = new Commitment(g, q, p);
+        PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h1, q, p);
+
+        BigInteger c1 = commitment.generateRandom();
+        BigInteger r1 = commitment.generateRandom();
+        BigInteger r2 = commitment.generateRandom();
+
+        BigInteger z1 = pedersenCommitment.calculateCommitment(r1, c1.negate());
+        BigInteger z2 = commitment.calculateCommitment(r2);
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        String publicValueOnHash = z1.toString().concat(
+                z2.toString()).concat(
+                g.toString()).concat(
+                h1.toString()).concat(
+                h2.toString()).concat(
+                "" + this.nodeIndex);
+        md.update(publicValueOnHash.getBytes("UTF-8"));
+        byte[] hashOnPublicValues = md.digest();
+        BigInteger b = new BigInteger(hashOnPublicValues).mod(q); // b = H( z1 || z2 || g || h1 || h2 || nodeIndex )
+
+        BigInteger c2 = b.subtract(c1).mod(q);
+
+        BigInteger a2 = r2.add(c2.multiply(x2));
+
+        return new ProofOfKnowledgeResendingFatherRoundReal(c1, c2, z1, z2, r1, a2, nodeIndex);
+
+    }
+
+    public boolean verifyProofOfKnowledgeResendingFatherRoundReal(ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundReal, BigInteger h1, BigInteger h2, BigInteger g, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        BigInteger c1 = proofOfKnowledgeResendingFatherRoundReal.getC1();
+        BigInteger c2 = proofOfKnowledgeResendingFatherRoundReal.getC2();
+        BigInteger z1 = proofOfKnowledgeResendingFatherRoundReal.getZ1();
+        BigInteger z2 = proofOfKnowledgeResendingFatherRoundReal.getZ2();
+        BigInteger a1 = proofOfKnowledgeResendingFatherRoundReal.getA1();
+        BigInteger a2 = proofOfKnowledgeResendingFatherRoundReal.getA2();
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        String publicValueOnHash = z1.toString().concat(
+                z2.toString()).concat(
+                g.toString()).concat(
+                h1.toString()).concat(
+                h2.toString()).concat(
+                "" + proofOfKnowledgeResendingFatherRoundReal.getNodeIndex());
+        md.update(publicValueOnHash.getBytes("UTF-8"));
+        byte[] hashOnPublicValues = md.digest();
+        BigInteger b = new BigInteger(hashOnPublicValues).mod(q); // b = H( z1 || z2 || g || h1 || h2 || nodeIndex ) (mod q)
+
+        BigInteger cSum = c1.add(c2).mod(q); // cSum = c1 + c2
+
+        Commitment commitment = new Commitment(g, q, p);
+        PedersenCommitment pedersenCommitment1 = new PedersenCommitment(z1, h1, q, p);
+        PedersenCommitment pedersenCommitment2 = new PedersenCommitment(z2, h2, q, p);
+
+        BigInteger _a = commitment.calculateCommitment(a1);
+        BigInteger _b = pedersenCommitment1.calculateCommitment(BigInteger.ONE, c1);
+
+        BigInteger _c = commitment.calculateCommitment(a2);
+        BigInteger _d = pedersenCommitment2.calculateCommitment(BigInteger.ONE, c2);
+
+        return b.equals(cSum) && _a.equals(_b) && _c.equals(_d);
 
     }
 

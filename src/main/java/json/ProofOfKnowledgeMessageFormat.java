@@ -2,12 +2,12 @@ package json;
 
 import java.math.BigInteger;
 
-public class ProofOfKnowledgeOR {
+public class ProofOfKnowledgeMessageFormat {
 
     BigInteger c1, c2, z1, z2, z3, a1, a2, a3;
     int nodeIndex;
 
-    public ProofOfKnowledgeOR(BigInteger c1, BigInteger c2, BigInteger z1, BigInteger z2, BigInteger z3, BigInteger a1, BigInteger a2, BigInteger a3, int nodeIndex) {
+    public ProofOfKnowledgeMessageFormat(BigInteger c1, BigInteger c2, BigInteger z1, BigInteger z2, BigInteger z3, BigInteger a1, BigInteger a2, BigInteger a3, int nodeIndex) {
         this.c1 = c1;
         this.c2 = c2;
         this.z1 = z1;

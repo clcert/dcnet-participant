@@ -95,13 +95,13 @@ public class SessionManager {
         String zeroMessageJson;
 
         // Synchronize nodes at the beginning to solve slow joiner problem
-        // TODO: fix this using a better solution
+        synchronizeNodes(nodeIndex, repliers, requestors, room);
+
         /*try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }*/
-        synchronizeNodes(nodeIndex, repliers, requestors, room);
 
         // Set values of subsequently commitments with the public info of the Room
         pedersenCommitment = new PedersenCommitment(room.getG(), room.getH(), room.getQ(), room.getP());
@@ -117,7 +117,6 @@ public class SessionManager {
         while (!Thread.currentThread().isInterrupted()) {
 
             /*initialSyncTime = System.nanoTime();
-            // Synchronize nodes at the beginning of each round
             synchronizeNodes(nodeIndex, repliers, requestors, room);
             totalSyncTime += System.nanoTime() - initialSyncTime;*/
 
@@ -165,7 +164,6 @@ public class SessionManager {
                 BigInteger keyRoundValue = keyGeneration.getParticipantNodeRoundKeyValue();
 
                 /*initialSyncTime = System.nanoTime();
-                // Synchronize nodes to let know that we all finish the Key-Sharing part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
                 totalSyncTime += System.nanoTime() - initialSyncTime;*/
 
@@ -225,7 +223,6 @@ public class SessionManager {
                     System.err.println("Round " + round + " commitments on keys are WRONG");
 
                 /*initialSyncTime = System.nanoTime();
-                // Synchronize nodes to let know that we all finish the key commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
                 totalSyncTime += System.nanoTime() - initialSyncTime;*/
 
@@ -266,12 +263,12 @@ public class SessionManager {
                 // Create Object with single commitments
                 CommitmentsOnSingleValues commitmentsOnSingleValues = new CommitmentsOnSingleValues(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, nodeIndex);
 
-                ProofOfKnowledgeOR proofForMessageFormat;
+                ProofOfKnowledgeMessageFormat proofForMessageFormat;
                 BigInteger _comm = room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()); // _comm = C_b * g^{-1}
                 if (messageInThisRound) {
-                    proofForMessageFormat = zkp.generateProofOfKnowledgeORX1(_comm, room.getH(), randomForFinalBit, commitmentOnFinalBit, commitmentOnPlainMessage, room.getQ(), room.getP());
+                    proofForMessageFormat = zkp.generateProofOfKnowledgeMessageFormatX1(_comm, room.getH(), randomForFinalBit, commitmentOnFinalBit, commitmentOnPlainMessage, room.getQ(), room.getP());
                 } else {
-                    proofForMessageFormat = zkp.generateProofOfKnowledgeORX2X3(_comm, room.getH(), commitmentOnFinalBit, randomForFinalBit, commitmentOnPlainMessage, randomForPlainMessage, room.getQ(), room.getP());
+                    proofForMessageFormat = zkp.generateProofOfKnowledgeMessageFormatX2X3(_comm, room.getH(), commitmentOnFinalBit, randomForFinalBit, commitmentOnPlainMessage, randomForPlainMessage, room.getQ(), room.getP());
                 }
 
                 CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat = new CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat(commitmentsOnSingleValues, proofForMessageFormat);
@@ -290,16 +287,15 @@ public class SessionManager {
                     BigInteger receivedCommitmentOnMessage = constructCommitmentOnMessage(receivedCommitmentOnPlainMessage, receivedCommitmentOnRandomPadding, receivedCommitmentOnFinalBit, room);
                     commitmentsOnMessage[receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getCommitmentsOnSingleValues().getNodeIndex() - 1] = receivedCommitmentOnMessage;
 
-                    ProofOfKnowledgeOR receivedProofForMessageFormat = receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getProofOfKnowledgeOR();
+                    ProofOfKnowledgeMessageFormat receivedProofForMessageFormat = receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getProofOfKnowledgeMessageFormat();
 
                     // Verify Proof of Knowledge
                     BigInteger _rcvComm = room.getG().modInverse(room.getP()).multiply(receivedCommitmentOnFinalBit).mod(room.getP()); // _comm = C_b * g^{-1}
-                    if (!zkp.verifyProofOfKnowledgeOR(receivedProofForMessageFormat, _rcvComm, receivedCommitmentOnFinalBit, receivedCommitmentOnPlainMessage, room.getH(), room.getQ(), room.getP()))
+                    if (!zkp.verifyProofOfKnowledgeMessageFormat(receivedProofForMessageFormat, _rcvComm, receivedCommitmentOnFinalBit, receivedCommitmentOnPlainMessage, room.getH(), room.getQ(), room.getP()))
                         System.err.println("WRONG PoK on Message Format. Round: " + round + ", Node: " + receivedProofForMessageFormat.getNodeIndex());
                 }
 
                 /*initialSyncTime = System.nanoTime();
-                // Synchronize nodes to let know that we all finish the single values commitments part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
                 totalSyncTime += System.nanoTime() - initialSyncTime;*/
 
@@ -331,7 +327,6 @@ public class SessionManager {
                 }
 
                 /*initialSyncTime = System.nanoTime();
-                // Synchronize nodes to let know that we all finish the commitments on messages part
                 synchronizeNodes(nodeIndex, repliers, requestors, room);
                 totalSyncTime += System.nanoTime() - initialSyncTime;*/
 
@@ -352,6 +347,9 @@ public class SessionManager {
                 } else if ((round / 2) % 2 == 0) {
                     // TODO: DO SOMETHING WHEN MY FATHER ROUND IS REAL
                     // TODO: ZKP that my message is either 0 or is equal to the message that i sent in the father round
+
+
+
                     // Send the message
                     node.getSender().send(outputMessageRoundJson);
                 } else {

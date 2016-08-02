@@ -3,18 +3,18 @@ package json;
 public class CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat {
 
     CommitmentsOnSingleValues commitmentsOnSingleValues;
-    ProofOfKnowledgeOR proofOfKnowledgeOR;
+    ProofOfKnowledgeMessageFormat proofOfKnowledgeMessageFormat;
 
-    public CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat(CommitmentsOnSingleValues commitmentsOnSingleValues, ProofOfKnowledgeOR proofOfKnowledgeOR) {
+    public CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat(CommitmentsOnSingleValues commitmentsOnSingleValues, ProofOfKnowledgeMessageFormat proofOfKnowledgeMessageFormat) {
         this.commitmentsOnSingleValues = commitmentsOnSingleValues;
-        this.proofOfKnowledgeOR = proofOfKnowledgeOR;
+        this.proofOfKnowledgeMessageFormat = proofOfKnowledgeMessageFormat;
     }
 
     public CommitmentsOnSingleValues getCommitmentsOnSingleValues() {
         return commitmentsOnSingleValues;
     }
 
-    public ProofOfKnowledgeOR getProofOfKnowledgeOR() {
-        return proofOfKnowledgeOR;
+    public ProofOfKnowledgeMessageFormat getProofOfKnowledgeMessageFormat() {
+        return proofOfKnowledgeMessageFormat;
     }
 }
