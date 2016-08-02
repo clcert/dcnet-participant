@@ -552,7 +552,11 @@ public class SessionManager {
         // Save execution time
         executionTime = t2 - t1;
         // Save average time per message
-        averageTimePerMessage = executionTime / messagesSentWithNoCollisions;
+        try {
+            averageTimePerMessage = executionTime / messagesSentWithNoCollisions;
+        } catch (ArithmeticException e) {
+            averageTimePerMessage = 0;
+        }
     }
 
     private BigInteger calculateRandomForCommitmentOnMessage(BigInteger randomForPlainMessage, BigInteger randomForRandomPadding, BigInteger randomForFinalBit, Room room) {
