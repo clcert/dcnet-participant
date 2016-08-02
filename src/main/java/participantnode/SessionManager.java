@@ -109,6 +109,9 @@ public class SessionManager {
         // Initialize ZeroKnowledgeProof with values of the room
         ZeroKnowledgeProof zkp = new ZeroKnowledgeProof(nodeIndex);
 
+        ArrayList<BigInteger> commitmentsOnPlainMessage = new ArrayList<>();
+        ArrayList<BigInteger> randomsForPlainMessage = new ArrayList<>();
+
         // Set time to measure entire protocol
         long t1 = System.nanoTime();
 
@@ -139,6 +142,8 @@ public class SessionManager {
             // Store commitments on keys and on message for future checking
             BigInteger[] commitmentsOnKey = new BigInteger[room.getRoomSize()];
             BigInteger[] commitmentsOnMessage = new BigInteger[room.getRoomSize()];
+
+
 
             /** REAL ROUND (first and even rounds) **/
             if (round == 1 || round % 2 == 0) {
@@ -255,10 +260,14 @@ public class SessionManager {
                 BigInteger randomForRandomPadding = pedersenCommitment.generateRandom();
                 BigInteger randomForFinalBit = pedersenCommitment.generateRandom();
 
+                randomsForPlainMessage.add(round, randomForPlainMessage);
+
                 // Commitments for single values
                 BigInteger commitmentOnPlainMessage = pedersenCommitment.calculateCommitment(plainMessage, randomForPlainMessage);
                 BigInteger commitmentOnRandomPadding = pedersenCommitment.calculateCommitment(randomPadding, randomForRandomPadding);
                 BigInteger commitmentOnFinalBit = pedersenCommitment.calculateCommitment(finalBit, randomForFinalBit);
+
+                commitmentsOnPlainMessage.add(round, commitmentOnPlainMessage);
 
                 // Create Object with single commitments
                 CommitmentsOnSingleValues commitmentsOnSingleValues = new CommitmentsOnSingleValues(commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, nodeIndex);
@@ -345,13 +354,19 @@ public class SessionManager {
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 } else if ((round / 2) % 2 == 0) {
-                    // TODO: DO SOMETHING WHEN MY FATHER ROUND IS REAL
-                    // TODO: ZKP that my message is either 0 or is equal to the message that i sent in the father round
-
-
-
-                    // Send the message
-                    node.getSender().send(outputMessageRoundJson);
+                    BigInteger divisionOfCommitments = commitmentsOnPlainMessage.get((round / 2)).divide(commitmentOnPlainMessage);
+                    ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundReal;
+                    if (messageInThisRound) {
+                        BigInteger subtractionOfRandomness = randomsForPlainMessage.get((round / 2)).subtract(randomForPlainMessage);
+                        proofOfKnowledgeResendingFatherRoundReal = zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(commitmentOnPlainMessage, divisionOfCommitments, room.getH(), subtractionOfRandomness, room.getQ(), room.getP());
+                    }
+                    else {
+                        proofOfKnowledgeResendingFatherRoundReal = zkp.generateProofOfKnowledgeResendingFatherRoundRealX1(commitmentOnPlainMessage, room.getH(), randomForPlainMessage, divisionOfCommitments, room.getQ(), room.getP());
+                    }
+                    OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundReal = new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(outputParticipantMessage, proofOfKnowledgeResendingFatherRoundReal);
+                    String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledgeResendingFatherRoundReal, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
+                    // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge when the father round is real)
+                    node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 } else {
                     // TODO: DO SOMETHING WHEN MY FATHER ROUND IS VIRTUAL
                     // TODO: ZKP that my message is either 0 or codifies a message that was sent in a previous real
