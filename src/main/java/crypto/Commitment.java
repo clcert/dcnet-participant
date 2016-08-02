@@ -4,11 +4,26 @@ import java.math.BigInteger;
 import java.util.Random;
 
 /**
+ * Class that manages regular commitments \((c = g^x \pmod{p})\) operations
+ *
  * @author Camilo J. Gómez (camilo@niclabs.cl)
  */
 public class Commitment {
 
-    private BigInteger g, q, p;
+    /**
+     * Generator of group \(G_q\)
+     */
+    private BigInteger g;
+
+    /**
+     * Large prime
+     */
+    private BigInteger q;
+
+    /**
+     * Large prime s.t. \(p = kq + 1\)
+     */
+    private BigInteger p;
 
     /**
      * Constructor for crypto.Commitment class

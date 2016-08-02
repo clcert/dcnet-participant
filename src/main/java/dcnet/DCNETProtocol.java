@@ -44,6 +44,12 @@ public class DCNETProtocol {
         observableParticipantsLeft = new ObservableParticipantsLeft();
     }
 
+    /**
+     * Method that runs the DC-NET protocol itself by one participant node
+     *
+     * @return true if the protocol went ok, false otherwise
+     * @throws IOException test
+     */
     public boolean runProtocol() throws IOException {
         // Run session with the established parameters
         try {
@@ -71,6 +77,14 @@ public class DCNETProtocol {
         return true;
     }
 
+    /**
+     * Connect participant node to directory node, sending own IP address and receiving IP addresses of all other
+     * participant nodes in the room
+     *
+     * @param directoryIp directory node IP address
+     * @return true if the participant node connected to directory node, false otherwise
+     * @throws SocketException test
+     */
     public boolean connectToDirectory(String directoryIp) throws SocketException {
         // Create DirectoryNode object with the IP from arguments
         DirectoryNode directoryNode = new DirectoryNode(directoryIp);

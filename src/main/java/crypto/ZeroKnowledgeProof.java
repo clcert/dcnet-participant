@@ -10,10 +10,15 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
+ * Class that manages Zero Knowledge Proofs operations, using regular and Pedersen commitments
+ *
  * @author Camilo J. Gómez (camilo@niclabs.cl)
  */
 public class ZeroKnowledgeProof {
 
+    /**
+     * Index of current node
+     */
     private final int nodeIndex;
 
     /**

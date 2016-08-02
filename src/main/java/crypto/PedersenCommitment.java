@@ -4,12 +4,32 @@ import java.math.BigInteger;
 import java.util.Random;
 
 /**
+ * Class that manages Pedersen commitments \((c = g^x h^r \pmod{p})\) operations
+ *
  * @author Camilo J. Gómez (camilo@niclabs.cl)
  */
 public class PedersenCommitment {
 
 
-    private BigInteger g, h, q, p;
+    /**
+     * Generator of group \(G_q\)
+     */
+    private BigInteger g;
+
+    /**
+     * Generator of group \(G_q\)
+     */
+    private BigInteger h;
+
+    /**
+     * Large prime
+     */
+    private BigInteger q;
+
+    /**
+     * Large prime s.t. \(p = kq + 1\)
+     */
+    private BigInteger p;
 
     /**
      * Constructor with parameters for crypto.PedersenCommitment class
