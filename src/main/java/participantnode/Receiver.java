@@ -73,6 +73,13 @@ public class Receiver implements ZThread.IAttachedRunnable {
                     // Send String (json) to the sender thread
                     pipe.send(inputOutputMessagePOKAndOutputMessage);
                 }
+            } else if ((round/2) % 2 == 0 || round == 2) {
+                for (int i = 0; i < roomSize; i++) {
+                    // Receive message from a node in the room
+                    String incomingOutputMessageAndPOKResending = receiver.recvStr().trim();
+                    // Send String (json) to the sender thread the message received
+                    pipe.send(incomingOutputMessageAndPOKResending);
+                }
             } else {
                 for (int i = 0; i < roomSize; i++) {
                     // Receive message from a node in the room
