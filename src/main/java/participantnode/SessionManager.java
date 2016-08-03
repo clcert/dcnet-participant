@@ -110,9 +110,8 @@ public class SessionManager {
 
         // Store commitments on plain messages of others participant nodes in the room
         Hashtable[] receivedCommitmentsOnPlainMessages = new Hashtable[room.getRoomSize()];
-        for (int i = 0; i < receivedCommitmentsOnPlainMessages.length; i++) {
+        for (int i = 0; i < receivedCommitmentsOnPlainMessages.length; i++)
             receivedCommitmentsOnPlainMessages[i] = new Hashtable<>();
-        }
 
         // Set time to measure entire protocol
         long t1 = System.nanoTime();
@@ -121,8 +120,8 @@ public class SessionManager {
         // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
 
-            /* Check if the protocol was finished in the last round played.
-             * If it so, let know to the receiver thread, wait for his response and break the loop */
+            // Check if the protocol was finished in the last round played.
+            // If it so, let know to the receiver thread, wait for his response and break the loop
             if (finished) {
                 receiverThread.send("FINISHED");
                 receiverThread.recvStr();
@@ -292,6 +291,7 @@ public class SessionManager {
                     ProofOfKnowledgeMessageFormat receivedProofForMessageFormat = receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getProofOfKnowledgeMessageFormat();
 
                     // Verify Proof of Knowledge
+                    // TODO: fix wrong pok when no message is sent
                     BigInteger _rcvComm = room.getG().modInverse(room.getP()).multiply(receivedCommitmentOnFinalBit).mod(room.getP()); // _comm = C_b * g^{-1}
                     if (!zkp.verifyProofOfKnowledgeMessageFormat(receivedProofForMessageFormat, _rcvComm, receivedCommitmentOnFinalBit, receivedCommitmentOnPlainMessage, room.getH(), room.getQ(), room.getP()))
                         System.err.println("WRONG PoK on Message Format. Round: " + round + ", Node: " + receivedProofForMessageFormat.getNodeIndex());
