@@ -338,8 +338,7 @@ public class SessionManager {
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 } else if ((round / 2) % 2 == 0 || round == 2) {
-                    // BigInteger divisionOfCommitments = commitmentsOnPlainMessage.get((round / 2)).divide(commitmentOnPlainMessage);
-                    BigInteger divisionOfCommitments = BigInteger.ONE;
+                    BigInteger divisionOfCommitments = commitmentOnPlainMessage.modInverse(room.getP()).multiply(commitmentsOnPlainMessage.get((round / 2)));
                     ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundReal;
                     OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundReal;
                     if (messageInThisRound) {
@@ -404,8 +403,7 @@ public class SessionManager {
 
                         BigInteger commitmentOnPlainMessageNodeRound2K = (BigInteger) receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
                         BigInteger commitmentOnPlainMessageNodeRoundK = (BigInteger) receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get((round / 2));
-                        // BigInteger resultantCommitment = commitmentOnPlainMessageNodeRoundK.divide(commitmentOnPlainMessageNodeRound2K).mod(room.getQ());
-                        BigInteger resultantCommitment = BigInteger.ONE;
+                        BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP()).multiply(commitmentOnPlainMessageNodeRoundK);
 
                         if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(outputMessageAndProofOfKnowledgeResendingFatherRoundReal.getProofOfKnowledgeResendingFatherRoundReal(), commitmentOnPlainMessageNodeRound2K, resultantCommitment, room.getH(), room.getQ(), room.getP()))
                             System.err.println("WRONG PoK on Resending when father round is real. Round: " + round + ", Node: " + participantNodeIndex);
