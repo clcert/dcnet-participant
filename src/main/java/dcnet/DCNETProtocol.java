@@ -131,11 +131,17 @@ public class DCNETProtocol {
         return true;
     }
 
-    public boolean setMessageToSend(String message, boolean cheaterNode) {
+    /**
+     * Set the message and mode that the participant wants to communicate to the rest of the room
+     *
+     * @param message     message that the participants wants to communicate
+     * @param cheaterNode true if the participant won't send the message in the correct round, false otherwise
+     */
+    public void setMessageToSend(String message, boolean cheaterNode) {
         this.messageToSend = message;
         this.cheaterNode = cheaterNode;
-        return true;
     }
+
 
     public String getNodeIp() {
         return nodeIp;

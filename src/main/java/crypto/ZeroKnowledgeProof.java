@@ -267,12 +267,12 @@ public class ZeroKnowledgeProof {
      * Verifies if the Proof of Knowledge provide is correct or not for knowing either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \pmod{p} \lor (h_2 = g^{x_2} \pmod{p} \land h_3 = g^{x_3} \pmod{p})\)
      *
      * @param proofOfKnowledgeMessageFormat ProofOfKnowledgeMessageFormat that node knows either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \pmod{p} \lor (h_2 = g^{x_2} \pmod{p} \land h_3 = g^{x_3} \pmod{p})\)
-     * @param h1                 commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
-     * @param h2                 commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
-     * @param h3                 commitment s.t. \(h_3 = g^{x_3} \pmod{p}\)
-     * @param g                  generator of group \(G_q\)
-     * @param q                  large prime
-     * @param p                  large prime s.t. \(p = kq + 1\)
+     * @param h1                            commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
+     * @param h2                            commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
+     * @param h3                            commitment s.t. \(h_3 = g^{x_3} \pmod{p}\)
+     * @param g                             generator of group \(G_q\)
+     * @param q                             large prime
+     * @param p                             large prime s.t. \(p = kq + 1\)
      * @return true if proof is correct, false otherwise
      * @throws UnsupportedEncodingException test
      * @throws NoSuchAlgorithmException     test
@@ -320,6 +320,19 @@ public class ZeroKnowledgeProof {
 
     }
 
+    /**
+     * Generates Proof of Knowledge that participant knows \(x_1\) in \(h_1 = g^{x_1} \lor h_2 = g^{x_2}\)
+     *
+     * @param h1 commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
+     * @param g  generator of group \(G_q\)
+     * @param x1 value in \(\mathbb{Z}_q\)
+     * @param h2 commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
+     * @param q  large prime
+     * @param p  large prime s.t. \(p = kq + 1\)
+     * @return Proof of Knowledge that participant knows \(x_1\) in \(h_1 = g^{x_1} \lor h_2 = g^{x_2}\)
+     * @throws NoSuchAlgorithmException     test
+     * @throws UnsupportedEncodingException test
+     */
     public ProofOfKnowledgeResendingFatherRoundReal generateProofOfKnowledgeResendingFatherRoundRealX1(BigInteger h1, BigInteger g, BigInteger x1, BigInteger h2, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         Commitment commitment = new Commitment(g, q, p);
         PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h2, q, p);
@@ -350,6 +363,19 @@ public class ZeroKnowledgeProof {
 
     }
 
+    /**
+     * Generates Proof of Knowledge that participant knows \(x_2\) in \(h_1 = g^{x_1} \lor h_2 = g^{x_2}\)
+     *
+     * @param h1 commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
+     * @param h2 commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
+     * @param g  generator of group \(G_q\)
+     * @param x2 value in \(\mathbb{Z}_q\)
+     * @param q  large prime
+     * @param p  large prime s.t. \(p = kq + 1\)
+     * @return Proof of Knowledge that participant knows \(x_1\) in \(h_1 = g^{x_1} \lor h_2 = g^{x_2}\)
+     * @throws NoSuchAlgorithmException     test
+     * @throws UnsupportedEncodingException test
+     */
     public ProofOfKnowledgeResendingFatherRoundReal generateProofOfKnowledgeResendingFatherRoundRealX2(BigInteger h1, BigInteger h2, BigInteger g, BigInteger x2, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         Commitment commitment = new Commitment(g, q, p);
         PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h1, q, p);
@@ -380,6 +406,19 @@ public class ZeroKnowledgeProof {
 
     }
 
+    /**
+     * Verifies if the Proof of Knowledge provide is correct or not for knowing either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \lor h_2 = g^{x_2}\)
+     *
+     * @param proofOfKnowledgeResendingFatherRoundReal Proof of Knowledge that participants knows either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \lor h_2 = g^{x_2}\)
+     * @param h1                                       commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
+     * @param h2                                       commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
+     * @param g                                        generator of group \(G_q\)
+     * @param q                                        large prime
+     * @param p                                        large prime s.t. \(p = kq + 1\)
+     * @return true if proof is correct, false otherwise
+     * @throws NoSuchAlgorithmException     test
+     * @throws UnsupportedEncodingException test
+     */
     public boolean verifyProofOfKnowledgeResendingFatherRoundReal(ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundReal, BigInteger h1, BigInteger h2, BigInteger g, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         BigInteger c1 = proofOfKnowledgeResendingFatherRoundReal.getC1();
         BigInteger c2 = proofOfKnowledgeResendingFatherRoundReal.getC2();

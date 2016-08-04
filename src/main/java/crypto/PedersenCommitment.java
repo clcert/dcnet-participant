@@ -90,4 +90,5 @@ public class PedersenCommitment {
     BigInteger getH() {
         return h;
     }
+
 }

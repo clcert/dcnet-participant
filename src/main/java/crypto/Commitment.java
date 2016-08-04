@@ -66,4 +66,5 @@ public class Commitment {
     BigInteger getG() {
         return g;
     }
+
 }
