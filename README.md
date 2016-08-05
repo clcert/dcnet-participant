@@ -18,7 +18,7 @@ In order to this nodes to work and start communicating with each other, one mach
 
 * In order to start a session, all the machines (nodes) must run the following command:
 
-    ```./gradlew run -PappArgs=[<message>,<directoryIP>]```
+    ```./participant.sh -m <"message"> -d <directoryIP> -c <cheaterMode>```
 
 ### Using Docker
 
