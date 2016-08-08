@@ -77,22 +77,23 @@ public class SessionManager {
      * @throws NoSuchAlgorithmException test
      */
     public void runSession(int nodeIndex, String participantMessage, boolean cheaterNode, Room room, ParticipantNode node, ZMQ.Socket receiverThread, ArrayList<String> messagesList, DCNETProtocol.ObservableMessageArrived observableMessageArrived) throws IOException, NoSuchAlgorithmException {
+        boolean emptyMessage = false;
 
-        if (participantMessage.equals(""))
+        if (participantMessage.equals("")) {
             participantMessage = "0";
+            emptyMessage = true;
+        }
 
         // Create an outputMessage
         OutputMessage outputParticipantMessage = new OutputMessage();
         outputParticipantMessage.setPaddingLength(room.getPadLength());
         outputParticipantMessage.setParticipantMessage(participantMessage, room);
         BigInteger plainMessageWithRandomPadding = outputParticipantMessage.getPlainMessageWithRandomPadding();
-        String outputParticipantMessageJson;
 
         // Create a zeroMessage
         OutputMessage zeroMessage = new OutputMessage();
         zeroMessage.setParticipantMessage("0", room);
         zeroMessage.setPaddingLength(room.getPadLength());
-        String zeroMessageJson;
 
         // Synchronize nodes at the beginning to solve slow joiner problem
         synchronizeNodes(nodeIndex, repliers, requestors, room);
@@ -220,22 +221,17 @@ public class SessionManager {
 
                 /* SET MESSAGES AND OBJECTS OF THIS ROUND **/
                 // Set protocol message to make a commitment to and add round key to the message to construct Json that will be sent
-                String outputMessageRoundJson;
                 BigInteger protocolRoundMessage;
                 BigInteger plainMessage, randomPadding, finalBit;
                 if (messageInThisRound) {
                     protocolRoundMessage = outputParticipantMessage.getProtocolMessage();
                     outputParticipantMessage.setRoundKeyValue(keyRoundValue);
-                    outputParticipantMessageJson = new Gson().toJson(outputParticipantMessage);
-                    outputMessageRoundJson = outputParticipantMessageJson;
                     plainMessage = outputParticipantMessage.getPlainMessage();
                     randomPadding = outputParticipantMessage.getRandomPadding();
                     finalBit = outputParticipantMessage.getFinalBit();
                 } else {
                     protocolRoundMessage = BigInteger.ZERO;
                     zeroMessage.setRoundKeyValue(keyRoundValue);
-                    zeroMessageJson = new Gson().toJson(zeroMessage);
-                    outputMessageRoundJson = zeroMessageJson;
                     plainMessage = zeroMessage.getPlainMessage();
                     randomPadding = zeroMessage.getRandomPadding();
                     finalBit = zeroMessage.getFinalBit();
@@ -263,7 +259,7 @@ public class SessionManager {
 
                 ProofOfKnowledgeMessageFormat proofForMessageFormat;
                 BigInteger _comm = room.getG().modInverse(room.getP()).multiply(commitmentOnFinalBit).mod(room.getP()); // _comm = C_b * g^{-1}
-                if (messageInThisRound) {
+                if (messageInThisRound && !emptyMessage) {
                     proofForMessageFormat = zkp.generateProofOfKnowledgeMessageFormatX1(_comm, room.getH(), randomForFinalBit, commitmentOnFinalBit, commitmentOnPlainMessage, room.getQ(), room.getP());
                 } else {
                     proofForMessageFormat = zkp.generateProofOfKnowledgeMessageFormatX2X3(_comm, room.getH(), commitmentOnFinalBit, randomForFinalBit, commitmentOnPlainMessage, randomForPlainMessage, room.getQ(), room.getP());
@@ -291,7 +287,6 @@ public class SessionManager {
                     ProofOfKnowledgeMessageFormat receivedProofForMessageFormat = receivedCommitmentsOnSingleValuesAndPOKMessageFormat.getProofOfKnowledgeMessageFormat();
 
                     // Verify Proof of Knowledge
-                    // TODO: fix wrong pok when no message is sent
                     BigInteger _rcvComm = room.getG().modInverse(room.getP()).multiply(receivedCommitmentOnFinalBit).mod(room.getP()); // _comm = C_b * g^{-1}
                     if (!zkp.verifyProofOfKnowledgeMessageFormat(receivedProofForMessageFormat, _rcvComm, receivedCommitmentOnFinalBit, receivedCommitmentOnPlainMessage, room.getH(), room.getQ(), room.getP()))
                         System.err.println("WRONG PoK on Message Format. Round: " + round + ", Node: " + receivedProofForMessageFormat.getNodeIndex());
