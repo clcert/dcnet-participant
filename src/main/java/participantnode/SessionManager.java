@@ -353,11 +353,23 @@ public class SessionManager {
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge when the father round is real)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 } else {
-                    // TODO: DO SOMETHING WHEN MY FATHER ROUND IS VIRTUAL
-                    // TODO: ZKP that my message is either 0 or codifies a message that was sent in a previous real
-                    // TODO: round and not in real rounds between this and that previous one
-                    // Send the message
-                    node.getSender().send(outputMessageRoundJson);
+                    // TODO: message not sent in real rounds between this and that previous one
+                    int virtualFatherRound = (round / 2);
+                    int nearestRealRound = getNearestRealRound(virtualFatherRound);
+                    BigInteger divisionOfCommitments = commitmentOnPlainMessage.modInverse(room.getP()).multiply(commitmentsOnPlainMessage.get(nearestRealRound));
+                    ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundVirtual;
+                    OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual;
+                    if (messageInThisRound) {
+                        BigInteger subtractioOfRandomness = randomsForPlainMessage.get(nearestRealRound).subtract(randomForPlainMessage).mod(room.getQ());
+                        proofOfKnowledgeResendingFatherRoundVirtual = zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(commitmentOnPlainMessage, divisionOfCommitments, room.getH(), subtractioOfRandomness, room.getQ(), room.getP());
+                        outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual = new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(outputParticipantMessage, proofOfKnowledgeResendingFatherRoundVirtual);
+                    } else {
+                        proofOfKnowledgeResendingFatherRoundVirtual = zkp.generateProofOfKnowledgeResendingFatherRoundRealX1(commitmentOnPlainMessage, room.getH(), randomForPlainMessage, divisionOfCommitments, room.getQ(), room.getP());
+                        outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual = new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(zeroMessage, proofOfKnowledgeResendingFatherRoundVirtual);
+                    }
+                    String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
+                    // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge when the father round is real)
+                    node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 }
 
                 // Subtract round key to the message in order to send a clear one in the next round
@@ -414,17 +426,26 @@ public class SessionManager {
                         messagesReceivedInThisRound++;
                     }
                 } else {
-                    // TODO: DO SOMETHING WHEN MY FATHER ROUND IS VIRTUAL
                     // Variable to count how many messages were received from the receiver thread
                     int messagesReceivedInThisRound = 0;
                     // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
                     while (messagesReceivedInThisRound < room.getRoomSize()) {
                         // Receive a message
-                        byte[] messageReceivedFromReceiverThread = receiverThread.recv();
-                        // Transform incoming message to a BigInteger
-                        BigInteger incomingOutputMessage = new BigInteger(messageReceivedFromReceiverThread);
+                        String messageReceivedFromReceiverThread = receiverThread.recvStr();
+
+                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual = new Gson().fromJson(messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
+                        int participantNodeIndex = outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
+
+                        BigInteger commitmentOnPlainMessageNodeRound2K = (BigInteger) receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
+                        int nearestRealRound = getNearestRealRound(round / 2);
+                        BigInteger commitmentOnPlainMessageNodeNearestRealRound = (BigInteger) receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(nearestRealRound);
+                        BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP()).multiply(commitmentOnPlainMessageNodeNearestRealRound);
+
+                        if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.getProofOfKnowledgeResendingFatherRoundReal(), commitmentOnPlainMessageNodeRound2K, resultantCommitment, room.getH(), room.getQ(), room.getP()))
+                            System.err.println("WRONG PoK on Resending when father round is virtual. Round: " + round + ", Node: " + participantNodeIndex);
+
                         // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
-                        sumOfO = sumOfO.add(incomingOutputMessage).mod(room.getP());
+                        sumOfO = sumOfO.add(outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.getOutputMessage().getProtocolMessage()).mod(room.getP());
                         // Increase the number of messages received
                         messagesReceivedInThisRound++;
                     }
@@ -563,6 +584,13 @@ public class SessionManager {
         } catch (ArithmeticException e) {
             averageTimePerMessage = 0;
         }
+    }
+
+    private int getNearestRealRound(int fatherRound) {
+        int possibleNearestRound = (fatherRound - 1) / 2;
+        while (!(possibleNearestRound % 2 == 0 || possibleNearestRound == 1))
+            possibleNearestRound = (possibleNearestRound - 1) / 2;
+        return possibleNearestRound;
     }
 
     private BigInteger calculateRandomForCommitmentOnMessage(BigInteger randomForPlainMessage, BigInteger randomForRandomPadding, BigInteger randomForFinalBit, Room room) {

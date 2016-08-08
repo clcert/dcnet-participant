@@ -1,6 +1,5 @@
 package participantnode;
 
-import com.google.gson.Gson;
 import dcnet.Room;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -83,12 +82,9 @@ public class Receiver implements ZThread.IAttachedRunnable {
             } else {
                 for (int i = 0; i < roomSize; i++) {
                     // Receive message from a node in the room
-                    String inputOutputMessage = receiver.recvStr().trim();
-                    // Format the message that is incoming to "extract" the actual message
-                    OutputMessage incomingOutputMessage = new Gson().fromJson(inputOutputMessage, OutputMessage.class);
-                    byte[] byteArrayInputMessage = incomingOutputMessage.getProtocolMessage().toByteArray();
-                    // Send to the sender thread the message received
-                    pipe.send(byteArrayInputMessage);
+                    String incomingOutputMessageAndPOKResending = receiver.recvStr().trim();
+                    // Send String (json) to the sender thread the message received
+                    pipe.send(incomingOutputMessageAndPOKResending);
                 }
             }
 
