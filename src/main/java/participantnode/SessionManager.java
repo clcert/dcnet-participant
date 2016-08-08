@@ -110,7 +110,8 @@ public class SessionManager {
         Dictionary<Integer, BigInteger> randomsForPlainMessage = new Hashtable<>();
 
         // Store commitments on plain messages of others participant nodes in the room
-        Hashtable[] receivedCommitmentsOnPlainMessages = new Hashtable[room.getRoomSize()];
+        @SuppressWarnings("unchecked")
+        Hashtable<Integer, BigInteger>[] receivedCommitmentsOnPlainMessages = new Hashtable[room.getRoomSize()];
         for (int i = 0; i < receivedCommitmentsOnPlainMessages.length; i++)
             receivedCommitmentsOnPlainMessages[i] = new Hashtable<>();
 
@@ -355,8 +356,8 @@ public class SessionManager {
                     ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundVirtual;
                     OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual;
                     if (messageInThisRound) {
-                        BigInteger subtractioOfRandomness = randomsForPlainMessage.get(nearestRealRound).subtract(randomForPlainMessage).mod(room.getQ());
-                        proofOfKnowledgeResendingFatherRoundVirtual = zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(commitmentOnPlainMessage, divisionOfCommitments, room.getH(), subtractioOfRandomness, room.getQ(), room.getP());
+                        BigInteger subtractionOfRandomness = randomsForPlainMessage.get(nearestRealRound).subtract(randomForPlainMessage).mod(room.getQ());
+                        proofOfKnowledgeResendingFatherRoundVirtual = zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(commitmentOnPlainMessage, divisionOfCommitments, room.getH(), subtractionOfRandomness, room.getQ(), room.getP());
                         outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual = new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(outputParticipantMessage, proofOfKnowledgeResendingFatherRoundVirtual);
                     } else {
                         proofOfKnowledgeResendingFatherRoundVirtual = zkp.generateProofOfKnowledgeResendingFatherRoundRealX1(commitmentOnPlainMessage, room.getH(), randomForPlainMessage, divisionOfCommitments, room.getQ(), room.getP());
@@ -408,8 +409,8 @@ public class SessionManager {
                         OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundReal = new Gson().fromJson(messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
                         int participantNodeIndex = outputMessageAndProofOfKnowledgeResendingFatherRoundReal.getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
 
-                        BigInteger commitmentOnPlainMessageNodeRound2K = (BigInteger) receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
-                        BigInteger commitmentOnPlainMessageNodeRoundK = (BigInteger) receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get((round / 2));
+                        BigInteger commitmentOnPlainMessageNodeRound2K = receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
+                        BigInteger commitmentOnPlainMessageNodeRoundK = receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get((round / 2));
                         BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP()).multiply(commitmentOnPlainMessageNodeRoundK);
 
                         if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(outputMessageAndProofOfKnowledgeResendingFatherRoundReal.getProofOfKnowledgeResendingFatherRoundReal(), commitmentOnPlainMessageNodeRound2K, resultantCommitment, room.getH(), room.getQ(), room.getP()))
@@ -431,9 +432,9 @@ public class SessionManager {
                         OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual = new Gson().fromJson(messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
                         int participantNodeIndex = outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
 
-                        BigInteger commitmentOnPlainMessageNodeRound2K = (BigInteger) receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
+                        BigInteger commitmentOnPlainMessageNodeRound2K = receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
                         int nearestRealRound = getNearestRealRound(round / 2);
-                        BigInteger commitmentOnPlainMessageNodeNearestRealRound = (BigInteger) receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(nearestRealRound);
+                        BigInteger commitmentOnPlainMessageNodeNearestRealRound = receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(nearestRealRound);
                         BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP()).multiply(commitmentOnPlainMessageNodeNearestRealRound);
 
                         if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.getProofOfKnowledgeResendingFatherRoundReal(), commitmentOnPlainMessageNodeRound2K, resultantCommitment, room.getH(), room.getQ(), room.getP()))
