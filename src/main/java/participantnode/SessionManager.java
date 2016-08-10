@@ -373,7 +373,7 @@ public class SessionManager {
                     // Transform string (json) to CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat object
                     CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat
                             receivedCommitmentsOnSingleValuesAndPOKMessageFormat = new Gson().fromJson(
-                                    receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson,
+                            receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson,
                             CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat.class);
 
                     // Get commitmentOnPlainMessage, commitmentOnRandomPadding, receivedCommitmentOnFinalBit
@@ -463,7 +463,7 @@ public class SessionManager {
                     // Commitment for the sum of both randomness used
                     BigInteger commitmentOnSumOfRandomness = new Commitment(
                             room.getH(), room.getQ(), room.getP()).calculateCommitment(
-                                    randomForCommitmentOnOutputMessage);
+                            randomForCommitmentOnOutputMessage);
 
                     // Generate proofOfKnowledge for OutputMessage, as a commitment for the sum of both randomness used
                     ProofOfKnowledge proofOfKnowledgeOnOutputMessage = zkp.generateProofOfKnowledge(
@@ -483,44 +483,107 @@ public class SessionManager {
 
                 // Set Proof of Knowledge that is needed for rounds which have a father round real
                 else if ((round / 2) % 2 == 0 || round == 2) {
-                    // Calculate commitment of current round divided by commitment of father round
+                    // Calculate commitment on plain message of father round divided by
+                    // commitment on plain message of current round
                     BigInteger divisionOfCommitments = commitmentOnPlainMessage.modInverse(room.getP()).multiply(
                             commitmentsOnPlainMessage.get((round / 2)));
 
-
+                    // Create Pok depending if the participant node will send a message in this round or not
                     ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundReal;
-                    OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundReal;
+                    OutputMessageAndProofOfKnowledgeResendingFatherRoundReal
+                            outputMessageAndProofOfKnowledgeResendingFatherRoundReal;
+
+                    // If will send a message, needs to prove that is the same message that was sent in the father round
                     if (messageInThisRound) {
-                        BigInteger subtractionOfRandomness = randomsForPlainMessage.get((round / 2)).subtract(randomForCommitmentOnPlainMessage).mod(room.getQ());
-                        proofOfKnowledgeResendingFatherRoundReal = zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(commitmentOnPlainMessage, divisionOfCommitments, room.getH(), subtractionOfRandomness, room.getQ(), room.getP());
-                        outputMessageAndProofOfKnowledgeResendingFatherRoundReal = new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(outputParticipantMessage, proofOfKnowledgeResendingFatherRoundReal);
-                    } else {
-                        proofOfKnowledgeResendingFatherRoundReal = zkp.generateProofOfKnowledgeResendingFatherRoundRealX1(commitmentOnPlainMessage, room.getH(), randomForCommitmentOnPlainMessage, divisionOfCommitments, room.getQ(), room.getP());
-                        outputMessageAndProofOfKnowledgeResendingFatherRoundReal = new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(zeroMessage, proofOfKnowledgeResendingFatherRoundReal);
+                        // Calculate subtraction of randomness used for commitments on plain message sent in
+                        // the current round and in the father round
+                        BigInteger subtractionOfRandomness = randomsForPlainMessage.get((round / 2)).subtract(
+                                randomForCommitmentOnPlainMessage).mod(room.getQ());
+
+                        // Create Pok and create object containing it and the output message
+                        proofOfKnowledgeResendingFatherRoundReal =
+                                zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(
+                                        commitmentOnPlainMessage, divisionOfCommitments, room.getH(),
+                                        subtractionOfRandomness, room.getQ(), room.getP());
+                        outputMessageAndProofOfKnowledgeResendingFatherRoundReal =
+                                new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(
+                                        outputParticipantMessage, proofOfKnowledgeResendingFatherRoundReal);
                     }
-                    String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledgeResendingFatherRoundReal, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
-                    // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge when the father round is real)
+
+                    // If won't, needs to prove that his message is zero
+                    else {
+                        // Create Pok and create object containing it and the output message
+                        proofOfKnowledgeResendingFatherRoundReal =
+                                zkp.generateProofOfKnowledgeResendingFatherRoundRealX1(
+                                        commitmentOnPlainMessage, room.getH(), randomForCommitmentOnPlainMessage,
+                                        divisionOfCommitments, room.getQ(), room.getP());
+                        outputMessageAndProofOfKnowledgeResendingFatherRoundReal =
+                                new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(
+                                        zeroMessage, proofOfKnowledgeResendingFatherRoundReal);
+                    }
+
+                    // Generate Json object with the Pok (using an OR) and the output message
+                    String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(
+                            outputMessageAndProofOfKnowledgeResendingFatherRoundReal,
+                            OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
+
+                    // Send Json to the room (containing the output Message and the Pok when the father round is real)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 }
 
                 // Set Proof of Knowledge that is needed for rounds which have a father round virtual
                 else {
                     // TODO: message not sent in real rounds between this and that previous one
+                    // Calculate number of the father round (which is virtual) and the nearest real round
+                    // (between the current round and the first round)
                     int virtualFatherRound = (round / 2);
                     int nearestRealRound = getNearestRealRound(virtualFatherRound);
-                    BigInteger divisionOfCommitments = commitmentOnPlainMessage.modInverse(room.getP()).multiply(commitmentsOnPlainMessage.get(nearestRealRound));
+
+                    // Calculate commitment on plain message of nearest real round divided by
+                    // commitment on plain message of current round
+                    BigInteger divisionOfCommitments = commitmentOnPlainMessage.modInverse(room.getP()).multiply(
+                            commitmentsOnPlainMessage.get(nearestRealRound));
+
+                    // Create Pok depending if the participant node will send a message in this round or not
                     ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundVirtual;
-                    OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual;
+                    OutputMessageAndProofOfKnowledgeResendingFatherRoundReal
+                            outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual;
+
+                    // If will send a message, needs to prove that is the same message that was sent in the nearest real round
                     if (messageInThisRound) {
-                        BigInteger subtractionOfRandomness = randomsForPlainMessage.get(nearestRealRound).subtract(randomForCommitmentOnPlainMessage).mod(room.getQ());
-                        proofOfKnowledgeResendingFatherRoundVirtual = zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(commitmentOnPlainMessage, divisionOfCommitments, room.getH(), subtractionOfRandomness, room.getQ(), room.getP());
-                        outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual = new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(outputParticipantMessage, proofOfKnowledgeResendingFatherRoundVirtual);
-                    } else {
-                        proofOfKnowledgeResendingFatherRoundVirtual = zkp.generateProofOfKnowledgeResendingFatherRoundRealX1(commitmentOnPlainMessage, room.getH(), randomForCommitmentOnPlainMessage, divisionOfCommitments, room.getQ(), room.getP());
-                        outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual = new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(zeroMessage, proofOfKnowledgeResendingFatherRoundVirtual);
+                        // Calculate subtraction of randomness used for commitments on plain message sent in
+                        // the current round and in the nearest real round
+                        BigInteger subtractionOfRandomness = randomsForPlainMessage.get(nearestRealRound).subtract(
+                                randomForCommitmentOnPlainMessage).mod(room.getQ());
+
+                        // Create Pok and create object containing it and the output message
+                        proofOfKnowledgeResendingFatherRoundVirtual =
+                                zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(
+                                        commitmentOnPlainMessage, divisionOfCommitments, room.getH(),
+                                        subtractionOfRandomness, room.getQ(), room.getP());
+                        outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual =
+                                new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(
+                                        outputParticipantMessage, proofOfKnowledgeResendingFatherRoundVirtual);
                     }
-                    String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
-                    // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge when the father round is real)
+
+                    // If won't, needs to prove that the message is zero
+                    else {
+                        // Create Pok and create object containing it and the output message
+                        proofOfKnowledgeResendingFatherRoundVirtual =
+                                zkp.generateProofOfKnowledgeResendingFatherRoundRealX1(
+                                        commitmentOnPlainMessage, room.getH(), randomForCommitmentOnPlainMessage,
+                                        divisionOfCommitments, room.getQ(), room.getP());
+                        outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual =
+                                new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(
+                                        zeroMessage, proofOfKnowledgeResendingFatherRoundVirtual);
+                    }
+
+                    // Generate Json object with the Pok (using an OR) and the output message
+                    String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(
+                            outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual,
+                            OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
+
+                    // Send Json to the room (containing the output Message and the Pok when the father round is virtual)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
                 }
 
@@ -530,107 +593,195 @@ public class SessionManager {
                 else
                     zeroMessage.setRoundKeyValue(keyRoundValue.negate());
 
-                /* RECEIVE OUTPUT MESSAGES AND POKs ASSOCIATED **/
+                /* RECEIVE OUTPUT MESSAGES AND POKs ASSOCIATED */
+                // Receive Pok that is needed for Round 1
                 if (round == 1) {
-                    // Variable to count how many messages were received from the receiver thread
+                    // Variable to count how many messages were received from the receiver thread in this round
                     int messagesReceivedInThisRound = 0;
-                    // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
+
+                    // When this number equals the total number of participants nodes in the room,
+                    // it means that i've received all the messages in this round
                     while (messagesReceivedInThisRound < room.getRoomSize()) {
-                        // Receive a message (json)
+
+                        // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
+
                         // Transform incoming message (json) to a OutputMessageAndProofOfKnowledge object
-                        OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new Gson().fromJson(messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledge.class);
+                        OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new Gson().fromJson(
+                                messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledge.class);
+
                         // Get index of participant node that is sending his proofOfKnowledge
                         int participantNodeIndex = outputMessageAndProofOfKnowledge.getProofOfKnowledge().getNodeIndex();
-                        // Construct commitment on outputMessage as the multiplication of commitmentOnKey and commitmentOnMessage
-                        BigInteger commitmentOnOutputMessage = receivedCommitmentsOnKeyCurrentRound[participantNodeIndex - 1].multiply(receivedCommitmentsOnMessageCurrentRound[participantNodeIndex - 1]).mod(room.getP());
-                        // Construct beta in order to verify proof of knowledge sent by the participant node
-                        BigInteger beta = commitmentOnOutputMessage.multiply(room.getG().modPow(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage(), room.getP()).modInverse(room.getP())).mod(room.getP());
-                        // Verify the proofOfKnowledge with the values rescued before and do something if it's not valid
-                        if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(), beta, room.getH(), room.getQ(), room.getP()))
-                            System.err.println("WRONG PoK on OutputMessage. Round: " + round + ", Node: " + participantNodeIndex);
-                        // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
-                        sumOfO = sumOfO.add(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage()).mod(room.getP());
+
+                        // Construct commitment on outputMessage as the multiplication of
+                        // commitmentOnKey and commitmentOnMessage
+                        BigInteger commitmentOnOutputMessage =
+                                receivedCommitmentsOnKeyCurrentRound[participantNodeIndex - 1].multiply(
+                                        receivedCommitmentsOnMessageCurrentRound[participantNodeIndex - 1]).mod(
+                                        room.getP());
+
+                        // Construct beta using commitment on output message construct before
+                        // in order to verify proof of knowledge sent by the participant node
+                        BigInteger beta = commitmentOnOutputMessage.multiply(room.getG().modPow(
+                                outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage(), room.getP())
+                                .modInverse(room.getP())).mod(room.getP());
+
+                        // Verify the proof of knowledge
+                        if (!zkp.verifyProofOfKnowledge(outputMessageAndProofOfKnowledge.getProofOfKnowledge(),
+                                beta, room.getH(), room.getQ(), room.getP()))
+                            System.err.println("WRONG PoK on OutputMessage. Round: " + round + ", Node: " +
+                                    participantNodeIndex);
+
+                        // Sum this incoming message with the rest that i've received in this round
+                        // in order to construct the resulting message of this round
+                        sumOfO = sumOfO.add(outputMessageAndProofOfKnowledge.getOutputMessage().getProtocolMessage())
+                                .mod(room.getP());
+
                         // Increase the number of messages received
                         messagesReceivedInThisRound++;
                     }
-                } else if ((round / 2) % 2 == 0 || round == 2) {
+                }
+
+                // Receive Pok that is needed for rounds which have father round is real
+                else if ((round / 2) % 2 == 0 || round == 2) {
                     // Variable to count how many messages were received from the receiver thread
                     int messagesReceivedInThisRound = 0;
-                    // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
+
+                    // When this number equals the total number of participants nodes in the room,
+                    // it means that i've received all the messages in this round
                     while (messagesReceivedInThisRound < room.getRoomSize()) {
-                        // Receive a message
+
+                        // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
 
-                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundReal = new Gson().fromJson(messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
-                        int participantNodeIndex = outputMessageAndProofOfKnowledgeResendingFatherRoundReal.getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
+                        // Transform incoming message (json) to a
+                        // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
+                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal
+                                outputMessageAndProofOfKnowledgeResendingFatherRoundReal =
+                                new Gson().fromJson(messageReceivedFromReceiverThread,
+                                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
 
-                        BigInteger commitmentOnPlainMessageNodeRound2K = receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
-                        BigInteger commitmentOnPlainMessageNodeRoundK = receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get((round / 2));
-                        BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP()).multiply(commitmentOnPlainMessageNodeRoundK);
+                        // Get index of participant node that is sending his proofOfKnowledge
+                        int participantNodeIndex = outputMessageAndProofOfKnowledgeResendingFatherRoundReal.
+                                getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
 
-                        if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(outputMessageAndProofOfKnowledgeResendingFatherRoundReal.getProofOfKnowledgeResendingFatherRoundReal(), commitmentOnPlainMessageNodeRound2K, resultantCommitment, room.getH(), room.getQ(), room.getP()))
-                            System.err.println("WRONG PoK on Resending when father round is real. Round: " + round + ", Node: " + participantNodeIndex);
+                        // Retrieve commitments on plain message sent in the current round and in the father round
+                        BigInteger commitmentOnPlainMessageNodeRound2K =
+                                receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
+                        BigInteger commitmentOnPlainMessageNodeRoundK =
+                                receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get((round / 2));
 
-                        // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
-                        sumOfO = sumOfO.add(outputMessageAndProofOfKnowledgeResendingFatherRoundReal.getOutputMessage().getProtocolMessage()).mod(room.getP());
+                        // Construct a commitment needed to verify Pok as the multiplication of the inverse of the
+                        // commitment send in the current round with the commitment sent in the father round
+                        BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP())
+                                .multiply(commitmentOnPlainMessageNodeRoundK);
+
+                        // Verify proof of knowledge
+                        if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(
+                                outputMessageAndProofOfKnowledgeResendingFatherRoundReal.
+                                        getProofOfKnowledgeResendingFatherRoundReal(), commitmentOnPlainMessageNodeRound2K,
+                                resultantCommitment, room.getH(), room.getQ(), room.getP()))
+                            System.err.println("WRONG PoK on Resending when father round is real. Round: " +
+                                    round + ", Node: " + participantNodeIndex);
+
+                        // Sum this incoming message with the rest that i've received in this round
+                        // in order to construct the resulting message of this round
+                        sumOfO = sumOfO.add(outputMessageAndProofOfKnowledgeResendingFatherRoundReal.getOutputMessage()
+                                .getProtocolMessage()).mod(room.getP());
+
                         // Increase the number of messages received
                         messagesReceivedInThisRound++;
                     }
-                } else {
+                }
+
+                // Receive Pok that is needed for rounds which have father round is virtual
+                else {
                     // Variable to count how many messages were received from the receiver thread
                     int messagesReceivedInThisRound = 0;
-                    // When this number equals the total number of participants nodes in the room, it means that i've received all the messages in this round
+
+                    // When this number equals the total number of participants nodes in the room,
+                    // it means that i've received all the messages in this round
                     while (messagesReceivedInThisRound < room.getRoomSize()) {
-                        // Receive a message
+
+                        // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
 
-                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual = new Gson().fromJson(messageReceivedFromReceiverThread, OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
-                        int participantNodeIndex = outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
+                        // Transform incoming message (json) to a
+                        // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
+                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal
+                                outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual =
+                                new Gson().fromJson(messageReceivedFromReceiverThread,
+                                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
 
-                        BigInteger commitmentOnPlainMessageNodeRound2K = receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
+                        // Get index of participant node that is sending his proofOfKnowledge
+                        int participantNodeIndex = outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.
+                                getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
+
+                        // Calculate the nearest real round played between the current and the first ones
                         int nearestRealRound = getNearestRealRound(round / 2);
-                        BigInteger commitmentOnPlainMessageNodeNearestRealRound = receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(nearestRealRound);
-                        BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP()).multiply(commitmentOnPlainMessageNodeNearestRealRound);
 
-                        if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.getProofOfKnowledgeResendingFatherRoundReal(), commitmentOnPlainMessageNodeRound2K, resultantCommitment, room.getH(), room.getQ(), room.getP()))
-                            System.err.println("WRONG PoK on Resending when father round is virtual. Round: " + round + ", Node: " + participantNodeIndex);
+                        // Retrieve commitments on plain message sent in the current round and in the nearest real round
+                        BigInteger commitmentOnPlainMessageNodeRound2K =
+                                receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
+                        BigInteger commitmentOnPlainMessageNodeNearestRealRound =
+                                receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(nearestRealRound);
 
-                        // Sum this incoming message with the rest that i've received in this round in order to construct the resulting message of this round
-                        sumOfO = sumOfO.add(outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.getOutputMessage().getProtocolMessage()).mod(room.getP());
+                        // Construct a commitment needed to verify Pok as the multiplication of the inverse of the
+                        // commitment send in the current round with the commitment sent in the nearest real round
+                        BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP())
+                                .multiply(commitmentOnPlainMessageNodeNearestRealRound);
+
+                        // Verify proof of knowledge
+                        if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(
+                                outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.
+                                        getProofOfKnowledgeResendingFatherRoundReal(),
+                                commitmentOnPlainMessageNodeRound2K, resultantCommitment,
+                                room.getH(), room.getQ(), room.getP()))
+                            System.err.println("WRONG PoK on Resending when father round is virtual. Round: " +
+                                    round + ", Node: " + participantNodeIndex);
+
+                        // Sum this incoming message with the rest that i've received in this round
+                        // in order to construct the resulting message of this round
+                        sumOfO = sumOfO.add(outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.
+                                getOutputMessage().getProtocolMessage()).mod(room.getP());
+
                         // Increase the number of messages received
                         messagesReceivedInThisRound++;
                     }
                 }
             }
 
-            /* VIRTUAL ROUND (odd rounds) **/
+            /* VIRTUAL ROUND (odd rounds) */
             else {
-                // Recover messages sent in rounds (2*round) and round in order to construct the resulting message of this round (see Reference for more information)
+                // Recover messages sent in father and previous round in order to construct
+                // the resulting message of this round
                 BigInteger sumOfOSentInRound2K = messagesSentInPreviousRounds.get(round - 1);
                 BigInteger sumOfOSentInRoundK = messagesSentInPreviousRounds.get((round - 1) / 2);
+
                 // Construct the resulting message of this round
                 sumOfO = sumOfOSentInRoundK.subtract(sumOfOSentInRound2K);
             }
 
-            /* EXTRACT ROUND MESSAGES VALUES **/
+            /* EXTRACT ROUND MESSAGES VALUES */
             // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
             messagesSentInPreviousRounds.put(round, sumOfO);
-            // Divide sumOfO in sumOfM and sumOfT (see Reference for more information)
+
+            // Separate sumOfO in (sumOfM, sumOfT)
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
 
             // Print info about the messages sent in probabilistic mode
-            if (!room.getNonProbabilisticMode()) {
+            /*if (!room.getNonProbabilisticMode()) {
                 if (sumOfM.toString().length() > 15)
                     System.err.println("C_" + round + ":\t(" + sumOfM.toString().substring(0, 10) + "..., " + sumOfT + ")");
                 else
                     System.err.println("C_" + round + ":\t(" + sumOfM + ", " + sumOfT + ")");
-            }
+            }*/
 
             // If we are playing the first round, assign the size of the collision
             if (round == 1) {
                 collisionSize = Integer.parseInt(sumOfT.toString());
+
                 // If the size is 0, it means that no messages were sent during this session, so we finish the protocol
                 if (collisionSize == 0) {
                     System.err.println("NO MESSAGES WERE SENT");
@@ -639,34 +790,43 @@ public class SessionManager {
                 }
             }
 
-            /* NO COLLISION ROUND **/
-            // <sumOfT> = 1 => No Collision Round => a message went through clearly, received by the rest of the nodes
+            /* NO COLLISION ROUND */
+            // <sumOfT> = 1 => No Collision Round => a message went through, received by the rest of the nodes
             if (sumOfT.equals(BigInteger.ONE)) {
                 // Increase the number of messages that went through the protocol
                 messagesSentWithNoCollisions++;
 
+                // Freeze the time of receiving the first message (if it's indeed the first)
                 if (messagesSentWithNoCollisions == 1)
                     firstMessageTime = System.nanoTime() - t1;
 
-                // Print message that went through the protocol
+                // Retrieve message that went through the protocol
                 String singleMessage = OutputMessage.getMessageWithoutRandomPadding(sumOfM, room);
-                // Add message to List
+
+                // Add message to the list
                 messagesList.add(singleMessage);
-                // Set message to Observable object
+
+                // Set message to Observable object to notify that a message went through
                 observableMessageArrived.setValue(singleMessage);
 
-                /* If the message that went through is mine, my message was transmitted.
-                 * We have to set the variable in order to start sending zero messages in subsequently rounds */
+                // If the message that went through is from current participant node,
+                // it needs to set the variable in order to start sending zero messages in subsequent rounds
                 if (plainMessageWithRandomPadding.equals(sumOfM))
                     messageTransmitted = true;
 
-                /* If the number of messages that went through equals the collision size, the first collision was completely resolved.
-                 * Set variable to finalize the protocol in the next round */
+                // If the number of messages that went through until now equals the collision size,
+                // the first collision was completely resolved.
+                // It needs to be set a variable to finalize the protocol in the next round
                 if (messagesSentWithNoCollisions == collisionSize)
                     finished = true;
-            } else {
+
+            }
+
+            // Size of collision is not zero
+            else {
                 /* PROBLEMATIC ROUND **/
-                // <sumOfT> == 0 => if we are in a deterministic mode, this means that someone cheated, and it's necessary to change the mode
+                // <sumOfT> == 0 => if we are in a deterministic mode, this means that someone cheated,
+                // and it's necessary to change the mode
                 if (sumOfT.equals(BigInteger.ZERO)) {
                     // Change resending mode
                     if (room.getNonProbabilisticMode()) {
@@ -674,34 +834,41 @@ public class SessionManager {
                     }
                 }
 
-                /* COLLISION ROUND **/
+                /* COLLISION ROUND */
                 // <sumOfT> > 1 => A Collision was produced
                 if (sumOfT.compareTo(BigInteger.ONE) > 0) {
 
-                    /* PROBLEMATIC ROUND **/
-                    // <sumOfT> repeats in this real round and the "father" round. Someone cheated and it's necessary to change the mode
+                    /* PROBLEMATIC ROUND */
+                    // <sumOfT> gets repeated in this real round and the father round.
+                    // Someone cheated and it's necessary to change the mode
                     if (round != 1 && round % 2 == 0 && sumOfO.equals(messagesSentInPreviousRounds.get(round / 2))) {
                         // Remove next round to happen (it will be a virtual round with no messages sent)
                         removeRoundToHappen(nextRoundsToHappen, round + 1);
+
                         // Change resending mode
                         if (room.getNonProbabilisticMode()) {
                             room.setNonProbabilisticMode(false);
                         }
                     }
 
-                    /* RESENDING PROTOCOL **/
-                    // Check if my message was involved in the collision, checking if in this round i was allowed to send my message
+                    /* RESENDING PROTOCOL */
+                    // Check if current participant node's message was involved in the collision,
+                    // checking if in this round it was allowed to send a message
                     if (nextRoundAllowedToSend == round) {
-                        // Non probabilistic mode (see Reference for more information)
+
+                        // Non probabilistic mode
                         if (room.getNonProbabilisticMode()) {
-                            // Calculate average message, if my message is below that value i re-send in the round (2*round)
+
+                            // Calculate average message, if the message is below that value
+                            // it will be re-send in the round (2*round)
                             if (plainMessageWithRandomPadding.compareTo(sumOfM.divide(sumOfT)) <= 0) {
                                 if (cheaterNode)
                                     nextRoundAllowedToSend = 2 * round + 1;
                                 else
                                     nextRoundAllowedToSend = 2 * round;
                             }
-                            // If not, i re-send my message in the round (2*round + 1)
+
+                            // If it's above the average, it will be re-send in the round (2*round + 1)
                             else {
                                 if (cheaterNode)
                                     nextRoundAllowedToSend = 2 * round;
@@ -709,9 +876,10 @@ public class SessionManager {
                                     nextRoundAllowedToSend = 2 * round + 1;
                             }
                         }
-                        // Probabilistic mode (see Reference for more information)
+
+                        // Probabilistic mode
                         else {
-                            // Throw a coin to see if a send in the round (2*round) or (2*round + 1)
+                            // Throw a coin to see if the message is re-send in the round (2*round) or (2*round + 1)
                             boolean coin = new SecureRandom().nextBoolean();
                             if (coin)
                                 nextRoundAllowedToSend = 2 * round;
@@ -719,6 +887,7 @@ public class SessionManager {
                                 nextRoundAllowedToSend = 2 * round + 1;
                         }
                     }
+
                     // Add (2*round) and (2*round + 1) rounds to future plays
                     addRoundToHappenNext(nextRoundsToHappen, 2 * round);
                     addRoundToHappenNext(nextRoundsToHappen, 2 * round + 1);
@@ -728,8 +897,10 @@ public class SessionManager {
 
         // Finish time measurement
         long t2 = System.nanoTime();
+
         // Save execution time
         executionTime = t2 - t1;
+
         // Save average time per message
         try {
             averageTimePerMessage = executionTime / messagesSentWithNoCollisions;
@@ -738,6 +909,12 @@ public class SessionManager {
         }
     }
 
+    /**
+     * Calculate nearest real round between fatherRound and the first round of the session
+     *
+     * @param fatherRound number of round that needs to be found the nearest real round
+     * @return nearest real round between fatherRound and the first round of the session
+     */
     private int getNearestRealRound(int fatherRound) {
         int possibleNearestRound = (fatherRound - 1) / 2;
         while (!(possibleNearestRound % 2 == 0 || possibleNearestRound == 1))
@@ -745,7 +922,16 @@ public class SessionManager {
         return possibleNearestRound;
     }
 
-    private BigInteger calculateRandomForCommitmentOnMessage(BigInteger randomForPlainMessage, BigInteger randomForRandomPadding, BigInteger randomForFinalBit, Room room) {
+    /**
+     * @param randomForPlainMessage  random value for commitment on plain message
+     * @param randomForRandomPadding random value for commitment on random padding
+     * @param randomForFinalBit      random value for commitment on final bit
+     * @param room                   room where the messages are being send
+     * @return random for commitment on message
+     */
+    private BigInteger calculateRandomForCommitmentOnMessage(BigInteger randomForPlainMessage,
+                                                             BigInteger randomForRandomPadding,
+                                                             BigInteger randomForFinalBit, Room room) {
         BigInteger two = BigInteger.valueOf(2);
         BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize() + 1);
         int randomPaddingLength = room.getPadLength() * 8; // z
@@ -754,7 +940,16 @@ public class SessionManager {
 
     }
 
-    private BigInteger constructCommitmentOnMessage(BigInteger commitmentOnPlainMessage, BigInteger commitmentOnRandomPadding, BigInteger commitmentOnFinalBit, Room room) {
+    /**
+     * @param commitmentOnPlainMessage  commitment on plain message
+     * @param commitmentOnRandomPadding commitment on random padding
+     * @param commitmentOnFinalBit      commitment on final bit
+     * @param room                      room where the messages are being send
+     * @return commitment on message
+     */
+    private BigInteger constructCommitmentOnMessage(BigInteger commitmentOnPlainMessage,
+                                                    BigInteger commitmentOnRandomPadding,
+                                                    BigInteger commitmentOnFinalBit, Room room) {
         BigInteger two = BigInteger.valueOf(2);
         BigInteger nPlusOne = BigInteger.valueOf(room.getRoomSize() + 1);
         int nPlusOneInteger = room.getRoomSize() + 1;
@@ -918,6 +1113,9 @@ public class SessionManager {
         return realRoundsPlayed;
     }
 
+    /**
+     * @return total time that took the synchronization between the nodes
+     */
     public long getTotalSyncTime() {
         return totalSyncTime;
     }
