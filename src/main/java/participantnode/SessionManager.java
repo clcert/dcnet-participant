@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * Class that manages an entire session when running the DC-NET protocol.
@@ -166,16 +163,17 @@ public class SessionManager {
         // Store commitments on plain message of current participant node
         // TODO: Check if make this a class variable
         Dictionary<Integer, BigInteger> commitmentsOnPlainMessage = new Hashtable<>();
+
         // Store random values for commitments on plain message of current participant node
         // TODO: Check if make this a class variable
         Dictionary<Integer, BigInteger> randomsForPlainMessage = new Hashtable<>();
 
         // Store commitments on plain messages of others participant nodes in the room
         // TODO: Check if make this a class variable
-        @SuppressWarnings("unchecked")
-        Hashtable<Integer, BigInteger>[] receivedCommitmentsOnPlainMessages = new Hashtable[room.getRoomSize()];
-        for (int i = 0; i < receivedCommitmentsOnPlainMessages.length; i++)
-            receivedCommitmentsOnPlainMessages[i] = new Hashtable<>();
+        List<Hashtable<Integer, BigInteger>> receivedCommitmentsOnPlainMessages = new ArrayList<>();
+        for (int i = 0; i < room.getRoomSize(); i++) {
+            receivedCommitmentsOnPlainMessages.add(i, new Hashtable<Integer, BigInteger>());
+        }
 
         // Set time to measure entire session
         long t1 = System.nanoTime();
@@ -389,7 +387,7 @@ public class SessionManager {
                     int participantNodeIndex = receivedCommitmentsOnSingleKeys.getNodeIndex();
 
                     // Store received commitment on plain message for future use in subsequent rounds
-                    receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].
+                    receivedCommitmentsOnPlainMessages.get(participantNodeIndex - 1).
                             put(round, receivedCommitmentOnPlainMessage);
 
                     // Construct received commitment on message using received commitments on single values
@@ -666,10 +664,10 @@ public class SessionManager {
                                 getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
 
                         // Retrieve commitments on plain message sent in the current round and in the father round
-                        BigInteger commitmentOnPlainMessageNodeRound2K =
-                                receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
-                        BigInteger commitmentOnPlainMessageNodeRoundK =
-                                receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get((round / 2));
+                        BigInteger commitmentOnPlainMessageNodeRound2K = receivedCommitmentsOnPlainMessages.get(
+                                participantNodeIndex - 1).get(round);
+                        BigInteger commitmentOnPlainMessageNodeRoundK = receivedCommitmentsOnPlainMessages.get(
+                                participantNodeIndex - 1).get(round / 2);
 
                         // Construct a commitment needed to verify Pok as the multiplication of the inverse of the
                         // commitment send in the current round with the commitment sent in the father round
@@ -721,10 +719,10 @@ public class SessionManager {
                         int nearestRealRound = getNearestRealRound(round / 2);
 
                         // Retrieve commitments on plain message sent in the current round and in the nearest real round
-                        BigInteger commitmentOnPlainMessageNodeRound2K =
-                                receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(round);
-                        BigInteger commitmentOnPlainMessageNodeNearestRealRound =
-                                receivedCommitmentsOnPlainMessages[participantNodeIndex - 1].get(nearestRealRound);
+                        BigInteger commitmentOnPlainMessageNodeRound2K = receivedCommitmentsOnPlainMessages.
+                                get(participantNodeIndex - 1).get(round);
+                        BigInteger commitmentOnPlainMessageNodeNearestRealRound = receivedCommitmentsOnPlainMessages.
+                                get(participantNodeIndex - 1).get(nearestRealRound);
 
                         // Construct a commitment needed to verify Pok as the multiplication of the inverse of the
                         // commitment send in the current round with the commitment sent in the nearest real round
@@ -769,14 +767,6 @@ public class SessionManager {
             // Separate sumOfO in (sumOfM, sumOfT)
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
-
-            // Print info about the messages sent in probabilistic mode
-            /*if (!room.getNonProbabilisticMode()) {
-                if (sumOfM.toString().length() > 15)
-                    System.err.println("C_" + round + ":\t(" + sumOfM.toString().substring(0, 10) + "..., " + sumOfT + ")");
-                else
-                    System.err.println("C_" + round + ":\t(" + sumOfM + ", " + sumOfT + ")");
-            }*/
 
             // If we are playing the first round, assign the size of the collision
             if (round == 1) {
