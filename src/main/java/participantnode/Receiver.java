@@ -40,7 +40,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
             if (round != 1 && round % 2 != 0)
                 continue;
 
-            /** COMMITMENTS ON KEYS PART **/
+            /* COMMITMENTS ON KEYS PART **/
             for (int i = 0; i < roomSize; i++) {
                 // Receive commitment on key from a node in the room
                 String inputKeyCommitment = receiver.recvStr();
@@ -48,7 +48,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
                 pipe.send(inputKeyCommitment);
             }
 
-            /** COMMITMENTS FOR SINGLE VALUES **/
+            /* COMMITMENTS FOR SINGLE VALUES **/
             for (int i = 0; i < roomSize; i++) {
                 // Received commitments on single values from a node in the room
                 String inputCommitmentsOnSingleValues = receiver.recvStr().trim();
@@ -56,7 +56,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
                 pipe.send(inputCommitmentsOnSingleValues);
             }
 
-            /** COMMITMENTS AND POK ON MESSAGES **/
+            /* COMMITMENTS AND POK ON MESSAGES **/
             for (int i = 0; i < roomSize; i++) {
                 // Receive proof of knowledge from a node in the room as a String (json)
                 String inputMessagePOKAndCommitment = receiver.recvStr().trim();
@@ -64,7 +64,7 @@ public class Receiver implements ZThread.IAttachedRunnable {
                 pipe.send(inputMessagePOKAndCommitment);
             }
 
-            /** OUTPUT MESSAGE SENDING **/
+            /* OUTPUT MESSAGE SENDING **/
             if (round == 1) {
                 for (int i = 0; i < roomSize; i++) {
                     // Receive message from a node in the room

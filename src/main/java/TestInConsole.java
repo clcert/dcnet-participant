@@ -54,7 +54,7 @@ public class TestInConsole {
 
         private DCNETProtocol.ObservableParticipantsLeft observableParticipantsLeft;
 
-        public ParticipantsLeftToConnectObserver(DCNETProtocol.ObservableParticipantsLeft observableParticipantsLeft) {
+        ParticipantsLeftToConnectObserver(DCNETProtocol.ObservableParticipantsLeft observableParticipantsLeft) {
             this.observableParticipantsLeft = observableParticipantsLeft;
         }
 
@@ -79,7 +79,7 @@ public class TestInConsole {
 
         private DCNETProtocol.ObservableMessageArrived observableMessageArrived;
 
-        public MessagesArrivedObserver(DCNETProtocol.ObservableMessageArrived observableMessageArrived) {
+        MessagesArrivedObserver(DCNETProtocol.ObservableMessageArrived observableMessageArrived) {
             this.observableMessageArrived = observableMessageArrived;
         }
 
