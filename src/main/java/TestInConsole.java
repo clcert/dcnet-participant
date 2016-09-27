@@ -87,7 +87,7 @@ public class TestInConsole {
         public void update(Observable observable, Object data) {
             if (observable == observableMessageArrived) {
                 final String messageArrivedValue = observableMessageArrived.getValue();
-                System.err.println("ANON: " + messageArrivedValue);
+                // System.err.println("ANON: " + messageArrivedValue);
             }
         }
 

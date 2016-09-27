@@ -176,6 +176,8 @@ public class SessionManager {
                 receiverThread.send("" + currentRound);
             }
 
+            System.err.println("Current Round: " + currentRound);
+
             // Variables to store the resulting message of the round
             BigInteger sumOfM, sumOfT, sumOfO = BigInteger.ZERO;
 
@@ -512,11 +514,20 @@ public class SessionManager {
 
                 // Set Proof of Knowledge that is needed for rounds which have a father round virtual
                 else {
-                    // TODO: message not sent in real rounds between this and that previous one
                     // Calculate number of the father round (which is virtual) and the nearest real round
                     // (between the current round and the first round)
                     int virtualFatherRound = (currentRound / 2);
                     int nearestRealRound = getNearestRealRound(virtualFatherRound);
+
+                    // Get real rounds between current and nearest real round
+                    int[] realRounds = convertToIntArray(getRealRoundsToCheckNotSending(nearestRealRound,
+                            virtualFatherRound));
+
+                    BigInteger[] commitmentsOnPlainMessagesInPreviousRounds = new BigInteger[realRounds.length];
+                    for (int i = 0; i < realRounds.length; i++) {
+                        commitmentsOnPlainMessagesInPreviousRounds[i] = commitmentsOnPlainMessage.get(realRounds[i]);
+                    }
+                    // TODO: message not sent in real rounds between this and that previous one
 
                     // Calculate commitment on plain message of nearest real round divided by
                     // commitment on plain message of current round
@@ -833,7 +844,8 @@ public class SessionManager {
 
                             // Calculate average message, if the message is below that value
                             // it will be re-send in the round (2*round)
-                            if (plainMessageWithRandomPadding.compareTo(sumOfM.divide(sumOfT)) <= 0) {
+                            BigInteger averageMessage = sumOfM.divide(sumOfT);
+                            if (plainMessageWithRandomPadding.compareTo(averageMessage) <= 0) {
                                 if (cheaterNode)
                                     nextRoundAllowedToSend = 2 * currentRound + 1;
                                 else
@@ -881,6 +893,14 @@ public class SessionManager {
         }
     }
 
+    private int[] convertToIntArray(Object[] array) {
+        int[] a = new int[array.length];
+        for (int i = 0; i < a.length; i++) {
+            a[i] = (int) array[i];
+        }
+        return a;
+    }
+
     /**
      * Calculate nearest real round between fatherRound and the first round of the session
      *
@@ -892,6 +912,23 @@ public class SessionManager {
         while (!(possibleNearestRound % 2 == 0 || possibleNearestRound == 1))
             possibleNearestRound = (possibleNearestRound - 1) / 2;
         return possibleNearestRound;
+    }
+
+    /**
+     * Calculate the real rounds between the father of the current and the nearest real round
+     *
+     * @param nearestRealRound nearest real round between current round and round one
+     * @param fatherVirtualRound father round (which is virtual) of the current round
+     * @return real rounds between current and nearest real round in the direct branch
+     */
+    private Object[] getRealRoundsToCheckNotSending(int nearestRealRound, int fatherVirtualRound) {
+        ArrayList<Integer> realRounds = new ArrayList<>();
+        int auxRound = nearestRealRound;
+        while(auxRound != fatherVirtualRound) {
+            realRounds.add(auxRound*2);
+            auxRound = 2*auxRound + 1;
+        }
+        return realRounds.toArray();
     }
 
     /**
