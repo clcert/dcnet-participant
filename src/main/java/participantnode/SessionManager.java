@@ -759,6 +759,7 @@ public class SessionManager {
             // Separate sumOfO in (sumOfM, sumOfT)
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
+            System.err.println("Number of messages: " + sumOfT);
 
             // If we are playing the first round, assign the size of the collision
             if (currentRound == 1) {
