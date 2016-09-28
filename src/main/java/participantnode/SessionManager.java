@@ -520,13 +520,13 @@ public class SessionManager {
                     int nearestRealRound = getNearestRealRound(virtualFatherRound);
 
                     // Get real rounds between current and nearest real round
-                    int[] realRounds = convertToIntArray(getRealRoundsToCheckNotSending(nearestRealRound,
-                            virtualFatherRound));
+                    ArrayList<Integer> realRounds = getRealRoundsToCheckNotSending(nearestRealRound, virtualFatherRound);
 
-                    BigInteger[] commitmentsOnPlainMessagesInPreviousRounds = new BigInteger[realRounds.length];
-                    for (int i = 0; i < realRounds.length; i++) {
-                        commitmentsOnPlainMessagesInPreviousRounds[i] = commitmentsOnPlainMessage.get(realRounds[i]);
+                    BigInteger[] commitmentsOnPlainMessagesInPreviousRounds = new BigInteger[realRounds.size()];
+                    for (int i = 0; i < realRounds.size(); i++) {
+                        commitmentsOnPlainMessagesInPreviousRounds[i] = commitmentsOnPlainMessage.get(realRounds.get(i));
                     }
+
                     // TODO: message not sent in real rounds between this and that previous one
 
                     // Calculate commitment on plain message of nearest real round divided by
@@ -710,11 +710,23 @@ public class SessionManager {
                         // Calculate the nearest real round played between the current and the first ones
                         int nearestRealRound = getNearestRealRound(currentRound / 2);
 
+                        //  Get real round between current and nearest real round
+                        ArrayList<Integer> realRounds = getRealRoundsToCheckNotSending(nearestRealRound, currentRound/2);
+
                         // Retrieve commitments on plain message sent in the current round and in the nearest real round
                         BigInteger commitmentOnPlainMessageNodeRound2K = receivedCommitmentsOnPlainMessages.
                                 get(participantNodeIndex - 1).get(currentRound);
                         BigInteger commitmentOnPlainMessageNodeNearestRealRound = receivedCommitmentsOnPlainMessages.
                                 get(participantNodeIndex - 1).get(nearestRealRound);
+
+                        // Retrieve commitments on plain message sent in all the real rounds between current and nearest real round
+                        BigInteger[] commitmentsOnPlainMessageInPreviousRounds = new BigInteger[realRounds.size()];
+                        for (int i = 0; i < realRounds.size(); i++) {
+                            commitmentsOnPlainMessageInPreviousRounds[i] = receivedCommitmentsOnPlainMessages.get(participantNodeIndex - 1).get(realRounds.get(i));
+                        }
+
+                        // TODO: message not sent in real rounds between this and that previous one
+
 
                         // Construct a commitment needed to verify Pok as the multiplication of the inverse of the
                         // commitment send in the current round with the commitment sent in the nearest real round
@@ -894,14 +906,6 @@ public class SessionManager {
         }
     }
 
-    private int[] convertToIntArray(Object[] array) {
-        int[] a = new int[array.length];
-        for (int i = 0; i < a.length; i++) {
-            a[i] = (int) array[i];
-        }
-        return a;
-    }
-
     /**
      * Calculate nearest real round between fatherRound and the first round of the session
      *
@@ -922,14 +926,14 @@ public class SessionManager {
      * @param fatherVirtualRound father round (which is virtual) of the current round
      * @return real rounds between current and nearest real round in the direct branch
      */
-    private Object[] getRealRoundsToCheckNotSending(int nearestRealRound, int fatherVirtualRound) {
+    private ArrayList<Integer> getRealRoundsToCheckNotSending(int nearestRealRound, int fatherVirtualRound) {
         ArrayList<Integer> realRounds = new ArrayList<>();
         int auxRound = nearestRealRound;
         while(auxRound != fatherVirtualRound) {
             realRounds.add(auxRound*2);
             auxRound = 2*auxRound + 1;
         }
-        return realRounds.toArray();
+        return realRounds;
     }
 
     /**
