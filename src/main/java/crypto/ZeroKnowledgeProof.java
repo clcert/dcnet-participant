@@ -1,9 +1,6 @@
 package crypto;
 
-import json.ProofOfKnowledge;
-import json.ProofOfKnowledgeMessageFormat;
-import json.ProofOfKnowledgePedersen;
-import json.ProofOfKnowledgeResendingFatherRoundReal;
+import json.*;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -451,6 +448,193 @@ public class ZeroKnowledgeProof {
         BigInteger _d = pedersenCommitment2.calculateCommitment(BigInteger.ONE, c2);
 
         return b.equals(cSum) && _a.equals(_b) && _c.equals(_d);
+
+    }
+
+    /**
+     * Generates Proof of Knowledge that participant knows \(x_1\) in \(h_1 = g^{x_1} \lor (h_2 = g^{x_2} \land (\bigwedge h_j = g^{x_j})\)
+     *
+     * @param h1 commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
+     * @param g  generator of group \(G_q\)
+     * @param x1 value in \(\mathbb{Z}_q\)
+     * @param h2 commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
+     * @param hj array of commitments s.t. \(h_j = g^{x_j} \pmod{p}\)
+     * @param q  large prime
+     * @param p  large prime s.t. \(p = kq + 1\)
+     * @return Proof of Knowledge that participant knows \(x_1\) in \(h_1 = g^{x_1} \lor (h_2 = g^{x_2} \land (\bigwedge h_j = g^{x_j})\)
+     * @throws NoSuchAlgorithmException     test
+     * @throws UnsupportedEncodingException test
+     */
+    public ProofOfKnowledgeResendingFatherRoundVirtual generateProofOfKnowledgeResendingFatherRoundVirtualX1(BigInteger h1, BigInteger g, BigInteger x1, BigInteger h2, BigInteger[] hj, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        Commitment commitment = new Commitment(g, q, p);
+        PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h2, q, p);
+
+        BigInteger c2 = commitment.generateRandom();
+        BigInteger[] cj = new BigInteger[hj.length];
+        for (int i = 0; i < cj.length; i++) {
+            cj[i] = commitment.generateRandom();
+        }
+        BigInteger r1 = commitment.generateRandom();
+        BigInteger r2 = commitment.generateRandom();
+        BigInteger[] rj = new BigInteger[hj.length];
+        for (int i = 0; i < cj.length; i++) {
+            rj[i] = commitment.generateRandom();
+        }
+
+        BigInteger z1 = commitment.calculateCommitment(r1);
+        BigInteger z2 = pedersenCommitment.calculateCommitment(r2, c2.negate());
+        BigInteger[] zj = new BigInteger[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            zj[i] = pedersenCommitment.calculateCommitment(rj[i], cj[i].negate());
+        }
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        String publicValueOnHash = z1.toString().concat(
+                z2.toString()).concat(
+                g.toString()).concat(
+                h1.toString()).concat(
+                h2.toString()).concat(
+                "" + this.nodeIndex);
+        md.update(publicValueOnHash.getBytes("UTF-8"));
+        byte[] hashOnPublicValues = md.digest();
+        BigInteger b = new BigInteger(hashOnPublicValues).mod(q); // b = H( z1 || z2 || g || h1 || h2 || nodeIndex )
+
+        BigInteger c1 = b.subtract(c2).mod(q);
+
+        BigInteger a1 = r1.add(c1.multiply(x1));
+
+        return new ProofOfKnowledgeResendingFatherRoundVirtual(c1, c2, cj, z1, z2, zj, a1, r2, rj, nodeIndex);
+
+    }
+
+    /**
+     * Generates Proof of Knowledge that participant knows \(x_2 \land x_j\) in \(h_1 = g^{x_1} \lor (h_2 = g^{x_2} \land (\bigwedge h_j = g^{x_j})\)
+     *
+     * @param h1 commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
+     * @param h2 commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
+     * @param hj array of commitments s.t. \(h_j = g^{x_j} \pmod{p}\)
+     * @param g  generator of group \(G_q\)
+     * @param x2 value in \(\mathbb{Z}_q\)
+     * @param xj values in \(\mathbb{Z}_q\)
+     * @param q  large prime
+     * @param p  large prime s.t. \(p = kq + 1\)
+     * @return Proof of Knowledge that participant knows \(x_2 \land x_j\) in \(h_1 = g^{x_1} \lor (h_2 = g^{x_2} \land (\bigwedge h_j = g^{x_j})\)
+     * @throws NoSuchAlgorithmException     test
+     * @throws UnsupportedEncodingException test
+     */
+    public ProofOfKnowledgeResendingFatherRoundVirtual generateProofOfKnowledgeResendingFatherRoundVirtualX2Xs(BigInteger h1, BigInteger h2, BigInteger[] hj, BigInteger g, BigInteger x2, BigInteger[] xj, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        Commitment commitment = new Commitment(g, q, p);
+        PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h1, q, p);
+
+        BigInteger c1 = commitment.generateRandom();
+        BigInteger r1 = commitment.generateRandom();
+        BigInteger r2 = commitment.generateRandom();
+        BigInteger[] rj = new BigInteger[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            rj[i] = commitment.generateRandom();
+        }
+
+        BigInteger z1 = pedersenCommitment.calculateCommitment(r1, c1.negate());
+        BigInteger z2 = commitment.calculateCommitment(r2);
+        BigInteger[] zj = new BigInteger[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            zj[i] = commitment.calculateCommitment(rj[i]);
+        }
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        String publicValueOnHash = z1.toString().concat(
+                z2.toString()).concat(
+                g.toString()).concat(
+                h1.toString()).concat(
+                h2.toString()).concat(
+                "" + this.nodeIndex);
+        md.update(publicValueOnHash.getBytes("UTF-8"));
+        byte[] hashOnPublicValues = md.digest();
+        BigInteger b = new BigInteger(hashOnPublicValues).mod(q); // b = H( z1 || z2 || g || h1 || h2 || nodeIndex )
+
+        BigInteger c2 = b.subtract(c1).mod(q);
+        BigInteger[] cj = new BigInteger[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            cj[i] = b.subtract(c1).mod(q); // Check this
+        }
+
+        BigInteger a2 = r2.add(c2.multiply(x2));
+        BigInteger[] aj = new BigInteger[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            aj[i] = rj[i].add(c2.multiply(xj[i]));
+        }
+
+        return new ProofOfKnowledgeResendingFatherRoundVirtual(c1, c2, cj, z1, z2, zj, r1, a2, aj, nodeIndex);
+
+    }
+
+    /**
+     * Verifies if the Proof of Knowledge provide is correct or not for knowing either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \lor h_2 = g^{x_2}\)
+     *
+     * @param proofOfKnowledgeResendingFatherRoundVirtual Proof of Knowledge that participants knows either \(x_1\) or \(x_2\) in \(h_1 = g^{x_1} \lor h_2 = g^{x_2}\)
+     * @param h1                                          commitment s.t. \(h_1 = g^{x_1} \pmod{p}\)
+     * @param h2                                          commitment s.t. \(h_2 = g^{x_2} \pmod{p}\)
+     * @param g                                           generator of group \(G_q\)
+     * @param q                                           large prime
+     * @param p                                           large prime s.t. \(p = kq + 1\)
+     * @return true if proof is correct, false otherwise
+     * @throws NoSuchAlgorithmException     test
+     * @throws UnsupportedEncodingException test
+     */
+    public boolean verifyProofOfKnowledgeResendingFatherRoundVirtual(ProofOfKnowledgeResendingFatherRoundVirtual proofOfKnowledgeResendingFatherRoundVirtual, BigInteger h1, BigInteger h2, BigInteger[] hj, BigInteger g, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        BigInteger c1 = proofOfKnowledgeResendingFatherRoundVirtual.getC1();
+        BigInteger c2 = proofOfKnowledgeResendingFatherRoundVirtual.getC2();
+        BigInteger[] cj = proofOfKnowledgeResendingFatherRoundVirtual.getCj();
+        BigInteger z1 = proofOfKnowledgeResendingFatherRoundVirtual.getZ1();
+        BigInteger z2 = proofOfKnowledgeResendingFatherRoundVirtual.getZ2();
+        BigInteger[] zj = proofOfKnowledgeResendingFatherRoundVirtual.getZj();
+        BigInteger a1 = proofOfKnowledgeResendingFatherRoundVirtual.getA1();
+        BigInteger a2 = proofOfKnowledgeResendingFatherRoundVirtual.getA2();
+        BigInteger[] aj = proofOfKnowledgeResendingFatherRoundVirtual.getAj();
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        String publicValueOnHash = z1.toString().concat(
+                z2.toString()).concat(
+                g.toString()).concat(
+                h1.toString()).concat(
+                h2.toString()).concat(
+                "" + proofOfKnowledgeResendingFatherRoundVirtual.getNodeIndex());
+        md.update(publicValueOnHash.getBytes("UTF-8"));
+        byte[] hashOnPublicValues = md.digest();
+        BigInteger b = new BigInteger(hashOnPublicValues).mod(q); // b = H( z1 || z2 || g || h1 || h2 || nodeIndex ) (mod q)
+
+        BigInteger cSum = c1.add(c2).mod(q); // cSum = c1 + c2
+
+        Commitment commitment = new Commitment(g, q, p);
+        PedersenCommitment pedersenCommitment1 = new PedersenCommitment(z1, h1, q, p);
+        PedersenCommitment pedersenCommitment2 = new PedersenCommitment(z2, h2, q, p);
+        PedersenCommitment[] pedersenCommitmentJ = new PedersenCommitment[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            pedersenCommitmentJ[i] = new PedersenCommitment(zj[i], hj[i], q, p);
+        }
+
+        BigInteger _a = commitment.calculateCommitment(a1);
+        BigInteger _b = pedersenCommitment1.calculateCommitment(BigInteger.ONE, c1);
+
+        BigInteger _c = commitment.calculateCommitment(a2);
+        BigInteger _d = pedersenCommitment2.calculateCommitment(BigInteger.ONE, c2);
+
+        BigInteger[] _e = new BigInteger[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            _e[i] = commitment.calculateCommitment(aj[i]);
+        }
+        BigInteger[] _f = new BigInteger[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            _f[i] = pedersenCommitmentJ[i].calculateCommitment(BigInteger.ONE, cj[i]);
+        }
+
+        boolean condition = true;
+        for (int i = 0; i < hj.length; i++) {
+            if (!(_e[i].equals(_f[i])))
+                condition = false;
+        }
+
+        return b.equals(cSum) && _a.equals(_b) && _c.equals(_d) && condition;
 
     }
 

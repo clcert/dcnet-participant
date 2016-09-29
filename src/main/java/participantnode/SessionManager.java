@@ -523,11 +523,14 @@ public class SessionManager {
                     ArrayList<Integer> realRounds = getRealRoundsToCheckNotSending(nearestRealRound, virtualFatherRound);
 
                     BigInteger[] commitmentsOnPlainMessagesInPreviousRounds = new BigInteger[realRounds.size()];
+                    BigInteger[] randomsOnPlainMessagesInPreviousRounds = new BigInteger[realRounds.size()];
                     for (int i = 0; i < realRounds.size(); i++) {
                         commitmentsOnPlainMessagesInPreviousRounds[i] = commitmentsOnPlainMessage.get(realRounds.get(i));
+                        randomsOnPlainMessagesInPreviousRounds[i] = randomsForPlainMessage.get(realRounds.get(i));
                     }
 
                     // TODO: message not sent in real rounds between this and that previous one
+                    // TODO: PoK that all the commitments on commitmentsOnPlainMessagesInPreviousRounds commit to message zero
 
                     // Calculate commitment on plain message of nearest real round divided by
                     // commitment on plain message of current round
@@ -535,8 +538,8 @@ public class SessionManager {
                             commitmentsOnPlainMessage.get(nearestRealRound));
 
                     // Create Pok depending if the participant node will send a message in this round or not
-                    ProofOfKnowledgeResendingFatherRoundReal proofOfKnowledgeResendingFatherRoundVirtual;
-                    OutputMessageAndProofOfKnowledgeResendingFatherRoundReal
+                    ProofOfKnowledgeResendingFatherRoundVirtual proofOfKnowledgeResendingFatherRoundVirtual;
+                    OutputMessageAndProofOfKnowledgeResendingFatherRoundVirtual
                             outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual;
 
                     // If will send a message, needs to prove that is the same message that was sent in the nearest real round
@@ -548,11 +551,11 @@ public class SessionManager {
 
                         // Create Pok and create object containing it and the output message
                         proofOfKnowledgeResendingFatherRoundVirtual =
-                                zkp.generateProofOfKnowledgeResendingFatherRoundRealX2(
-                                        commitmentOnPlainMessage, divisionOfCommitments, room.getH(),
-                                        subtractionOfRandomness, room.getQ(), room.getP());
+                                zkp.generateProofOfKnowledgeResendingFatherRoundVirtualX2Xs(
+                                        commitmentOnPlainMessage, divisionOfCommitments, commitmentsOnPlainMessagesInPreviousRounds, room.getH(),
+                                        subtractionOfRandomness, randomsOnPlainMessagesInPreviousRounds, room.getQ(), room.getP());
                         outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual =
-                                new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(
+                                new OutputMessageAndProofOfKnowledgeResendingFatherRoundVirtual(
                                         outputParticipantMessage, proofOfKnowledgeResendingFatherRoundVirtual);
                     }
 
@@ -560,18 +563,18 @@ public class SessionManager {
                     else {
                         // Create Pok and create object containing it and the output message
                         proofOfKnowledgeResendingFatherRoundVirtual =
-                                zkp.generateProofOfKnowledgeResendingFatherRoundRealX1(
+                                zkp.generateProofOfKnowledgeResendingFatherRoundVirtualX1(
                                         commitmentOnPlainMessage, room.getH(), randomForCommitmentOnPlainMessage,
-                                        divisionOfCommitments, room.getQ(), room.getP());
+                                        divisionOfCommitments, commitmentsOnPlainMessagesInPreviousRounds, room.getQ(), room.getP());
                         outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual =
-                                new OutputMessageAndProofOfKnowledgeResendingFatherRoundReal(
+                                new OutputMessageAndProofOfKnowledgeResendingFatherRoundVirtual(
                                         zeroMessage, proofOfKnowledgeResendingFatherRoundVirtual);
                     }
 
                     // Generate Json object with the Pok (using an OR) and the output message
                     String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(
                             outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual,
-                            OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
+                            OutputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.class);
 
                     // Send Json to the room (containing the output Message and the Pok when the father round is virtual)
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
@@ -698,14 +701,14 @@ public class SessionManager {
 
                         // Transform incoming message (json) to a
                         // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
-                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal
+                        OutputMessageAndProofOfKnowledgeResendingFatherRoundVirtual
                                 outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual =
                                 new Gson().fromJson(messageReceivedFromReceiverThread,
-                                        OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
+                                        OutputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.class);
 
                         // Get index of participant node that is sending his proofOfKnowledge
                         int participantNodeIndex = outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.
-                                getProofOfKnowledgeResendingFatherRoundReal().getNodeIndex();
+                                getProofOfKnowledgeResendingFatherRoundVirtual().getNodeIndex();
 
                         // Calculate the nearest real round played between the current and the first ones
                         int nearestRealRound = getNearestRealRound(currentRound / 2);
@@ -727,18 +730,17 @@ public class SessionManager {
 
                         // TODO: message not sent in real rounds between this and that previous one
 
-
                         // Construct a commitment needed to verify Pok as the multiplication of the inverse of the
                         // commitment send in the current round with the commitment sent in the nearest real round
                         BigInteger resultantCommitment = commitmentOnPlainMessageNodeRound2K.modInverse(room.getP())
                                 .multiply(commitmentOnPlainMessageNodeNearestRealRound);
 
                         // Verify proof of knowledge
-                        if (!zkp.verifyProofOfKnowledgeResendingFatherRoundReal(
+                        if (!zkp.verifyProofOfKnowledgeResendingFatherRoundVirtual(
                                 outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.
-                                        getProofOfKnowledgeResendingFatherRoundReal(),
+                                        getProofOfKnowledgeResendingFatherRoundVirtual(),
                                 commitmentOnPlainMessageNodeRound2K, resultantCommitment,
-                                room.getH(), room.getQ(), room.getP()))
+                                commitmentsOnPlainMessageInPreviousRounds, room.getH(), room.getQ(), room.getP()))
                             System.err.println("WRONG PoK on Resending when father round is virtual. Round: " +
                                     currentRound + ", Node: " + participantNodeIndex);
 
