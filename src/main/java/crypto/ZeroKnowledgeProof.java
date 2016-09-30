@@ -468,16 +468,20 @@ public class ZeroKnowledgeProof {
     public ProofOfKnowledgeResendingFatherRoundVirtual generateProofOfKnowledgeResendingFatherRoundVirtualX1(BigInteger h1, BigInteger g, BigInteger x1, BigInteger h2, BigInteger[] hj, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         Commitment commitment = new Commitment(g, q, p);
         PedersenCommitment pedersenCommitment = new PedersenCommitment(g, h2, q, p);
+        PedersenCommitment[] pedersenCommitmentJ = new PedersenCommitment[hj.length];
+        for (int i = 0; i < hj.length; i++) {
+            pedersenCommitmentJ[i] = new PedersenCommitment(g, hj[i], q, p);
+        }
 
         BigInteger c2 = commitment.generateRandom();
-        BigInteger[] cj = new BigInteger[hj.length];
+        /*BigInteger[] cj = new BigInteger[hj.length];
         for (int i = 0; i < cj.length; i++) {
             cj[i] = commitment.generateRandom();
-        }
+        }*/
         BigInteger r1 = commitment.generateRandom();
         BigInteger r2 = commitment.generateRandom();
         BigInteger[] rj = new BigInteger[hj.length];
-        for (int i = 0; i < cj.length; i++) {
+        for (int i = 0; i < hj.length; i++) {
             rj[i] = commitment.generateRandom();
         }
 
@@ -485,7 +489,7 @@ public class ZeroKnowledgeProof {
         BigInteger z2 = pedersenCommitment.calculateCommitment(r2, c2.negate());
         BigInteger[] zj = new BigInteger[hj.length];
         for (int i = 0; i < hj.length; i++) {
-            zj[i] = pedersenCommitment.calculateCommitment(rj[i], cj[i].negate());
+            zj[i] = pedersenCommitmentJ[i].calculateCommitment(rj[i], c2.negate());
         }
 
         MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -503,7 +507,7 @@ public class ZeroKnowledgeProof {
 
         BigInteger a1 = r1.add(c1.multiply(x1));
 
-        return new ProofOfKnowledgeResendingFatherRoundVirtual(c1, c2, cj, z1, z2, zj, a1, r2, rj, nodeIndex);
+        return new ProofOfKnowledgeResendingFatherRoundVirtual(c1, c2, z1, z2, zj, a1, r2, rj, nodeIndex);
 
     }
 
@@ -553,10 +557,10 @@ public class ZeroKnowledgeProof {
         BigInteger b = new BigInteger(hashOnPublicValues).mod(q); // b = H( z1 || z2 || g || h1 || h2 || nodeIndex )
 
         BigInteger c2 = b.subtract(c1).mod(q);
-        BigInteger[] cj = new BigInteger[hj.length];
+        /*BigInteger[] cj = new BigInteger[hj.length];
         for (int i = 0; i < hj.length; i++) {
             cj[i] = b.subtract(c1).mod(q); // Check this
-        }
+        }*/
 
         BigInteger a2 = r2.add(c2.multiply(x2));
         BigInteger[] aj = new BigInteger[hj.length];
@@ -564,7 +568,7 @@ public class ZeroKnowledgeProof {
             aj[i] = rj[i].add(c2.multiply(xj[i]));
         }
 
-        return new ProofOfKnowledgeResendingFatherRoundVirtual(c1, c2, cj, z1, z2, zj, r1, a2, aj, nodeIndex);
+        return new ProofOfKnowledgeResendingFatherRoundVirtual(c1, c2, z1, z2, zj, r1, a2, aj, nodeIndex);
 
     }
 
@@ -584,7 +588,7 @@ public class ZeroKnowledgeProof {
     public boolean verifyProofOfKnowledgeResendingFatherRoundVirtual(ProofOfKnowledgeResendingFatherRoundVirtual proofOfKnowledgeResendingFatherRoundVirtual, BigInteger h1, BigInteger h2, BigInteger[] hj, BigInteger g, BigInteger q, BigInteger p) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         BigInteger c1 = proofOfKnowledgeResendingFatherRoundVirtual.getC1();
         BigInteger c2 = proofOfKnowledgeResendingFatherRoundVirtual.getC2();
-        BigInteger[] cj = proofOfKnowledgeResendingFatherRoundVirtual.getCj();
+        // BigInteger[] cj = proofOfKnowledgeResendingFatherRoundVirtual.getCj();
         BigInteger z1 = proofOfKnowledgeResendingFatherRoundVirtual.getZ1();
         BigInteger z2 = proofOfKnowledgeResendingFatherRoundVirtual.getZ2();
         BigInteger[] zj = proofOfKnowledgeResendingFatherRoundVirtual.getZj();
@@ -625,13 +629,14 @@ public class ZeroKnowledgeProof {
         }
         BigInteger[] _f = new BigInteger[hj.length];
         for (int i = 0; i < hj.length; i++) {
-            _f[i] = pedersenCommitmentJ[i].calculateCommitment(BigInteger.ONE, cj[i]);
+            _f[i] = pedersenCommitmentJ[i].calculateCommitment(BigInteger.ONE, c2);
         }
 
         boolean condition = true;
         for (int i = 0; i < hj.length; i++) {
-            if (!(_e[i].equals(_f[i])))
+            if (!(_e[i].equals(_f[i]))) {
                 condition = false;
+            }
         }
 
         return b.equals(cSum) && _a.equals(_b) && _c.equals(_d) && condition;

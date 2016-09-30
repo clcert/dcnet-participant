@@ -5,13 +5,12 @@ import java.math.BigInteger;
 public class ProofOfKnowledgeResendingFatherRoundVirtual {
 
     BigInteger c1, c2, z1, z2, a1, a2;
-    BigInteger[] cj, zj, aj;
+    BigInteger[] zj, aj;
     int nodeIndex;
 
-    public ProofOfKnowledgeResendingFatherRoundVirtual(BigInteger c1, BigInteger c2, BigInteger[] cj, BigInteger z1, BigInteger z2, BigInteger[] zj, BigInteger a1, BigInteger a2, BigInteger[] aj, int nodeIndex) {
+    public ProofOfKnowledgeResendingFatherRoundVirtual(BigInteger c1, BigInteger c2, BigInteger z1, BigInteger z2, BigInteger[] zj, BigInteger a1, BigInteger a2, BigInteger[] aj, int nodeIndex) {
         this.c1 = c1;
         this.c2 = c2;
-        this.cj = cj;
         this.z1 = z1;
         this.z2 = z2;
         this.zj = zj;
@@ -43,10 +42,6 @@ public class ProofOfKnowledgeResendingFatherRoundVirtual {
 
     public BigInteger getA2() {
         return a2;
-    }
-
-    public BigInteger[] getCj() {
-        return cj;
     }
 
     public BigInteger[] getZj() {
