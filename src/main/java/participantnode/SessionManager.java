@@ -176,8 +176,6 @@ public class SessionManager {
                 receiverThread.send("" + currentRound);
             }
 
-            System.err.println("Current Round: " + currentRound);
-
             // Variables to store the resulting message of the round
             BigInteger sumOfM, sumOfT, sumOfO = BigInteger.ZERO;
 
@@ -768,7 +766,6 @@ public class SessionManager {
             // Separate sumOfO in (sumOfM, sumOfT)
             sumOfM = sumOfO.divide(BigInteger.valueOf(room.getRoomSize() + 1));
             sumOfT = sumOfO.subtract(sumOfM.multiply(BigInteger.valueOf(room.getRoomSize() + 1)));
-            System.err.println("Number of messages: " + sumOfT);
 
             // If we are playing the first round, assign the size of the collision
             if (currentRound == 1) {
