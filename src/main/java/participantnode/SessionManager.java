@@ -529,9 +529,6 @@ public class SessionManager {
                         randomsOnPlainMessagesInPreviousRounds[i] = randomsForPlainMessage.get(realRounds.get(i));
                     }
 
-                    // TODO: message not sent in real rounds between this and that previous one
-                    // TODO: PoK that all the commitments on commitmentsOnPlainMessagesInPreviousRounds commit to message zero
-
                     // Calculate commitment on plain message of nearest real round divided by
                     // commitment on plain message of current round
                     BigInteger divisionOfCommitments = commitmentOnPlainMessage.modInverse(room.getP()).multiply(
@@ -727,8 +724,6 @@ public class SessionManager {
                         for (int i = 0; i < realRounds.size(); i++) {
                             commitmentsOnPlainMessageInPreviousRounds[i] = receivedCommitmentsOnPlainMessages.get(participantNodeIndex - 1).get(realRounds.get(i));
                         }
-
-                        // TODO: message not sent in real rounds between this and that previous one
 
                         // Construct a commitment needed to verify Pok as the multiplication of the inverse of the
                         // commitment send in the current round with the commitment sent in the nearest real round
