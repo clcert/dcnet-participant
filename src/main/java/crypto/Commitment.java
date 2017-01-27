@@ -6,7 +6,7 @@ import java.util.Random;
 /**
  * Class that manages regular commitments \((c = g^x \pmod{p})\) operations
  *
- * @author Camilo J. Gómez (camilo@niclabs.cl)
+ * @author Camilo J. Gomez (camilo@niclabs.cl)
  */
 public class Commitment {
 

@@ -10,7 +10,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Class that manages Zero Knowledge Proofs operations, using regular and Pedersen commitments
  *
- * @author Camilo J. Gómez (camilo@niclabs.cl)
+ * @author Camilo J. Gomez (camilo@niclabs.cl)
  */
 public class ZeroKnowledgeProof {
 
