@@ -286,6 +286,8 @@ public class SessionManager {
 
                     // Get commitmentOnKey and index of the node that is sending the values
                     BigInteger receivedCommitmentOnKey = receivedCommitmentAndProofOfKnowledgeOnKey.getCommitment();
+                    System.out.println(receivedCommitmentAndProofOfKnowledgeOnKey);
+                    System.out.println(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge());
                     int receivedIndex = receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex();
 
                     // Store commitment for future checking
