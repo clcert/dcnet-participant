@@ -1061,12 +1061,12 @@ public class SessionManager {
 
         DecimalFormat df = new DecimalFormat("#0.000");
         System.out.print(df.format(getExecutionTime() / 1000000000.0) + ";" + df.format(getFirstMessageTime() / 1000000000.0) + ";" + df.format(getAverageTimePerMessage() / 1000000000.0) + ";");
-        System.out.println(t_key*100.0/executionTime + ";" + t_comm_k*100.0/executionTime + ";" + t_pok_k*100.0/executionTime +
-                ";" + t_send_cpk*100.0/executionTime + ";" + t_rcv_cpk*100.0/executionTime + ";" + t_set_msg*100.0/executionTime + ";" +
-                t_pok_f*100.0/executionTime + ";" + t_send_f*100.0/executionTime + ";" + t_rcv_cpf*100.0/executionTime + ";" +
-                t_pok_m*100.0/executionTime + ";" + t_send_pm*100.0/executionTime + ";" + t_rcv_cpm*100.0/executionTime + ";" +
-                t_pok_o*100.0/executionTime + ";" + t_send_po*100.0/executionTime + ";" + t_rcv_po*100.0/executionTime + ";" +
-                t_virt*100.0/executionTime + ";" + t_round_res*100.0/executionTime);
+        System.out.println(df.format(t_key*100.0/executionTime) + ";" + df.format(t_comm_k*100.0/executionTime) + ";" + df.format(t_pok_k*100.0/executionTime) +
+                ";" + df.format(t_send_cpk*100.0/executionTime) + ";" + df.format(t_rcv_cpk*100.0/executionTime) + ";" + df.format(t_set_msg*100.0/executionTime) + ";" +
+                df.format(t_pok_f*100.0/executionTime) + ";" + df.format(t_send_f*100.0/executionTime) + ";" + df.format(t_rcv_cpf*100.0/executionTime) + ";" +
+                df.format(t_pok_m*100.0/executionTime) + ";" + df.format(t_send_pm*100.0/executionTime) + ";" + df.format(t_rcv_cpm*100.0/executionTime) + ";" +
+                df.format(t_pok_o*100.0/executionTime) + ";" + df.format(t_send_po*100.0/executionTime) + ";" + df.format(t_rcv_po*100.0/executionTime) + ";" +
+                df.format(t_virt*100.0/executionTime) + ";" + df.format(t_round_res*100.0/executionTime));
 
     }
 
