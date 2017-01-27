@@ -266,6 +266,7 @@ public class SessionManager {
 
                 // Send commitment on key and index to the room
                 totalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
+                System.out.println(ownCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge());
                 node.getSender().send(ownCommitmentAndProofOfKnowledgeOnKeyJson);
 
                 t_fin = System.nanoTime();
@@ -286,8 +287,7 @@ public class SessionManager {
 
                     // Get commitmentOnKey and index of the node that is sending the values
                     BigInteger receivedCommitmentOnKey = receivedCommitmentAndProofOfKnowledgeOnKey.getCommitment();
-                    System.out.println(receivedCommitmentAndProofOfKnowledgeOnKey);
-                    System.out.println(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge());
+                    System.out.println(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge() + "from participant " + i);
                     int receivedIndex = receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex();
 
                     // Store commitment for future checking
