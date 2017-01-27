@@ -90,12 +90,12 @@ public class ParticipantNode {
     public void connectToDirectoryNode(DirectoryNode directoryNode, Room room, ZContext context, DCNETProtocol.ObservableParticipantsLeft observableParticipantsLeft) {
         // Create Directory Subscriber and connect to 5555 port
         ZMQ.Socket directorySubscriber = context.createSocket(ZMQ.SUB);
-        directorySubscriber.connect("tcp://" + directoryNode.getDirectoryIp() + ":5555");
+        directorySubscriber.connect("tcp://" + directoryNode.getDirectoryIp() + ":6555");
         directorySubscriber.subscribe("".getBytes());
 
         // Create Directory Push and connect to 5554 port
         ZMQ.Socket directoryPush = context.createSocket(ZMQ.PUSH);
-        directoryPush.connect("tcp://" + directoryNode.getDirectoryIp() + ":5554");
+        directoryPush.connect("tcp://" + directoryNode.getDirectoryIp() + ":6554");
 
         // Send my IP to the Directory through the PUSH socket
         directoryPush.send(getNodeIp());
