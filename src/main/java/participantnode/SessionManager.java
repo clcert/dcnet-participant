@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -1058,6 +1059,8 @@ public class SessionManager {
         System.out.println("Virtual Round:              \t" + t_virt*100/executionTime + "%");
         System.out.println("Round Resolution:           \t" + t_round_res*100/executionTime + "%");*/
 
+        DecimalFormat df = new DecimalFormat("#0.000");
+        System.out.print(df.format(getExecutionTime() / 1000000000.0) + ";" + df.format(getFirstMessageTime() / 1000000000.0) + ";" + df.format(getAverageTimePerMessage() / 1000000000.0) + ";");
         System.out.println(t_key*100.0/executionTime + ";" + t_comm_k*100.0/executionTime + ";" + t_pok_k*100.0/executionTime +
                 ";" + t_send_cpk*100.0/executionTime + ";" + t_rcv_cpk*100.0/executionTime + ";" + t_set_msg*100.0/executionTime + ";" +
                 t_pok_f*100.0/executionTime + ";" + t_send_f*100.0/executionTime + ";" + t_rcv_cpf*100.0/executionTime + ";" +
