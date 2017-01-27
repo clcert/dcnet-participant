@@ -280,6 +280,7 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
+                    System.out.println("json received: " + receivedCommitmentAndProofOfKnowledgeOnKeyJson);
                     totalReceivedMessageSize += receivedCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
 
                     // Transform string (json) to CommitmentAndProofOfKnowledge object
