@@ -1058,6 +1058,12 @@ public class SessionManager {
         System.out.println("Virtual Round:              \t" + t_virt*100/executionTime + "%");
         System.out.println("Round Resolution:           \t" + t_round_res*100/executionTime + "%");*/
 
+        System.out.println(t_key*100/executionTime + ";" + t_comm_k*100/executionTime + ";" + t_pok_k*100/executionTime +
+                ";" + t_send_cpk*100/executionTime + ";" + t_rcv_cpk*100/executionTime + ";" + t_set_msg*100/executionTime + ";" +
+                t_pok_f*100/executionTime + ";" + t_send_f*100/executionTime + ";" + t_rcv_cpf*100/executionTime + ";" +
+                t_pok_m*100/executionTime + ";" + t_send_pm*100/executionTime + ";" + t_rcv_cpm*100/executionTime + ";" +
+                t_pok_o*100/executionTime + ";" + t_send_po*100/executionTime + ";" + t_rcv_po*100/executionTime + ";" +
+                t_virt*100/executionTime + ";" + t_round_res*100/executionTime);
 
     }
 
