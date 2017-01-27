@@ -46,7 +46,7 @@ public class TestInConsole {
 //         System.err.println("Avg. p/msg: \t" + df.format(dcnetProtocol.getAverageTimePerMessage()) + " seconds");
 //         System.err.println("Real Rounds: \t" + dcnetProtocol.getNumberOfRealRounds() + " rounds");
 
-        System.out.println(df.format(dcnetProtocol.getTotalTime()) + ";" + df.format(dcnetProtocol.getFirstMessageTime()) + ";" + df.format(dcnetProtocol.getAverageTimePerMessage()));
+//        System.out.println(df.format(dcnetProtocol.getTotalTime()) + ";" + df.format(dcnetProtocol.getFirstMessageTime()) + ";" + df.format(dcnetProtocol.getAverageTimePerMessage()));
 
     }
 
