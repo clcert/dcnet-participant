@@ -253,8 +253,6 @@ public class SessionManager {
                         ownCommitmentOnKeyCurrentRound, room.getG(), keyRoundValue, room.getH(),
                         randomForCommitmentOnKeyCurrentRound, room.getQ(), room.getP());
 
-                System.out.println("my pok: " + ownProofOfKnowledgeOnKey);
-
                 t_fin = System.nanoTime();
                 t_pok_k += t_fin - t_init;
 
@@ -280,7 +278,6 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
-                    System.out.println("json received: " + receivedCommitmentAndProofOfKnowledgeOnKeyJson);
                     totalReceivedMessageSize += receivedCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
 
                     // Transform string (json) to CommitmentAndProofOfKnowledge object
@@ -289,7 +286,6 @@ public class SessionManager {
 
                     // Get commitmentOnKey and index of the node that is sending the values
                     BigInteger receivedCommitmentOnKey = receivedCommitmentAndProofOfKnowledgeOnKey.getCommitment();
-                    System.out.println("received pok: " + receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge());
                     int receivedIndex = receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex();
 
                     // Store commitment for future checking
