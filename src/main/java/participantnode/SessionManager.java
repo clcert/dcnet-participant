@@ -1022,8 +1022,8 @@ public class SessionManager {
             if (messageInThisRound && (currentRound == 1 || currentRound % 2 == 0)) {
                 a = '*';
             }
-            System.out.println("Messages sent size of Round " + currentRound + a + ": " + totalSentMessageSize + " bytes");
-            System.out.println("Messages received size of Round " + currentRound + ": " + totalReceivedMessageSize + " bytes");
+//            System.out.println("Messages sent size of Round " + currentRound + a + ": " + totalSentMessageSize + " bytes");
+//            System.out.println("Messages received size of Round " + currentRound + ": " + totalReceivedMessageSize + " bytes");
 
         }
 
@@ -1040,7 +1040,7 @@ public class SessionManager {
             averageTimePerMessage = 0;
         }
 
-        System.out.println("Key Generation:             \t" + t_key*100/executionTime + "%");
+        /*System.out.println("Key Generation:             \t" + t_key*100/executionTime + "%");
         System.out.println("Commitments on Keys:        \t" + t_comm_k*100/executionTime + "%");
         System.out.println("Generate PoK on Keys:       \t" + t_pok_k*100/executionTime + "%");
         System.out.println("Sending Comm&PoK on Keys:   \t" + t_send_cpk*100/executionTime + "%");
@@ -1056,7 +1056,7 @@ public class SessionManager {
         System.out.println("Send PoK on output:         \t" + t_send_po*100/executionTime + "%");
         System.out.println("Receive PoK on output:      \t" + t_rcv_po*100/executionTime + "%");
         System.out.println("Virtual Round:              \t" + t_virt*100/executionTime + "%");
-        System.out.println("Round Resolution:           \t" + t_round_res*100/executionTime + "%");
+        System.out.println("Round Resolution:           \t" + t_round_res*100/executionTime + "%");*/
 
 
     }
