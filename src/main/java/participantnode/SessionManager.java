@@ -108,7 +108,7 @@ public class SessionManager {
         boolean finished = false;
 
         // Verify if the participant node will send a message in the current round or not
-        boolean messageInThisRound;
+        boolean messageInThisRound = false;
 
         // Store messages that were sent in previous rounds in order to construct messages of virtual rounds
         Dictionary<Integer, BigInteger> messagesSentInPreviousRounds = new Hashtable<>();
@@ -156,12 +156,21 @@ public class SessionManager {
             receivedCommitmentsOnPlainMessages.add(i, new Hashtable<Integer, BigInteger>());
         }
 
+        // Delimiters for time
+        long t_init, t_fin;
+
+        // Time variables
+        long t_key = 0, t_comm_k = 0, t_pok_k = 0, t_send_cpk = 0, t_rcv_cpk = 0, t_set_msg = 0, t_pok_f = 0, t_send_f = 0, t_rcv_cpf = 0, t_pok_m = 0, t_send_pm = 0, t_rcv_cpm = 0, t_pok_o = 0, t_send_po = 0, t_rcv_po = 0, t_virt = 0, t_round_res = 0;
+
         // Set time to measure entire session
         long t1 = System.nanoTime();
 
         /* ROUNDS */
         // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
+            int totalSentMessageSize = 0;
+            int totalReceivedMessageSize = 0;
+            t_init = System.nanoTime();
 
             // Check if the protocol was finished in the last round played.
             // If it so, let know to the receiver thread, wait for his response and break the loop
@@ -215,6 +224,11 @@ public class SessionManager {
                 // Get shared random values
                 BigInteger[] sharedRandomValuesCurrentRound = keyGeneration.getSharedRandomValues();
 
+                t_fin = System.nanoTime();
+                t_key += t_fin - t_init;
+
+                t_init = System.nanoTime();
+
                 // Calculate and save commitments on each round key
                 BigInteger[] ownCommitmentsOnKeysCurrentRound = new BigInteger[ownRoundKeysCurrentRound.length];
                 for (int i = 0; i < ownRoundKeysCurrentRound.length; i++)
@@ -229,10 +243,20 @@ public class SessionManager {
                 BigInteger ownCommitmentOnKeyCurrentRound = generateCommitmentOnKey(ownCommitmentsOnKeysCurrentRound,
                         room);
 
+                t_fin = System.nanoTime();
+                t_comm_k += t_fin - t_init;
+
+                t_init = System.nanoTime();
+
                 // Generate proof of knowledge on key stored in commitment
                 ProofOfKnowledgePedersen ownProofOfKnowledgeOnKey = zkp.generateProofOfKnowledgePedersen(
                         ownCommitmentOnKeyCurrentRound, room.getG(), keyRoundValue, room.getH(),
                         randomForCommitmentOnKeyCurrentRound, room.getQ(), room.getP());
+
+                t_fin = System.nanoTime();
+                t_pok_k += t_fin - t_init;
+
+                t_init = System.nanoTime();
 
                 // Generate Json string containing commitmentOnKey and proofOfKnowledge
                 CommitmentAndProofOfKnowledge ownCommitmentAndProofOfKnowledgeOnKey = new CommitmentAndProofOfKnowledge(
@@ -241,13 +265,20 @@ public class SessionManager {
                         ownCommitmentAndProofOfKnowledgeOnKey, CommitmentAndProofOfKnowledge.class);
 
                 // Send commitment on key and index to the room
+                totalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
                 node.getSender().send(ownCommitmentAndProofOfKnowledgeOnKeyJson);
+
+                t_fin = System.nanoTime();
+                t_send_cpk += t_fin - t_init;
+
+                t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS AND POKs ON KEYS */
                 BigInteger multiplicationOnCommitments = BigInteger.ONE;
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
+                    totalReceivedMessageSize += receivedCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
 
                     // Transform string (json) to CommitmentAndProofOfKnowledge object
                     CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnKey = new Gson().fromJson(
@@ -273,6 +304,11 @@ public class SessionManager {
                 // Check that multiplication result is 1
                 if (!multiplicationOnCommitments.equals(BigInteger.ONE))
                     System.err.println("Round " + currentRound + " commitments on keys are WRONG");
+
+                t_fin = System.nanoTime();
+                t_rcv_cpk += t_fin - t_init;
+
+                t_init = System.nanoTime();
 
                 /* SET MESSAGES AND OBJECTS OF THIS ROUND */
                 // Set protocol message to make a commitment to and add round key to the message
@@ -317,6 +353,11 @@ public class SessionManager {
                 CommitmentsOnSingleValues commitmentsOnSingleValues = new CommitmentsOnSingleValues(
                         commitmentOnPlainMessage, commitmentOnRandomPadding, commitmentOnFinalBit, nodeIndex);
 
+                t_fin = System.nanoTime();
+                t_set_msg += t_fin - t_init;
+
+                t_init = System.nanoTime();
+
                 // Create Proof that the format of the message is correct
                 ProofOfKnowledgeMessageFormat ownProofForMessageFormat;
                 BigInteger _comm = room.getG().modInverse(room.getP()).multiply(
@@ -341,13 +382,25 @@ public class SessionManager {
                                 commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat,
                                 CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat.class);
 
+                t_fin = System.nanoTime();
+                t_pok_f += t_fin - t_init;
+
+                t_init = System.nanoTime();
+
                 // Send commitment and Proof of Knowledge that the format of the message is correct
+                totalSentMessageSize += commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length;
                 node.getSender().send(commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson);
+
+                t_fin = System.nanoTime();
+                t_send_cpk += t_fin - t_init;
+
+                t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS ON SINGLE VALUES AND POK ON CORRECT MESSAGE FORMAT */
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson = receiverThread.recvStr();
+                    totalReceivedMessageSize += receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson.getBytes("UTF-8").length;
 
                     // Transform string (json) to CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat object
                     CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat
@@ -393,6 +446,11 @@ public class SessionManager {
                                 receivedProofForMessageFormat.getNodeIndex());
                 }
 
+                t_fin = System.nanoTime();
+                t_rcv_cpf += t_fin - t_init;
+
+                t_init = System.nanoTime();
+
                 /* SEND POK ON MESSAGE */
                 // Generate Commitment on message using commitments on single values created previously
                 BigInteger ownCommitmentOnMessage = constructCommitmentOnMessage(commitmentOnPlainMessage,
@@ -410,13 +468,25 @@ public class SessionManager {
                 String proofOfKnowledgeOnMessageJson = new Gson().toJson(
                         proofOfKnowledgeOnMessage, ProofOfKnowledgePedersen.class);
 
+                t_fin = System.nanoTime();
+                t_pok_m += t_fin - t_init;
+
+                t_init = System.nanoTime();
+
                 // Send Json to the room (which contains the proofOfKnowledge)
+                totalSentMessageSize += proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length;
                 node.getSender().send(proofOfKnowledgeOnMessageJson);
+
+                t_fin = System.nanoTime();
+                t_send_pm += t_fin - t_init;
+
+                t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS AND POKs ON MESSAGES */
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a String (json)
                     String receivedProofOfKnowledgeOnMessageJson = receiverThread.recvStr();
+                    totalReceivedMessageSize += receivedProofOfKnowledgeOnMessageJson.getBytes("UTF-8").length;
 
                     // Transform String (json) to object ProofOfKnowledgePedersen
                     ProofOfKnowledgePedersen receivedProofOfKnowledgeOnMessage = new Gson().fromJson(
@@ -431,9 +501,15 @@ public class SessionManager {
                                 receivedProofOfKnowledgeOnMessage.getNodeIndex());
                 }
 
+                t_fin = System.nanoTime();
+                t_rcv_cpm += t_fin - t_init;
+
                 /* SEND OUTPUT MESSAGE AND POK ASSOCIATED */
                 // Set Proof of Knowledge that is needed for Round 1
                 if (currentRound == 1) {
+
+                    t_init = System.nanoTime();
+
                     // Calculate random for commitment as the sum of both random values used before
                     // (for commitment on key and for commitment on message)
                     BigInteger randomForCommitmentOnOutputMessage = randomForCommitmentOnKeyCurrentRound.add(
@@ -456,12 +532,25 @@ public class SessionManager {
                     String outputMessageAndProofOfKnowledgeJson = new Gson().toJson(
                             outputMessageAndProofOfKnowledge, OutputMessageAndProofOfKnowledge.class);
 
+                    t_fin = System.nanoTime();
+                    t_pok_o += t_fin - t_init;
+
+                    t_init = System.nanoTime();
+
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
+                    totalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
+
+                    t_fin = System.nanoTime();
+                    t_send_po += t_fin - t_init;
+
                 }
 
                 // Set Proof of Knowledge that is needed for rounds which have a father round real
                 else if ((currentRound / 2) % 2 == 0 || currentRound == 2) {
+
+                    t_init = System.nanoTime();
+
                     // Calculate commitment on plain message of father round divided by
                     // commitment on plain message of current round
                     BigInteger divisionOfCommitments = commitmentOnPlainMessage.modInverse(room.getP()).multiply(
@@ -506,12 +595,25 @@ public class SessionManager {
                             outputMessageAndProofOfKnowledgeResendingFatherRoundReal,
                             OutputMessageAndProofOfKnowledgeResendingFatherRoundReal.class);
 
+                    t_fin = System.nanoTime();
+                    t_pok_o += t_fin - t_init;
+
+                    t_init = System.nanoTime();
+
                     // Send Json to the room (containing the output Message and the Pok when the father round is real)
+                    totalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
+
+                    t_fin = System.nanoTime();
+                    t_send_po += t_fin - t_init;
+
                 }
 
                 // Set Proof of Knowledge that is needed for rounds which have a father round virtual
                 else {
+
+                    t_init = System.nanoTime();
+
                     // Calculate number of the father round (which is virtual) and the nearest real round
                     // (between the current round and the first round)
                     int virtualFatherRound = (currentRound / 2);
@@ -571,8 +673,18 @@ public class SessionManager {
                             outputMessageAndProofOfKnowledgeResendingFatherRoundVirtual,
                             OutputMessageAndProofOfKnowledgeResendingFatherRoundVirtual.class);
 
+                    t_fin = System.nanoTime();
+                    t_pok_o += t_fin - t_init;
+
+                    t_init = System.nanoTime();
+
                     // Send Json to the room (containing the output Message and the Pok when the father round is virtual)
+                    totalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
+
+                    t_fin = System.nanoTime();
+                    t_send_po += t_fin - t_init;
+
                 }
 
                 // Subtract round key to the message in order to send a clear one in the next round
@@ -580,6 +692,8 @@ public class SessionManager {
                     outputParticipantMessage.setRoundKeyValue(keyRoundValue.negate());
                 else
                     zeroMessage.setRoundKeyValue(keyRoundValue.negate());
+
+                t_init = System.nanoTime();
 
                 /* RECEIVE OUTPUT MESSAGES AND POKs ASSOCIATED */
                 // Receive Pok that is needed for Round 1
@@ -593,6 +707,7 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
+                        totalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a OutputMessageAndProofOfKnowledge object
                         OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new Gson().fromJson(
@@ -641,6 +756,7 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
+                        totalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a
                         // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
@@ -693,6 +809,7 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
+                        totalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a
                         // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
@@ -746,10 +863,17 @@ public class SessionManager {
                         messagesReceivedInThisRound++;
                     }
                 }
+
+                t_fin = System.nanoTime();
+                t_rcv_po += t_fin - t_init;
+
             }
 
             /* VIRTUAL ROUND (odd rounds) */
             else {
+
+                t_init = System.nanoTime();
+
                 // Recover messages sent in father and previous round in order to construct
                 // the resulting message of this round
                 BigInteger sumOfOSentInRound2K = messagesSentInPreviousRounds.get(currentRound - 1);
@@ -757,7 +881,13 @@ public class SessionManager {
 
                 // Construct the resulting message of this round
                 sumOfO = sumOfOSentInRoundK.subtract(sumOfOSentInRound2K);
+
+                t_fin = System.nanoTime();
+                t_virt += t_fin - t_init;
+
             }
+
+            t_init = System.nanoTime();
 
             /* EXTRACT ROUND MESSAGES VALUES */
             // Store the resulting message of this round in order to calculate the messages in subsequently virtual rounds
@@ -883,7 +1013,18 @@ public class SessionManager {
                     addRoundToHappenNext(nextRoundsToHappen, 2 * currentRound);
                     addRoundToHappenNext(nextRoundsToHappen, 2 * currentRound + 1);
                 }
+
             }
+
+            t_fin = System.nanoTime();
+            t_round_res += t_fin - t_init;
+            char a = ' ';
+            if (messageInThisRound && (currentRound == 1 || currentRound % 2 == 0)) {
+                a = '*';
+            }
+            System.out.println("Messages sent size of Round " + currentRound + a + ": " + totalSentMessageSize + " bytes");
+            System.out.println("Messages received size of Round " + currentRound + ": " + totalReceivedMessageSize + " bytes");
+
         }
 
         // Finish time measurement
@@ -898,6 +1039,26 @@ public class SessionManager {
         } catch (ArithmeticException e) {
             averageTimePerMessage = 0;
         }
+
+        System.out.println("Key Generation:             \t" + t_key*100/executionTime + "%");
+        System.out.println("Commitments on Keys:        \t" + t_comm_k*100/executionTime + "%");
+        System.out.println("Generate PoK on Keys:       \t" + t_pok_k*100/executionTime + "%");
+        System.out.println("Sending Comm&PoK on Keys:   \t" + t_send_cpk*100/executionTime + "%");
+        System.out.println("Receive Comm&PoK on Keys:   \t" + t_rcv_cpk*100/executionTime + "%");
+        System.out.println("Setting Round messages:     \t" + t_set_msg*100/executionTime + "%");
+        System.out.println("Calculate correct format:   \t" + t_pok_f*100/executionTime + "%");
+        System.out.println("Send correct format proof:  \t" + t_send_f*100/executionTime + "%");
+        System.out.println("Receive Comm&PoK on format: \t" + t_rcv_cpf*100/executionTime + "%");
+        System.out.println("Calculate PoK on message:   \t" + t_pok_m*100/executionTime + "%");
+        System.out.println("Send PoK on message:        \t" + t_send_pm*100/executionTime + "%");
+        System.out.println("Receive PoK on message:     \t" + t_rcv_cpm*100/executionTime + "%");
+        System.out.println("Calculate PoK on output:    \t" + t_pok_o*100/executionTime + "%");
+        System.out.println("Send PoK on output:         \t" + t_send_po*100/executionTime + "%");
+        System.out.println("Receive PoK on output:      \t" + t_rcv_po*100/executionTime + "%");
+        System.out.println("Virtual Round:              \t" + t_virt*100/executionTime + "%");
+        System.out.println("Round Resolution:           \t" + t_round_res*100/executionTime + "%");
+
+
     }
 
     /**
