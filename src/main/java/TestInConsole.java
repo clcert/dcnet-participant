@@ -31,9 +31,9 @@ public class TestInConsole {
 //         System.err.println("Participant IP: " + dcnetProtocol.getNodeIp());
 
 //         System.err.println("PARTICIPANT NODE " + dcnetProtocol.getNodeIndex() + " of " + dcnetProtocol.getRoomSize());
-        if (message.equals("")) {
+//        if (message.equals("")) {
 //             System.err.println("\nP_" + dcnetProtocol.getNodeIndex() + " doesn't want to communicate any message\n");
-        } else
+//        } else
 //             System.err.println("\nm_" + dcnetProtocol.getNodeIndex() + " = " + message + "\n");
 
         dcnetProtocol.setMessageToSend(message, cheaterNode);
