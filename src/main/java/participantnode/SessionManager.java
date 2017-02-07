@@ -1062,9 +1062,9 @@ public class SessionManager {
         System.out.println("Round Resolution:           \t" + t_round_res*100/executionTime + "%");*/
 
         DecimalFormat df = new DecimalFormat("#0.000");
-        System.out.println("Total Messages Size: " + totalSentMessageSize);
-        System.out.println("Average Messages Size per Round: " + df.format(totalSentMessageSize * 1.0 / room.getRoomSize()));
-        System.out.println("Average Bandwidth: " + df.format(totalSentMessageSize / getExecutionTime() / 1000000000.0) + " B/s");
+        System.out.println("Total Messages Size: " + totalSentMessageSize + " bytes");
+        System.out.println("Average Messages Size per Round: " + df.format(totalSentMessageSize * 1.0 / room.getRoomSize()) + " bytes");
+        System.out.println("Average Bandwidth: " + df.format(totalSentMessageSize / (getExecutionTime() / 1000000000.0)) + " B/s");
         System.out.print(df.format(getExecutionTime() / 1000000000.0) + ";" + df.format(getFirstMessageTime() / 1000000000.0) + ";" + df.format(getAverageTimePerMessage() / 1000000000.0) + ";");
         System.out.println(df.format(t_key*100.0/executionTime) + ";" + df.format(t_comm_k*100.0/executionTime) + ";" + df.format(t_pok_k*100.0/executionTime) +
                 ";" + df.format(t_send_cpk*100.0/executionTime) + ";" + df.format(t_rcv_cpk*100.0/executionTime) + ";" + df.format(t_set_msg*100.0/executionTime) + ";" +
