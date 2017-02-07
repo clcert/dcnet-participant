@@ -163,14 +163,16 @@ public class SessionManager {
         // Time variables
         long t_key = 0, t_comm_k = 0, t_pok_k = 0, t_send_cpk = 0, t_rcv_cpk = 0, t_set_msg = 0, t_pok_f = 0, t_send_f = 0, t_rcv_cpf = 0, t_pok_m = 0, t_send_pm = 0, t_rcv_cpm = 0, t_pok_o = 0, t_send_po = 0, t_rcv_po = 0, t_virt = 0, t_round_res = 0;
 
+        int totalSentMessageSize = 0;
+
         // Set time to measure entire session
         long t1 = System.nanoTime();
 
         /* ROUNDS */
         // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
-            int totalSentMessageSize = 0;
-            int totalReceivedMessageSize = 0;
+            int currentRoundTotalSentMessageSize = 0;
+            int currentRoundTotalReceivedMessageSize = 0;
             t_init = System.nanoTime();
 
             // Check if the protocol was finished in the last round played.
@@ -266,7 +268,7 @@ public class SessionManager {
                         ownCommitmentAndProofOfKnowledgeOnKey, CommitmentAndProofOfKnowledge.class);
 
                 // Send commitment on key and index to the room
-                totalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
+                currentRoundTotalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
                 node.getSender().send(ownCommitmentAndProofOfKnowledgeOnKeyJson);
 
                 t_fin = System.nanoTime();
@@ -279,7 +281,7 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
-                    totalReceivedMessageSize += receivedCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
+                    currentRoundTotalReceivedMessageSize += receivedCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
 
                     // Transform string (json) to CommitmentAndProofOfKnowledge object
                     CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnKey = new Gson().fromJson(
@@ -389,7 +391,7 @@ public class SessionManager {
                 t_init = System.nanoTime();
 
                 // Send commitment and Proof of Knowledge that the format of the message is correct
-                totalSentMessageSize += commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length;
+                currentRoundTotalSentMessageSize += commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length;
                 node.getSender().send(commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson);
 
                 t_fin = System.nanoTime();
@@ -401,7 +403,7 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson = receiverThread.recvStr();
-                    totalReceivedMessageSize += receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson.getBytes("UTF-8").length;
+                    currentRoundTotalReceivedMessageSize += receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson.getBytes("UTF-8").length;
 
                     // Transform string (json) to CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat object
                     CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat
@@ -475,7 +477,7 @@ public class SessionManager {
                 t_init = System.nanoTime();
 
                 // Send Json to the room (which contains the proofOfKnowledge)
-                totalSentMessageSize += proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length;
+                currentRoundTotalSentMessageSize += proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length;
                 node.getSender().send(proofOfKnowledgeOnMessageJson);
 
                 t_fin = System.nanoTime();
@@ -487,7 +489,7 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a String (json)
                     String receivedProofOfKnowledgeOnMessageJson = receiverThread.recvStr();
-                    totalReceivedMessageSize += receivedProofOfKnowledgeOnMessageJson.getBytes("UTF-8").length;
+                    currentRoundTotalReceivedMessageSize += receivedProofOfKnowledgeOnMessageJson.getBytes("UTF-8").length;
 
                     // Transform String (json) to object ProofOfKnowledgePedersen
                     ProofOfKnowledgePedersen receivedProofOfKnowledgeOnMessage = new Gson().fromJson(
@@ -539,7 +541,7 @@ public class SessionManager {
                     t_init = System.nanoTime();
 
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
-                    totalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
 
                     t_fin = System.nanoTime();
@@ -602,7 +604,7 @@ public class SessionManager {
                     t_init = System.nanoTime();
 
                     // Send Json to the room (containing the output Message and the Pok when the father round is real)
-                    totalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
 
                     t_fin = System.nanoTime();
@@ -680,7 +682,7 @@ public class SessionManager {
                     t_init = System.nanoTime();
 
                     // Send Json to the room (containing the output Message and the Pok when the father round is virtual)
-                    totalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
 
                     t_fin = System.nanoTime();
@@ -708,7 +710,7 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                        totalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
+                        currentRoundTotalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a OutputMessageAndProofOfKnowledge object
                         OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new Gson().fromJson(
@@ -757,7 +759,7 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                        totalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
+                        currentRoundTotalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a
                         // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
@@ -810,7 +812,7 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                        totalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
+                        currentRoundTotalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a
                         // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
@@ -1023,8 +1025,9 @@ public class SessionManager {
             if (messageInThisRound && (currentRound == 1 || currentRound % 2 == 0)) {
                 a = '*';
             }
-            System.out.println("Messages sent size of Round " + currentRound + a + ": " + totalSentMessageSize + " bytes");
-            System.out.println("Messages received size of Round " + currentRound + ": " + totalReceivedMessageSize + " bytes");
+            totalSentMessageSize += currentRoundTotalSentMessageSize;
+            System.out.println("Messages sent size of Round " + currentRound + a + ": " + currentRoundTotalSentMessageSize + " bytes");
+            System.out.println("Messages received size of Round " + currentRound + ": " + currentRoundTotalReceivedMessageSize + " bytes");
 
         }
 
@@ -1033,6 +1036,9 @@ public class SessionManager {
 
         // Save execution time
         executionTime = t2 - t1;
+
+        System.out.println("Total Messages Size: " + totalSentMessageSize);
+        System.out.println("Average Messages Size per Round: " + totalSentMessageSize * 1.0 / room.getRoomSize());
 
         // Save average time per message
         try {
