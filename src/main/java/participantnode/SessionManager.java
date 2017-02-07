@@ -1023,8 +1023,8 @@ public class SessionManager {
             if (messageInThisRound && (currentRound == 1 || currentRound % 2 == 0)) {
                 a = '*';
             }
-//            System.out.println("Messages sent size of Round " + currentRound + a + ": " + totalSentMessageSize + " bytes");
-//            System.out.println("Messages received size of Round " + currentRound + ": " + totalReceivedMessageSize + " bytes");
+            System.out.println("Messages sent size of Round " + currentRound + a + ": " + totalSentMessageSize + " bytes");
+            System.out.println("Messages received size of Round " + currentRound + ": " + totalReceivedMessageSize + " bytes");
 
         }
 
