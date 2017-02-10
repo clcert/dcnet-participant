@@ -136,9 +136,6 @@ public class SessionManager {
         zeroMessage.setParticipantMessage("0", room);
         zeroMessage.setPaddingLength(room.getPadLength());
 
-        System.out.println("Protocol message size (as string): " + outputParticipantMessage.getProtocolMessage().toString().getBytes("UTF-8").length + " bytes");
-        System.out.println("Protocol message size (as BI): " + outputParticipantMessage.getProtocolMessage().toByteArray().length + " bytes");
-
         // Synchronize nodes at the beginning to solve slow joiner problem
         synchronizeNodes(nodeIndex, repliers, requestors, room);
 
@@ -175,7 +172,6 @@ public class SessionManager {
         // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
             int currentRoundTotalSentMessageSize = 0;
-            int currentRoundTotalReceivedMessageSize = 0;
             t_init = System.nanoTime();
 
             // Check if the protocol was finished in the last round played.
@@ -284,7 +280,6 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
-                    currentRoundTotalReceivedMessageSize += receivedCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
 
                     // Transform string (json) to CommitmentAndProofOfKnowledge object
                     CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnKey = new Gson().fromJson(
@@ -406,7 +401,6 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
                     String receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson = receiverThread.recvStr();
-                    currentRoundTotalReceivedMessageSize += receivedCommitmentsOnSingleValuesAndPOKMessageFormatJson.getBytes("UTF-8").length;
 
                     // Transform string (json) to CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat object
                     CommitmentsOnSingleValuesAndProofOfKnowledgeMessageFormat
@@ -492,7 +486,6 @@ public class SessionManager {
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a String (json)
                     String receivedProofOfKnowledgeOnMessageJson = receiverThread.recvStr();
-                    currentRoundTotalReceivedMessageSize += receivedProofOfKnowledgeOnMessageJson.getBytes("UTF-8").length;
 
                     // Transform String (json) to object ProofOfKnowledgePedersen
                     ProofOfKnowledgePedersen receivedProofOfKnowledgeOnMessage = new Gson().fromJson(
@@ -713,7 +706,6 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                        currentRoundTotalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a OutputMessageAndProofOfKnowledge object
                         OutputMessageAndProofOfKnowledge outputMessageAndProofOfKnowledge = new Gson().fromJson(
@@ -762,7 +754,6 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                        currentRoundTotalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a
                         // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
@@ -815,7 +806,6 @@ public class SessionManager {
 
                         // Receive a message (json) from receiver thread
                         String messageReceivedFromReceiverThread = receiverThread.recvStr();
-                        currentRoundTotalReceivedMessageSize += messageReceivedFromReceiverThread.getBytes("UTF-8").length;
 
                         // Transform incoming message (json) to a
                         // OutputMessageAndProofOfKnowledgeResendingFatherRoundReal object
