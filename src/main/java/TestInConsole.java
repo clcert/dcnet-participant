@@ -16,7 +16,6 @@ public class TestInConsole {
     public static void main(String[] args) throws IOException {
         // Parse arguments
         String message = args[0];
-        System.out.println("Original message size: " + message.getBytes("UTF-8").length + " bytes");
         String directoryIp = args[1];
         boolean cheaterNode = Boolean.parseBoolean(args[2]);
 
