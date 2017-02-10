@@ -1058,7 +1058,8 @@ public class SessionManager {
         System.out.println("Original message size: " + outputParticipantMessage.getPlainMessage().toByteArray().length + " bytes");
         System.out.println("Protocol message size: " + outputParticipantMessage.getProtocolMessage().toByteArray().length + " bytes");
         System.out.println("Total Messages Size: " + totalSentMessageSize + " bytes");
-        System.out.println("Average Messages Size per Round: " + totalSentMessageSize / room.getRoomSize() + " bytes");
+        System.out.println("real rounds played: " + realRoundsPlayed);
+        System.out.println("Average Messages Size per Round: " + totalSentMessageSize / realRoundsPlayed + " bytes");
         System.out.println("Average Bandwidth (by participant): " + df.format(totalSentMessageSize / (getExecutionTime() / 1000000000.0)) + " B/s");
         System.out.println("Average Bandwidth Approx. (all room): " + df.format((totalSentMessageSize * room.getRoomSize()) / (getExecutionTime() / 1000000000.0)) + " B/s");
         System.out.print(df.format(getExecutionTime() / 1000000000.0) + ";" + df.format(getFirstMessageTime() / 1000000000.0) + ";" + df.format(getAverageTimePerMessage() / 1000000000.0) + ";");
