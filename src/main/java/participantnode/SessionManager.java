@@ -1056,7 +1056,6 @@ public class SessionManager {
 
         DecimalFormat df = new DecimalFormat("#0.000");
         System.out.println("Original message size: " + outputParticipantMessage.getPlainMessage().toByteArray().length + " bytes");
-        System.out.println("Protocol message: " + new String(outputParticipantMessage.getProtocolMessage().toByteArray()));
         System.out.println("Protocol message size: " + outputParticipantMessage.getProtocolMessage().toByteArray().length + " bytes");
         System.out.println("Total Messages Size: " + totalSentMessageSize + " bytes");
         System.out.println("Average Messages Size per Round: " + totalSentMessageSize / room.getRoomSize() + " bytes");
