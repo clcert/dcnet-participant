@@ -1062,7 +1062,7 @@ public class SessionManager {
         System.out.println("Round Resolution:           \t" + t_round_res*100/executionTime + "%");*/
 
         DecimalFormat df = new DecimalFormat("#0.000");
-        System.out.println("Protocol message size: " + participantMessage.getBytes("UTF-8").length + " bytes");
+        System.out.println("Protocol message size: " + outputParticipantMessage.getProtocolMessage().toString().getBytes("UTF-8").length + " bytes");
         System.out.println("Total Messages Size: " + totalSentMessageSize + " bytes");
         System.out.println("Average Messages Size per Round: " + totalSentMessageSize / room.getRoomSize() + " bytes");
         System.out.println("Average Bandwidth (by participant): " + df.format(totalSentMessageSize / (getExecutionTime() / 1000000000.0)) + " B/s");
