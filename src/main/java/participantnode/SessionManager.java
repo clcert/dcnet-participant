@@ -1056,7 +1056,7 @@ public class SessionManager {
 
         DecimalFormat df = new DecimalFormat("#0.000");
         System.out.println("Original message size (as string): " + outputParticipantMessage.getPlainMessage().toString().getBytes("UTF-8").length + " bytes");
-        System.out.println("Original message: " + outputParticipantMessage.getPlainMessage().toString());
+        System.out.println("Original message: " + new String(outputParticipantMessage.getPlainMessage().toByteArray()));
         System.out.println("Original message size (as BI): " + outputParticipantMessage.getPlainMessage().toByteArray().length + " bytes");
         System.out.println("Protocol message size (as string): " + outputParticipantMessage.getProtocolMessage().toString().getBytes("UTF-8").length + " bytes");
         System.out.println("Protocol message size (as BI): " + outputParticipantMessage.getProtocolMessage().toByteArray().length + " bytes");
