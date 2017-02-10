@@ -1055,11 +1055,9 @@ public class SessionManager {
         System.out.println("Round Resolution:           \t" + t_round_res*100/executionTime + "%");*/
 
         DecimalFormat df = new DecimalFormat("#0.000");
-        System.out.println("Original message size (as string): " + outputParticipantMessage.getPlainMessage().toString().getBytes("UTF-8").length + " bytes");
-        System.out.println("Original message: " + new String(outputParticipantMessage.getPlainMessage().toByteArray()));
-        System.out.println("Original message size (as BI): " + outputParticipantMessage.getPlainMessage().toByteArray().length + " bytes");
-        System.out.println("Protocol message size (as string): " + outputParticipantMessage.getProtocolMessage().toString().getBytes("UTF-8").length + " bytes");
-        System.out.println("Protocol message size (as BI): " + outputParticipantMessage.getProtocolMessage().toByteArray().length + " bytes");
+        System.out.println("Original message size: " + outputParticipantMessage.getPlainMessage().toByteArray().length + " bytes");
+        System.out.println("Protocol message: " + new String(outputParticipantMessage.getProtocolMessage().toByteArray()));
+        System.out.println("Protocol message size: " + outputParticipantMessage.getProtocolMessage().toByteArray().length + " bytes");
         System.out.println("Total Messages Size: " + totalSentMessageSize + " bytes");
         System.out.println("Average Messages Size per Round: " + totalSentMessageSize / room.getRoomSize() + " bytes");
         System.out.println("Average Bandwidth (by participant): " + df.format(totalSentMessageSize / (getExecutionTime() / 1000000000.0)) + " B/s");
