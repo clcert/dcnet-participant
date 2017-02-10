@@ -114,7 +114,6 @@ public class OutputMessage {
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
             this.protocolMessage = plainMessageWithRandomPadding.multiply(nPlusOne).add(BigInteger.ONE);
-            System.out.println("Protocol message size (from class): " + this.protocolMessage.toByteArray().length + " bytes");
             finalBit = BigInteger.ONE;
         }
     }
