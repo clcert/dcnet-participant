@@ -13,9 +13,9 @@ public class OutputMessage {
 
     private BigInteger plainMessage; // m
     private BigInteger randomPadding; // r*
-    private BigInteger plainMessageWithRandomPadding; // m + r*
+    private BigInteger plainMessageWithRandomPadding; // m || r*
     private BigInteger finalBit; // b
-    private BigInteger protocolMessage; // m + r* + b
+    private BigInteger protocolMessage; // m || r* || b
 
     static private int RANDOM_PADDING_LENGTH;
 
@@ -114,6 +114,7 @@ public class OutputMessage {
         // If not, the message to send must have the form (<m>,1), that it translates to: <m>*(n+1) + 1 (see Reference for more information)
         else {
             this.protocolMessage = plainMessageWithRandomPadding.multiply(nPlusOne).add(BigInteger.ONE);
+            System.out.println("Protocol message size (from class): " + this.protocolMessage.toByteArray().length + " bytes");
             finalBit = BigInteger.ONE;
         }
     }
