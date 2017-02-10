@@ -136,6 +136,9 @@ public class SessionManager {
         zeroMessage.setParticipantMessage("0", room);
         zeroMessage.setPaddingLength(room.getPadLength());
 
+        System.out.println("Protocol message size (as string): " + outputParticipantMessage.getProtocolMessage().toString().getBytes("UTF-8").length + " bytes");
+        System.out.println("Protocol message size (as BI): " + outputParticipantMessage.getProtocolMessage().toByteArray().length + " bytes");
+
         // Synchronize nodes at the beginning to solve slow joiner problem
         synchronizeNodes(nodeIndex, repliers, requestors, room);
 
