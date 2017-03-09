@@ -28,5 +28,5 @@ then
 	usage
 fi 
 
-! ls "$(pwd)/build/libs/collision_resolution_protocol-all-1.0-SNAPSHOT.jar" > /dev/null 2<&1 && ./gradlew fatJar > /dev/null 2<&1
-java -jar "$(pwd)/build/libs/collision_resolution_protocol-all-1.0-SNAPSHOT.jar" "${message}" ${directory_ip} ${cheater_mode}
+! ls "$(pwd)/build/libs/dcnet-participant-1.0.jar" > /dev/null 2<&1 && ./gradlew fatJar > /dev/null 2<&1
+java -jar "$(pwd)/build/libs/dcnet-participant-1.0.jar" "${message}" ${directory_ip} ${cheater_mode}
