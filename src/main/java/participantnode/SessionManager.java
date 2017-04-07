@@ -267,11 +267,12 @@ public class SessionManager {
                         ownCommitmentAndProofOfKnowledgeOnKey, CommitmentAndProofOfKnowledge.class);
 
                 // Send commitment on key and index to the room
-                currentRoundTotalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length;
                 node.getSender().send(ownCommitmentAndProofOfKnowledgeOnKeyJson);
 
                 t_fin = System.nanoTime();
                 t_send_cpk += t_fin - t_init;
+
+                currentRoundTotalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length * room.getRoomSize();
 
                 t_init = System.nanoTime();
 
@@ -389,12 +390,12 @@ public class SessionManager {
                 t_init = System.nanoTime();
 
                 // Send commitment and Proof of Knowledge that the format of the message is correct
-                currentRoundTotalSentMessageSize += commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length;
                 node.getSender().send(commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson);
 
                 t_fin = System.nanoTime();
                 t_send_cpk += t_fin - t_init;
 
+                currentRoundTotalSentMessageSize += commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length * room.getRoomSize();
                 t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS ON SINGLE VALUES AND POK ON CORRECT MESSAGE FORMAT */
@@ -474,12 +475,12 @@ public class SessionManager {
                 t_init = System.nanoTime();
 
                 // Send Json to the room (which contains the proofOfKnowledge)
-                currentRoundTotalSentMessageSize += proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length;
                 node.getSender().send(proofOfKnowledgeOnMessageJson);
 
                 t_fin = System.nanoTime();
                 t_send_pm += t_fin - t_init;
 
+                currentRoundTotalSentMessageSize += proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length * room.getRoomSize();
                 t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS AND POKs ON MESSAGES */
@@ -537,11 +538,11 @@ public class SessionManager {
                     t_init = System.nanoTime();
 
                     // Send the Json to the room (which contains the outputMessage and the proofOfKnowledge)
-                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
 
                     t_fin = System.nanoTime();
                     t_send_po += t_fin - t_init;
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * room.getRoomSize();
 
                 }
 
@@ -600,11 +601,11 @@ public class SessionManager {
                     t_init = System.nanoTime();
 
                     // Send Json to the room (containing the output Message and the Pok when the father round is real)
-                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
 
                     t_fin = System.nanoTime();
                     t_send_po += t_fin - t_init;
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * room.getRoomSize();
 
                 }
 
@@ -678,12 +679,12 @@ public class SessionManager {
                     t_init = System.nanoTime();
 
                     // Send Json to the room (containing the output Message and the Pok when the father round is virtual)
-                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length;
                     node.getSender().send(outputMessageAndProofOfKnowledgeJson);
 
                     t_fin = System.nanoTime();
                     t_send_po += t_fin - t_init;
 
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * room.getRoomSize();
                 }
 
                 // Subtract round key to the message in order to send a clear one in the next round
