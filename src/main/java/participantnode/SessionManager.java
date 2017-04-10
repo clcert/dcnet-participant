@@ -172,7 +172,6 @@ public class SessionManager {
         // Each loop of this while is a different round
         while (!Thread.currentThread().isInterrupted()) {
             int currentRoundTotalSentMessageSize = 0;
-            t_init = System.nanoTime();
 
             // Check if the protocol was finished in the last round played.
             // If it so, let know to the receiver thread, wait for his response and break the loop
@@ -204,6 +203,8 @@ public class SessionManager {
                 realRoundsPlayed++;
 
                 /* KEY SHARING PART */
+                t_init = System.nanoTime();
+
                 // Initialize KeyGeneration
                 /*KeyGeneration keyGeneration = new SecretSharing(room.getRoomSize(),
                 nodeIndex, repliers, requestors, room);*/
