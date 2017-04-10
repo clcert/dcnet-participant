@@ -272,7 +272,7 @@ public class SessionManager {
                 t_fin = System.nanoTime();
                 t_send_cpk += t_fin - t_init;
 
-                currentRoundTotalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length * room.getRoomSize();
+                currentRoundTotalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
 
                 t_init = System.nanoTime();
 
@@ -395,7 +395,7 @@ public class SessionManager {
                 t_fin = System.nanoTime();
                 t_send_cpk += t_fin - t_init;
 
-                currentRoundTotalSentMessageSize += commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length * room.getRoomSize();
+                currentRoundTotalSentMessageSize += commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
                 t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS ON SINGLE VALUES AND POK ON CORRECT MESSAGE FORMAT */
@@ -480,7 +480,7 @@ public class SessionManager {
                 t_fin = System.nanoTime();
                 t_send_pm += t_fin - t_init;
 
-                currentRoundTotalSentMessageSize += proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length * room.getRoomSize();
+                currentRoundTotalSentMessageSize += proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
                 t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS AND POKs ON MESSAGES */
@@ -542,7 +542,7 @@ public class SessionManager {
 
                     t_fin = System.nanoTime();
                     t_send_po += t_fin - t_init;
-                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * room.getRoomSize();
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
 
                 }
 
@@ -605,7 +605,7 @@ public class SessionManager {
 
                     t_fin = System.nanoTime();
                     t_send_po += t_fin - t_init;
-                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * room.getRoomSize();
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
 
                 }
 
@@ -684,7 +684,7 @@ public class SessionManager {
                     t_fin = System.nanoTime();
                     t_send_po += t_fin - t_init;
 
-                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * room.getRoomSize();
+                    currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
                 }
 
                 // Subtract round key to the message in order to send a clear one in the next round
