@@ -264,6 +264,10 @@ public class SessionManager {
                 // Generate Json string containing commitmentOnKey and proofOfKnowledge
                 CommitmentAndProofOfKnowledge ownCommitmentAndProofOfKnowledgeOnKey = new CommitmentAndProofOfKnowledge(
                         ownCommitmentOnKeyCurrentRound, ownProofOfKnowledgeOnKey);
+
+                System.out.println("c: " + ownCommitmentOnKeyCurrentRound.bitLength());
+                System.out.println("pok: " + (ownProofOfKnowledgeOnKey.getV().bitLength() + ownProofOfKnowledgeOnKey.getD().bitLength() + ownProofOfKnowledgeOnKey.getD().bitLength() + ownProofOfKnowledgeOnKey.getNodeIndex()));
+
                 String ownCommitmentAndProofOfKnowledgeOnKeyJson = new Gson().toJson(
                         ownCommitmentAndProofOfKnowledgeOnKey, CommitmentAndProofOfKnowledge.class);
 
@@ -274,14 +278,20 @@ public class SessionManager {
                 t_send_cpk += t_fin - t_init;
 
                 currentRoundTotalSentMessageSize += ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
+                System.out.println("c&pok on key: " + ownCommitmentAndProofOfKnowledgeOnKeyJson.getBytes("UTF-8").length);
 
                 t_init = System.nanoTime();
+                long total_verify = 0;
+                long total_reception = 0;
 
                 /* RECEIVE COMMITMENTS AND POKs ON KEYS */
                 BigInteger multiplicationOnCommitments = BigInteger.ONE;
                 for (int i = 0; i < room.getRoomSize(); i++) {
                     // Wait response from Receiver thread as a string
+                    long t_init_rec = System.nanoTime();
                     String receivedCommitmentAndProofOfKnowledgeOnKeyJson = receiverThread.recvStr();
+                    long t_final_rec = System.nanoTime();
+                    total_reception += (t_final_rec - t_init_rec);
 
                     // Transform string (json) to CommitmentAndProofOfKnowledge object
                     CommitmentAndProofOfKnowledge receivedCommitmentAndProofOfKnowledgeOnKey = new Gson().fromJson(
@@ -295,10 +305,13 @@ public class SessionManager {
                     receivedCommitmentsOnKeyCurrentRound[receivedIndex - 1] = receivedCommitmentOnKey;
 
                     // Verify proofOfKnowledge
+                    long t_init_ver = System.nanoTime();
                     if (!zkp.verifyProofOfKnowledgePedersen(receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge(),
                             receivedCommitmentOnKey, room.getG(), room.getH(), room.getQ(), room.getP()))
                         System.err.println("WRONG PoK on Key. Round: " + currentRound + ", Node: " +
                                 receivedCommitmentAndProofOfKnowledgeOnKey.getProofOfKnowledge().getNodeIndex());
+                    long t_fin_verify = System.nanoTime();
+                    total_verify += (t_fin_verify - t_init_ver);
 
                     // Calculate multiplication of incoming commitments
                     multiplicationOnCommitments = multiplicationOnCommitments.multiply(receivedCommitmentOnKey).
@@ -310,6 +323,9 @@ public class SessionManager {
 
                 t_fin = System.nanoTime();
                 t_rcv_cpk += t_fin - t_init;
+
+                System.out.println("ratio between total reception and verify: " + t_rcv_cpk * 1.0 / total_verify);
+                System.out.println("ratio between reception and verify: " + total_verify * 1.0 / total_reception);
 
                 t_init = System.nanoTime();
 
@@ -397,6 +413,7 @@ public class SessionManager {
                 t_send_cpk += t_fin - t_init;
 
                 currentRoundTotalSentMessageSize += commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
+//                System.out.println("comm and pok on format: " + commitmentsOnSingleValuesAndProofOfKnowledgeMessageFormatJson.getBytes("UTF-8").length);
                 t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS ON SINGLE VALUES AND POK ON CORRECT MESSAGE FORMAT */
@@ -482,6 +499,7 @@ public class SessionManager {
                 t_send_pm += t_fin - t_init;
 
                 currentRoundTotalSentMessageSize += proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
+//                System.out.println("pok on message: " + proofOfKnowledgeOnMessageJson.getBytes("UTF-8").length);
                 t_init = System.nanoTime();
 
                 /* RECEIVE COMMITMENTS AND POKs ON MESSAGES */
@@ -544,6 +562,7 @@ public class SessionManager {
                     t_fin = System.nanoTime();
                     t_send_po += t_fin - t_init;
                     currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
+//                    System.out.println("output and pok: " + outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length);
 
                 }
 
@@ -607,6 +626,7 @@ public class SessionManager {
                     t_fin = System.nanoTime();
                     t_send_po += t_fin - t_init;
                     currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
+//                    System.out.println("output and pok: " + outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length);
 
                 }
 
@@ -686,6 +706,7 @@ public class SessionManager {
                     t_send_po += t_fin - t_init;
 
                     currentRoundTotalSentMessageSize += outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length * (room.getRoomSize() - 1);
+//                    System.out.println("output and pok: " + outputMessageAndProofOfKnowledgeJson.getBytes("UTF-8").length);
                 }
 
                 // Subtract round key to the message in order to send a clear one in the next round
